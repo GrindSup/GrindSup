@@ -1,43 +1,43 @@
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\config\CorsConfig.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\AgendaController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\AlumnoController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\EjercicioController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\EntrenadorController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\EstadoController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\PlanEntrenamientoController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\RolController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\RutinaController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\RutinaEjercicioController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\SesionController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\TipoTurnoController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\TurnoController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\controller\UsuarioController.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\GrindSupBackendApplication.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Agenda.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Alumno.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Ejercicio.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Entrenador.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Estado.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\PlanEntrenamiento.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Rol.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Rutina.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\RutinaEjercicio.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\RutinaEjercicioId.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Sesion.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\TipoTurno.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Turno.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\model\Usuario.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\AgendaRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\AlumnoRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\EjercicioRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\EntrenadorRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\EstadoRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\PlanEntrenamientoRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\RolRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\RutinaEjercicioRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\RutinaRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\SesionRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\TipoTurnoRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\TurnoRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\repository\UsuarioRepository.java
-C:\Users\betin\OneDrive\Escritorio\GrindSup\GrindSup\backend\src\main\java\com\grindsup\backend\TestController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\config\CorsConfig.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\AgendaController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\AlumnoController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\EjercicioController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\EntrenadorController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\EstadoController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\PlanEntrenamientoController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\RolController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\RutinaController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\RutinaEjercicioController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\SesionController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\TipoTurnoController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\TurnoController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\controller\UsuarioController.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\GrindSupBackendApplication.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Agenda.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Alumno.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Ejercicio.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Entrenador.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Estado.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\PlanEntrenamiento.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Rol.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Rutina.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\RutinaEjercicio.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\RutinaEjercicioId.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Sesion.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\TipoTurno.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Turno.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\model\Usuario.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\AgendaRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\AlumnoRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\EjercicioRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\EntrenadorRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\EstadoRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\PlanEntrenamientoRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\RolRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\RutinaEjercicioRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\RutinaRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\SesionRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\TipoTurnoRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\TurnoRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\repository\UsuarioRepository.java
+C:\Users\Blue Oyola\GrindSupBackend\backend\src\main\java\com\grindsup\backend\TestController.java
