@@ -21,6 +21,7 @@ com\grindsup\backend\controller\EntrenadorController.class
 com\grindsup\backend\model\Ejercicio.class
 com\grindsup\backend\controller\SesionController.class
 com\grindsup\backend\repository\SesionRepository.class
+com\grindsup\backend\TestController.class
 com\grindsup\backend\controller\TipoTurnoController.class
 com\grindsup\backend\controller\PlanEntrenamientoController.class
 com\grindsup\backend\model\Rol.class
@@ -30,6 +31,7 @@ com\grindsup\backend\controller\RutinaEjercicioController.class
 com\grindsup\backend\model\Entrenador.class
 com\grindsup\backend\model\Estado.class
 com\grindsup\backend\model\RutinaEjercicioId.class
+com\grindsup\backend\config\CorsConfig.class
 com\grindsup\backend\controller\RolController.class
 com\grindsup\backend\repository\EntrenadorRepository.class
 com\grindsup\backend\repository\RutinaEjercicioRepository.class
