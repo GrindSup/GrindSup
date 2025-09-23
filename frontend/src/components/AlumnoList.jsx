@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SearchIcon, EditIcon, DeleteIcon, AddIcon } from "@chakra-ui/icons";
@@ -23,6 +23,14 @@ import {
   Center,
   Text,
   useToast,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter,
+  Textarea,
+  Checkbox,
 } from "@chakra-ui/react";
 
 const AlumnoList = () => {
@@ -30,41 +38,41 @@ const AlumnoList = () => {
   const [estados, setEstados] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [alumnoToDelete, setAlumnoToDelete] = useState(null);
+  const [motivo, setMotivo] = useState("");
+  const cancelRef = useRef();
+
   const navigate = useNavigate();
   const toast = useToast();
 
-  // 🔹 Cargar alumnos
   const fetchAlumnos = () => {
     axios
       .get("http://localhost:8080/api/alumnos")
       .then((res) => setAlumnos(res.data))
-      .catch((err) => {
-        console.error("Error al cargar alumnos:", err);
+      .catch(() =>
         toast({
           title: "Error al cargar alumnos",
-          description: "Verificá el backend",
           status: "error",
           duration: 2000,
           isClosable: true,
-        });
-      })
+        })
+      )
       .finally(() => setLoading(false));
   };
 
-  // 🔹 Cargar estados
   const fetchEstados = () => {
     axios
       .get("http://localhost:8080/api/estados")
       .then((res) => setEstados(res.data))
-      .catch((err) => {
-        console.error("Error al cargar estados:", err);
+      .catch(() =>
         toast({
           title: "Error al cargar estados",
           status: "error",
           duration: 2000,
           isClosable: true,
-        });
-      });
+        })
+      );
   };
 
   useEffect(() => {
@@ -72,13 +80,9 @@ const AlumnoList = () => {
     fetchEstados();
   }, []);
 
-  // 🔄 Cambiar estado de un alumno
   const handleEstadoChange = (idAlumno, idEstado) => {
-    const alumno = alumnos.find((a) => a.id_alumno === idAlumno);
-
     axios
       .put(`http://localhost:8080/api/alumnos/${idAlumno}`, {
-        ...alumno,
         estado: { id_estado: Number(idEstado) },
       })
       .then(() => {
@@ -90,43 +94,83 @@ const AlumnoList = () => {
         });
         fetchAlumnos();
       })
-      .catch((err) => {
-        console.error("Error al actualizar estado:", err);
+      .catch(() =>
         toast({
           title: "Error al actualizar estado",
           status: "error",
           duration: 2000,
           isClosable: true,
-        });
-      });
+        })
+      );
   };
 
-  // 🗑️ Eliminar alumno
-  const handleDelete = (idAlumno) => {
+  // ✅ Ahora usa PATCH al nuevo endpoint
+  const handleInformeChange = (idAlumno, checked) => {
     axios
-      .delete(`http://localhost:8080/api/alumnos/${idAlumno}`)
+      .patch(`http://localhost:8080/api/alumnos/${idAlumno}/informe`, {
+        informeMedico: checked,
+      })
       .then(() => {
         toast({
-          title: "Alumno eliminado",
+          title: "Informe médico actualizado",
           status: "success",
           duration: 2000,
           isClosable: true,
         });
         fetchAlumnos();
       })
-      .catch((err) => {
-        console.error("Error al eliminar alumno:", err);
+      .catch(() =>
         toast({
-          title: "Error al eliminar",
-          description: "Verificá si el backend está activo",
+          title: "Error al actualizar informe médico",
           status: "error",
           duration: 2000,
           isClosable: true,
-        });
-      });
+        })
+      );
   };
 
-  // 🔍 Filtrar alumnos por búsqueda
+  const openDeleteDialog = (alumno) => {
+    setAlumnoToDelete(alumno);
+    setMotivo("");
+    setIsOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!motivo.trim()) {
+      toast({
+        title: "Debe ingresar un motivo",
+        status: "warning",
+        duration: 2000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    axios
+      .delete(`http://localhost:8080/api/alumnos/${alumnoToDelete.id_alumno}`, {
+        data: { motivo },
+      })
+      .then(() => {
+        toast({
+          title: "Alumno eliminado",
+          description: `Motivo: ${motivo}`,
+          status: "success",
+          duration: 2000,
+          isClosable: true,
+        });
+        fetchAlumnos();
+      })
+      .catch(() =>
+        toast({
+          title: "Error al eliminar",
+          status: "error",
+          duration: 2000,
+          isClosable: true,
+        })
+      )
+      .finally(() => setIsOpen(false));
+  };
+
   const filteredAlumnos = alumnos.filter((alumno) => {
     const query = search.toLowerCase();
     return (
@@ -180,6 +224,8 @@ const AlumnoList = () => {
                 <Th>Apellido</Th>
                 <Th>Documento</Th>
                 <Th>Teléfono</Th>
+                <Th>Enfermedades</Th>
+                <Th>Informe Médico</Th>
                 <Th>Estado</Th>
                 <Th textAlign="center">Opciones</Th>
               </Tr>
@@ -191,6 +237,17 @@ const AlumnoList = () => {
                   <Td>{alumno.apellido}</Td>
                   <Td>{alumno.documento}</Td>
                   <Td>{alumno.telefono}</Td>
+                  <Td>{alumno.enfermedades || "—"}</Td>
+                  <Td>
+                    <Checkbox
+                      isChecked={alumno.informeMedico}
+                      onChange={(e) =>
+                        handleInformeChange(alumno.id_alumno, e.target.checked)
+                      }
+                    >
+                      Entregado
+                    </Checkbox>
+                  </Td>
                   <Td>
                     <Select
                       size="sm"
@@ -200,7 +257,10 @@ const AlumnoList = () => {
                       }
                     >
                       {estados.map((estado) => (
-                        <option key={estado.id_estado} value={estado.id_estado}>
+                        <option
+                          key={estado.id_estado}
+                          value={estado.id_estado}
+                        >
                           {estado.nombre}
                         </option>
                       ))}
@@ -212,7 +272,9 @@ const AlumnoList = () => {
                         size="sm"
                         colorScheme="blue"
                         leftIcon={<EditIcon />}
-                        onClick={() => navigate(`/alumno/editar/${alumno.id_alumno}`)}
+                        onClick={() =>
+                          navigate(`/alumno/editar/${alumno.id_alumno}`)
+                        }
                       >
                         Editar
                       </Button>
@@ -220,7 +282,7 @@ const AlumnoList = () => {
                         size="sm"
                         colorScheme="red"
                         leftIcon={<DeleteIcon />}
-                        onClick={() => handleDelete(alumno.id_alumno)}
+                        onClick={() => openDeleteDialog(alumno)}
                       >
                         Eliminar
                       </Button>
@@ -242,6 +304,39 @@ const AlumnoList = () => {
           Agregar Alumno
         </Button>
       </Flex>
+
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsOpen(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Eliminar Alumno
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              <Text mb={2}>
+                Ingrese el motivo de la eliminación del alumno{" "}
+                <strong>{alumnoToDelete?.nombre}</strong>:
+              </Text>
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Ej: alumno no continúa con el curso..."
+              />
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>
+                Cancelar
+              </Button>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+                Eliminar
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 };
