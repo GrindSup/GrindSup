@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# backend Java project (no Node)
+backend/node_modules/
+backend/package.json
+backend/package-lock.json

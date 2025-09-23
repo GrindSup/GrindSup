@@ -10,10 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/alumnos")
 public class AlumnoController {
@@ -24,9 +25,10 @@ public class AlumnoController {
     @Autowired
     private EstadoRepository estadoRepository;
 
+    // 🚩 Solo activos
     @GetMapping
     public List<Alumno> getAll() {
-        return alumnoRepository.findAll();
+        return alumnoRepository.findByDeletedAtIsNull();
     }
 
     @GetMapping("/{id}")
@@ -34,24 +36,22 @@ public class AlumnoController {
         return alumnoRepository.findById(id).orElse(null);
     }
 
+    // 🚩 Solo eliminados
+    @GetMapping("/eliminados")
+    public List<Alumno> getEliminados() {
+        return alumnoRepository.findByDeletedAtIsNotNull();
+    }
+
     @PostMapping
     public Alumno create(@RequestBody Alumno alumno) {
-        // Estado por defecto = 1 (ACTIVO) si existe; si no, queda null y permite guardar
         Estado estadoActivo = estadoRepository.findById(1L).orElse(null);
         alumno.setEstado(estadoActivo);
-
-        // 🚩 CAMBIO: Entrenador ahora puede ser NULL → lo dejamos sin asignar al crear
         alumno.setEntrenador(null);
 
-        // 🚩 CAMBIO: Agregamos soporte a nuevos campos (peso, altura, lesiones, etc.)
-        // Estos se guardan en la tabla alumnos, pero son opcionales (permiten null)
-
-        // Timestamps obligatorios → control de auditoría
         OffsetDateTime ahora = OffsetDateTime.now();
         alumno.setCreated_at(ahora);
         alumno.setUpdated_at(ahora);
 
-        // Limpieza mínima de strings
         if (alumno.getNombre() != null) alumno.setNombre(alumno.getNombre().trim());
         if (alumno.getApellido() != null) alumno.setApellido(alumno.getApellido().trim());
         if (alumno.getDocumento() != null) alumno.setDocumento(alumno.getDocumento().trim());
@@ -60,7 +60,6 @@ public class AlumnoController {
         try {
             return alumnoRepository.save(alumno);
         } catch (DataIntegrityViolationException ex) {
-            // 📌 Documento sigue siendo UNIQUE → evita duplicados
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
                 "No se pudo crear el alumno (verificá si el documento ya existe).",
@@ -72,22 +71,18 @@ public class AlumnoController {
     @PutMapping("/{id}")
     public Alumno update(@PathVariable Long id, @RequestBody Alumno alumno) {
         return alumnoRepository.findById(id).map(existing -> {
-            // Campos simples
             existing.setNombre(alumno.getNombre());
             existing.setApellido(alumno.getApellido());
             existing.setDocumento(alumno.getDocumento());
             existing.setTelefono(alumno.getTelefono());
-
-            // 🚩 CAMBIO: Ahora el modelo soporta más atributos opcionales
             existing.setFechaNacimiento(alumno.getFechaNacimiento());
             existing.setPeso(alumno.getPeso());
             existing.setAltura(alumno.getAltura());
             existing.setLesiones(alumno.getLesiones());
-
-            // 🚩 CAMBIO: Entrenador sigue siendo NULL hasta implementar esa parte
+            existing.setEnfermedades(alumno.getEnfermedades());
+            existing.setInformeMedico(alumno.getInformeMedico());
             existing.setEntrenador(null);
 
-            // Estado: si viene en el request con id válido, lo actualizo; si no, dejo el actual
             if (alumno.getEstado() != null) {
                 Long estadoId = alumno.getEstado().getId_estado();
                 if (estadoId != null) {
@@ -96,7 +91,6 @@ public class AlumnoController {
                 }
             }
 
-            // Timestamp de modificación
             existing.setUpdated_at(OffsetDateTime.now());
 
             try {
@@ -111,9 +105,31 @@ public class AlumnoController {
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
 
+    // 🚩 PATCH: actualizar solo el informe médico
+    @PatchMapping("/{id}/informe")
+    public Alumno updateInforme(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        return alumnoRepository.findById(id).map(existing -> {
+            if (body.containsKey("informeMedico")) {
+                existing.setInformeMedico(body.get("informeMedico"));
+                existing.setUpdated_at(OffsetDateTime.now());
+                return alumnoRepository.save(existing);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta el campo informeMedico");
+            }
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+    }
+
+    // 🚩 Baja lógica
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        alumnoRepository.deleteById(id);
-        return "Alumno eliminado con id " + id;
+    public Alumno delete(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+        return alumnoRepository.findById(id).map(alumno -> {
+            if (body != null && body.containsKey("motivo")) {
+                alumno.setMotivoBaja(body.get("motivo"));
+            } else {
+                alumno.setMotivoBaja("No especificado");
+            }
+            alumno.setDeletedAt(LocalDateTime.now());
+            return alumnoRepository.save(alumno);
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
 }
