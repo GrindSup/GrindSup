@@ -57,3 +57,5 @@ Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desd
 * **Ejecutar jar generado:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
 
 ### Frontend
+* **Instalar dependencias de UI y animaciones:** `npm install @chakra-ui/react @chakra-ui/icons @emotion/react @emotion/styled framer-motion`
+* **Instalar enrutamiento de React:** `npm install react-router-dom`
