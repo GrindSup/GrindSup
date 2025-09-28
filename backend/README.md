@@ -34,6 +34,7 @@ backend/
 │   │   ├── java/com/grindsup/backend/
 │   │   │   ├── GrindSupBackendApplication.java   
 │   │   │   ├── controller/         # Controladores REST
+│   │   │   │   ├── GoogleCalendarController.java
 │   │   │   │   ├── AlumnoController.java
 │   │   │   │   ├── AgendaController.java
 │   │   │   │   ├── EntrenadorController.java
@@ -42,11 +43,18 @@ backend/
 │   │   │   │   ├── RutinaController.java
 │   │   │   │   ├── RutinaEjercicioController.java
 │   │   │   │   ├── EstadoController.java
-│   │   │   │   ├── SesionController.java                # renombrado desde SesionEntrenadorController.java
+│   │   │   │   ├── SesionController.java   
 │   │   │   │   ├── TurnoController.java
 │   │   │   │   ├── RolController.java                   # agregado
 │   │   │   │   ├── TipoTurnoController.java            # agregado
 │   │   │   │   └── UsuarioController.java              # agregado
+│   │   │   ├── config/
+│   │   │   │   ├── CorsConfig.java
+│   │   │   │   └── GoogleCalendarConfig.java
+│   │   │   ├── service/
+│   │   │   │   ├── GoogleCalendarService.java
+│   │   │   │   ├── GoogleCalendarCredentialService.java
+│   │   │   │   └── UserService.java
 │   │   │   ├── model/              # Entidades JPA (tablas)
 │   │   │   │   ├── Alumno.java
 │   │   │   │   ├── Agenda.java
@@ -57,7 +65,6 @@ backend/
 │   │   │   │   ├── RutinaEjercicio.java
 │   │   │   │   ├── RutinaEjercicioId.java
 │   │   │   │   ├── Estado.java
-│   │   │   │   ├── Sesion.java                          # renombrado desde SesionEntrenador.java
 │   │   │   │   ├── Turno.java
 │   │   │   │   ├── Rol.java                             # agregado
 │   │   │   │   ├── TipoTurno.java                       # agregado
@@ -71,13 +78,14 @@ backend/
 │   │   │       ├── RutinaRepository.java
 │   │   │       ├── RutinaEjercicioRepository.java
 │   │   │       ├── EstadoRepository.java
-│   │   │       ├── SesionRepository.java                # renombrado desde SesionEntrenadorRepository.java
+│   │   │       ├── SesionRepository.java                
 │   │   │       ├── TurnoRepository.java
 │   │   │       ├── RolRepository.java                   # agregado
 │   │   │       ├── TipoTurnoRepository.java             # agregado
 │   │   │       └── UsuarioRepository.java               # agregado
 │   │   └── resources/              
-│   │       ├── application.properties  
+│   │       ├── application.properties
+│   │       ├── credentials.json  
 │   │       └── static/             
 │   │       └── templates/          
 │   │
