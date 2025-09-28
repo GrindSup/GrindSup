@@ -40,4 +40,4 @@ backend/package-lock.json
 /backend/target/
 
 # Google API credentials
-src/main/resources/credentials/
+src/main/resources/credentials.json
