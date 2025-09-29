@@ -1,6 +1,5 @@
 package com.grindsup.backend.config;
 
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -31,15 +30,17 @@ public class GoogleCalendarConfig {
                 GoogleNetHttpTransport.newTrustedTransport(),
                 JSON_FACTORY,
                 clientSecrets,
-                Collections.singleton(CalendarScopes.CALENDAR)).setAccessType("offline") // necesario para refresh token
+                Collections.singleton(CalendarScopes.CALENDAR))
+                .setAccessType("offline") // Necesario para refresh token
                 .build();
     }
 
-    public Calendar buildCalendar(Credential credential) throws Exception {
+    public Calendar buildCalendar(com.google.api.client.auth.oauth2.Credential credential) throws Exception {
         return new Calendar.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
                 JSON_FACTORY,
-                credential).setApplicationName(APPLICATION_NAME)
+                credential)
+                .setApplicationName(APPLICATION_NAME)
                 .build();
     }
 }
