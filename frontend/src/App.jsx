@@ -1,24 +1,53 @@
 import { Box, Container } from "@chakra-ui/react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Login from "./components/Login";
+import PantallaInicio from "./components/Inicio";
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 
 export default function App() {
+  const [usuario, setUsuario] = useState(() => {
+    const saved = localStorage.getItem("usuario");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => {
+    if (usuario) {
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+      setShowLogin(false); // oculta login al loguearse
+    } else {
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sesionId");
+    }
+  }, [usuario]);
+
   return (
     <BrowserRouter>
       <Box minH="100vh" display="flex" flexDirection="column">
-        <Header />
+        <Header usuario={usuario} setUsuario={setUsuario} setShowLogin={setShowLogin} />
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
           <Container maxW="container.xl">
-            <Routes>
-              <Route path="/" element={<AlumnoList />} />
-              <Route path="/alumnos" element={<AlumnoList />} />
-              <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
-              <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
-            </Routes>
+            {!usuario ? (
+              showLogin ? ( <Login setUsuario={setUsuario} />
+              ) : (
+                <PantallaInicio setUsuario={setUsuario} />
+              )
+            ) : (
+              <Routes>
+                <Route path="/" element={<PantallaInicio user={usuario} setUser={setUsuario} />} />
+                <Route path="/alumnos" element={<AlumnoList />} />
+                <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
+                <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            )}
           </Container>
         </Box>
         <Footer />
@@ -26,4 +55,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
