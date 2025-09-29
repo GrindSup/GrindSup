@@ -35,6 +35,7 @@ backend/
 │   │   │   ├── GrindSupBackendApplication.java   
 │   │   │   ├── controller/         # Controladores REST
 │   │   │   │   ├── GoogleCalendarController.java
+│   │   │   │   ├── GoogleCalendarNotificationController.java
 │   │   │   │   ├── AlumnoController.java
 │   │   │   │   ├── AgendaController.java
 │   │   │   │   ├── EntrenadorController.java
@@ -53,6 +54,7 @@ backend/
 │   │   │   │   └── GoogleCalendarConfig.java
 │   │   │   ├── service/
 │   │   │   │   ├── GoogleCalendarService.java
+│   │   │   │   ├── GoogleCalendarNotificationService.java
 │   │   │   │   ├── GoogleCalendarCredentialService.java
 │   │   │   │   └── UserService.java
 │   │   │   ├── model/              # Entidades JPA (tablas)
