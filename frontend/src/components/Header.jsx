@@ -19,13 +19,15 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
+import { useNavigate } from "react-router-dom";
 
 export default function Header({ usuario, setUsuario, setShowLogin }) {
+  const navigate = useNavigate();
   const isLoggedIn = !!usuario;
-  const { isOpen, onOpen, onClose } = useDisclosure(); // modal control
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleLogout = async () => {
-    onClose(); // cierra el modal
+    onClose();
 
     const sesionId = localStorage.getItem("sesionId");
     if (sesionId) {
@@ -39,20 +41,27 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
     localStorage.removeItem("usuario");
     localStorage.removeItem("sesionId");
     setUsuario(null);
+
+    navigate("/"); 
   };
+
+  const menuItems = [
+    { label: "Inicio", path: "/" },
+    { label: "Alumnos", path: "/alumnos" },
+    { label: "Entrenadores", path: "/entrenadores" },
+    { label: "Contacto", path: "/contacto" },
+  ];
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
         <Flex align="center" minH="64px">
-          {/* Logo */}
           <Flex w={{ base: "auto", md: "220px" }} align="center">
             <Text fontWeight="bold" fontSize="xl" color="brand.600">
               GrindSup
             </Text>
           </Flex>
 
-          {/* Menú de navegación */}
           <Flex flex="1" justify="center">
             <HStack
               spacing={8}
@@ -60,10 +69,15 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
               fontWeight={500}
               color="gray.700"
             >
-              <Text _hover={{ color: "brand.600", cursor: "pointer" }}>Inicio</Text>
-              <Text _hover={{ color: "brand.600", cursor: "pointer" }}>Alumnos</Text>
-              <Text _hover={{ color: "brand.600", cursor: "pointer" }}>Entrenadores</Text>
-              <Text _hover={{ color: "brand.600", cursor: "pointer" }}>Contacto</Text>
+              {menuItems.map((item) => (
+                <Text
+                  key={item.label}
+                  _hover={{ color: "brand.600", cursor: "pointer" }}
+                  onClick={() => navigate(item.path)}
+                >
+                  {item.label}
+                </Text>
+              ))}
             </HStack>
 
             <Menu>
@@ -75,15 +89,15 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
                 variant="ghost"
               />
               <MenuList>
-                <MenuItem>Inicio</MenuItem>
-                <MenuItem>Alumnos</MenuItem>
-                <MenuItem>Entrenadores</MenuItem>
-                <MenuItem>Contacto</MenuItem>
+                {menuItems.map((item) => (
+                  <MenuItem key={item.label} onClick={() => navigate(item.path)}>
+                    {item.label}
+                  </MenuItem>
+                ))}
               </MenuList>
             </Menu>
           </Flex>
 
-          {/* Botón de login / logout */}
           <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
             {!isLoggedIn ? (
               <Button
@@ -99,7 +113,6 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
                   Cerrar sesión
                 </Button>
 
-                {/* Modal de confirmación */}
                 <Modal isOpen={isOpen} onClose={onClose} isCentered>
                   <ModalOverlay />
                   <ModalContent>

@@ -40,8 +40,7 @@ export default function App() {
                 <PantallaInicio setUsuario={setUsuario} />
               )
             ) : (
-              <Routes>
-                <Route path="/" element={<PantallaInicio user={usuario} setUser={setUsuario} />} />
+              <Routes user={usuario} setUser={setUsuario}>
                 <Route path="/alumnos" element={<AlumnoList />} />
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
