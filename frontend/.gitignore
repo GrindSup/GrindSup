@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+frontend/src/pages/Clientes
+frontend/public
+frontend/target
