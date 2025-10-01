@@ -2,14 +2,19 @@ package com.grindsup.backend.controller;
 
 import com.grindsup.backend.model.Usuario;
 import com.grindsup.backend.model.Rol;
+import com.grindsup.backend.model.Sesion;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.repository.UsuarioRepository;
 import com.grindsup.backend.repository.RolRepository;
 import com.grindsup.backend.repository.EstadoRepository;
+import com.grindsup.backend.repository.SesionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -23,6 +28,9 @@ public class UsuarioController {
 
     @Autowired
     private EstadoRepository estadoRepository;
+
+    @Autowired
+    private SesionRepository sesionRepository;
 
     @GetMapping
     public List<Usuario> getAll() {
@@ -45,6 +53,40 @@ public class UsuarioController {
             usuario.setEstado(estado);
         }
         return usuarioRepository.save(usuario);
+    }
+
+    @PostMapping("/login")
+    public Map<String, Object> login(@RequestBody Map<String, String> body) {
+        String correo = body.get("correo");
+        String contrasena = body.get("contrasena");
+
+        Map<String, Object> response = new HashMap<>();
+
+        Usuario usuario = usuarioRepository.findByCorreo(correo);
+
+        if (usuario != null && usuario.getContrasena().equals(contrasena)) {
+            response.put("exito", true);
+            response.put("usuario", usuario);
+
+            // Crear sesión
+            Sesion sesion = new Sesion();
+            sesion.setUsuario(usuario);
+            sesion.setInicio(OffsetDateTime.now());
+            sesion.setCreated_at(OffsetDateTime.now());   // 👈 necesario
+            sesion.setUpdated_at(OffsetDateTime.now());   // 👈 necesario
+
+            // 👇 IMPORTANTE: asignar un estado por defecto (ej. "ACTIVA")
+            Estado estadoActivo = estadoRepository.findById(1L).orElse(null); 
+            sesion.setEstado(estadoActivo);
+            sesionRepository.save(sesion);
+
+            response.put("idSesion", sesion.getId_sesion());
+        } else {
+            response.put("exito", false);
+            response.put("mensaje", "Correo o contraseña incorrectos");
+        }
+
+        return response;
     }
 
     @PutMapping("/{id}")

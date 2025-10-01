@@ -8,6 +8,7 @@ import Login from "./components/Login";
 import PantallaInicio from "./components/Inicio";
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
+import RegistrarTurno from "./pages/Turnos/RegistrarTurno";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 
 export default function App() {
@@ -21,7 +22,7 @@ export default function App() {
   useEffect(() => {
     if (usuario) {
       localStorage.setItem("usuario", JSON.stringify(usuario));
-      setShowLogin(false); // oculta login al loguearse
+      setShowLogin(false);
     } else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
@@ -33,21 +34,13 @@ export default function App() {
       <Box minH="100vh" display="flex" flexDirection="column">
         <Header usuario={usuario} setUsuario={setUsuario} setShowLogin={setShowLogin} />
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
-          <Container maxW="container.xl">
-            {!usuario ? (
-              showLogin ? ( <Login setUsuario={setUsuario} />
-              ) : (
-                <PantallaInicio setUsuario={setUsuario} />
-              )
-            ) : (
-              <Routes user={usuario} setUser={setUsuario}>
+              <Routes>
                 <Route path="/alumnos" element={<AlumnoList />} />
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
+                <Route path="/turnos/registrar" element={<RegistrarTurno />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
-            )}
-          </Container>
         </Box>
         <Footer />
       </Box>

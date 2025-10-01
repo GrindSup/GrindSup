@@ -1,11 +1,24 @@
+// src/pages/Turnos/RegistrarTurno.jsx
 import { useState, useEffect } from "react";
 import {
-  crearTurno,
-  listarAlumnos,
-  listarTiposTurno,
-} from "../../services/turnos.servicio";
+  Box,
+  Button,
+  Container,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  Heading,
+  Text,
+  VStack,
+  Spinner,
+  Alert,
+  AlertIcon,
+} from "@chakra-ui/react";
 
-export function RegistrarTurno() {
+import { crearTurno, listarAlumnos, listarTiposTurno } from "/src/services/turnos.servicio.js";
+
+export default function RegistrarTurno() {
   const [alumno, setAlumno] = useState("");
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
@@ -42,125 +55,130 @@ export function RegistrarTurno() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("SUBMIT presionado"); // <-- Debe verse SI o SI
 
     setError("");
     setMsg("");
 
-    // Validaciones mínimas (si falla, no llamamos al backend)
-    if (!alumno) { setError("Seleccioná un alumno"); return; }
-    if (!tipo)   { setError("Seleccioná el tipo de turno"); return; }
-    if (!fecha)  { setError("Seleccioná una fecha"); return; }
-    if (!hora)   { setError("Seleccioná una hora"); return; }
-
-    const fechaHora = new Date(`${fecha}T${hora}:00`);
-    if (!(fechaHora instanceof Date) || isNaN(fechaHora.getTime())) {
-      setError("Fecha/hora inválida");
+    if (!alumno || !tipo || !fecha || !hora) {
+      setError("Todos los campos son obligatorios");
       return;
     }
+
+    const fechaHora = new Date(`${fecha}T${hora}:00`);
     if (fechaHora < new Date()) {
       setError("No se permiten turnos en fechas anteriores");
       return;
     }
 
-    // Armo payload
     const payload = {
       fecha: fechaHora.toISOString(),
       alumno: { id_alumno: Number(alumno) },
-      entrenador: { id_entrenador: 1 }, // pruebas
+      entrenador: { id_entrenador: 1 },
       tipoTurno: { id_tipoturno: Number(tipo) },
-      estado: { id_estado: 1 },
+      estado: { id_estado: 3 }, // Pendiente
       cupo: Number(cupo),
     };
-    console.log("Payload a enviar:", payload); // <-- Debe verse
 
     try {
       setLoading(true);
-      const res = await crearTurno(payload); // <-- Debe aparecer en Network
-      console.log("Respuesta backend:", res.status, res.data);
+      await crearTurno(payload);
       setMsg("Turno registrado con éxito ✅");
     } catch (err) {
       console.error("Error al registrar turno:", err);
-      setError("Error al registrar turno ❌ (mirá la consola del backend)");
+      setError("Error al registrar turno ❌");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="turno-container">
-      <div className="turno-box">
-        <h1>GrindSup</h1>
-        <h2>Registrar Turno</h2>
+    <Container maxW="lg" py={10}>
+      <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white">
+        <Heading size="lg" textAlign="center" mb={6} color="brand.600">
+          Registrar Turno
+        </Heading>
 
-        <form className="turno-form" onSubmit={handleSubmit}>
-          <label>Alumno</label>
-          <select
-            value={alumno}
-            onChange={(e) => setAlumno(e.target.value)}
-            required
-          >
-            <option value="">Seleccione un alumno</option>
-            {alumnos.map((a) => (
-              <option key={a.id_alumno} value={a.id_alumno}>
-                {a.nombre} {a.apellido}
-              </option>
-            ))}
-          </select>
+        <form onSubmit={handleSubmit}>
+          <VStack spacing={5}>
+            <FormControl isRequired>
+              <FormLabel>Alumno</FormLabel>
+              <Select
+                placeholder="Seleccione un alumno"
+                value={alumno}
+                onChange={(e) => setAlumno(e.target.value)}
+              >
+                {alumnos.map((a) => (
+                  <option key={a.id_alumno} value={a.id_alumno}>
+                    {a.nombre} {a.apellido}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
 
-          <label>Fecha</label>
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            required
-          />
+            <FormControl isRequired>
+              <FormLabel>Fecha</FormLabel>
+              <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            </FormControl>
 
-          <label>Hora</label>
-          <input
-            type="time"
-            value={hora}
-            onChange={(e) => setHora(e.target.value)}
-            required
-          />
+            <FormControl isRequired>
+              <FormLabel>Hora</FormLabel>
+              <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+            </FormControl>
 
-          <label>Tipo de turno</label>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(Number(e.target.value))}
-            required
-          >
-            <option value="">Seleccione tipo</option>
-            {tipos.map((t) => (
-              <option key={t.id_tipoturno} value={t.id_tipoturno}>
-                {t.nombre}
-              </option>
-            ))}
-          </select>
+            <FormControl isRequired>
+              <FormLabel>Tipo de turno</FormLabel>
+              <Select
+                placeholder="Seleccione tipo"
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value)}
+              >
+                {tipos.map((t) => (
+                  <option key={t.id_tipoturno} value={t.id_tipoturno}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
 
-          {tipo &&
-            tipos.find((t) => t.id_tipoturno === Number(tipo))?.nombre?.toLowerCase() ===
-              "grupal" && (
-              <>
-                <label>Cupo</label>
-                <input
-                  type="number"
-                  min="2"
-                  value={cupo}
-                  onChange={(e) => setCupo(e.target.value)}
-                  required
-                />
-              </>
+            {tipo &&
+              tipos.find((t) => t.id_tipoturno === Number(tipo))?.nombre?.toLowerCase() === "grupal" && (
+                <FormControl isRequired>
+                  <FormLabel>Cupo</FormLabel>
+                  <Input
+                    type="number"
+                    min="2"
+                    value={cupo}
+                    onChange={(e) => setCupo(e.target.value)}
+                  />
+                </FormControl>
+              )}
+
+            {error && (
+              <Alert status="error">
+                <AlertIcon />
+                {error}
+              </Alert>
             )}
 
-          {error && <p className="error">{error}</p>}
-          {msg && <p className="success">{msg}</p>}
+            {msg && (
+              <Alert status="success">
+                <AlertIcon />
+                {msg}
+              </Alert>
+            )}
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Guardando..." : "Guardar turno"}
-          </button>
+            <Button
+              type="submit"
+              colorScheme="brand"
+              width="full"
+              isLoading={loading}
+              loadingText="Guardando..."
+            >
+              Guardar turno
+            </Button>
+          </VStack>
         </form>
-      </div>
-    </div>
+      </Box>
+    </Container>
   );
 }
