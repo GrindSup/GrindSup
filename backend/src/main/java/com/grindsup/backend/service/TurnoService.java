@@ -1,7 +1,7 @@
 package com.grindsup.backend.service;
 
-import com.grindsup.backend.dto.TurnoRequestDTO;
-import com.grindsup.backend.dto.TurnoResponseDTO;
+import com.grindsup.backend.DTO.TurnoRequestDTO;
+import com.grindsup.backend.DTO.TurnoResponseDTO;
 import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.TipoTurno;
 import com.grindsup.backend.model.Turno;
