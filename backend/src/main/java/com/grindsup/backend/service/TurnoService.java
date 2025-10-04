@@ -3,9 +3,6 @@ package com.grindsup.backend.service;
 import com.grindsup.backend.DTO.TurnoRequestDTO;
 import com.grindsup.backend.DTO.TurnoResponseDTO;
 import com.grindsup.backend.model.Alumno;
-import com.grindsup.backend.model.Entrenador;
-import com.grindsup.backend.model.Estado;
-import com.grindsup.backend.model.TipoTurno;
 import com.grindsup.backend.model.Turno;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EntrenadorRepository;
@@ -37,7 +34,6 @@ public class TurnoService {
     @Autowired
     private AlumnoRepository alumnoRepository;
 
-    // Crear turno vacío
     public TurnoResponseDTO crearTurno(TurnoRequestDTO dto) {
         Turno turno = new Turno();
 
@@ -61,7 +57,6 @@ public class TurnoService {
         return mapToResponseDTO(turno);
     }
 
-    // Asignar alumnos a un turno ya creado
     public TurnoResponseDTO asignarAlumnos(Long turnoId, List<Long> alumnosIds) {
         Turno turno = turnoRepository.findById(turnoId)
                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
@@ -74,21 +69,18 @@ public class TurnoService {
         return mapToResponseDTO(turno);
     }
 
-    // Obtener todos los turnos
     public List<TurnoResponseDTO> getAllTurnos() {
         return turnoRepository.findAll().stream()
                 .map(this::mapToResponseDTO)
                 .toList();
     }
 
-    // Obtener por ID
     public TurnoResponseDTO getTurnoById(Long id) {
         return turnoRepository.findById(id)
                 .map(this::mapToResponseDTO)
                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
     }
 
-    // Eliminar
     public void deleteTurno(Long id) {
         if (!turnoRepository.existsById(id)) {
             throw new RuntimeException("Turno no encontrado");
@@ -96,7 +88,6 @@ public class TurnoService {
         turnoRepository.deleteById(id);
     }
 
-    // Mapper
     public TurnoResponseDTO mapToResponseDTO(Turno turno) {
         return new TurnoResponseDTO(
                 turno.getId_turno(),

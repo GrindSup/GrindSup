@@ -1,26 +1,12 @@
 package com.grindsup.backend.controller;
 
-import com.grindsup.backend.model.Turno;
-import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.DTO.TurnoRequestDTO;
 import com.grindsup.backend.DTO.TurnoResponseDTO;
-import com.grindsup.backend.model.Alumno;
-import com.grindsup.backend.model.TipoTurno;
-import com.grindsup.backend.model.Estado;
-import com.grindsup.backend.repository.TurnoRepository;
 import com.grindsup.backend.service.TurnoService;
-
-import jakarta.persistence.ManyToMany;
-
-import com.grindsup.backend.repository.EntrenadorRepository;
-import com.grindsup.backend.repository.AlumnoRepository;
-import com.grindsup.backend.repository.TipoTurnoRepository;
-import com.grindsup.backend.repository.EstadoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController

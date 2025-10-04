@@ -3,14 +3,13 @@ package com.grindsup.backend.DTO;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import com.grindsup.backend.model.Entrenador;
 
 public class TurnoResponseDTO {
     private Long id_turno;
     private String entrenador;
     private String tipo_turno;
     private OffsetDateTime fecha;
-    private List<String> alumnos; // nombres de los alumnos
+    private List<String> alumnos; 
 
     public TurnoResponseDTO(Long id_turno, String entrenador, String tipo_turno,
                             OffsetDateTime fecha, List<String> alumnos) {
