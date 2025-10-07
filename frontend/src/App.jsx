@@ -1,7 +1,7 @@
 import { Box, Container } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-
+import InicioDashboard from "./pages/InicioDashboard"; // ⬅️ nuevo
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
@@ -37,10 +37,11 @@ export default function App() {
             {!usuario ? (
               showLogin ? ( <Login setUsuario={setUsuario} />
               ) : (
-                <PantallaInicio setUsuario={setUsuario} />
+                <PantallaInicio setUsuario={setUsuario} /> // tu landing pública
               )
             ) : (
               <Routes user={usuario} setUser={setUsuario}>
+                <Route path="/" element={<InicioDashboard />} />   
                 <Route path="/alumnos" element={<AlumnoList />} />
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />

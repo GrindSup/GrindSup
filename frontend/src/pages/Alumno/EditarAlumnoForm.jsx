@@ -16,50 +16,99 @@ export function EditarAlumnoForm({
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [useSnakeCase, setUseSnakeCase] = useState(false); // detecta naming del backend
 
   const [alumno, setAlumno] = useState({
     nombre: "", apellido: "", documento: "", peso: "", altura: "",
     lesiones: "", enfermedades: "", informeMedico: false, telefono: "",
+    estado: undefined,
   });
 
+  // --- helpers ---
+  function normalizeAlumno(data = {}) {
+    // detecta automáticamente snake_case vs camelCase
+    const snake = Object.prototype.hasOwnProperty.call(data, "informe_medico")
+              || Object.prototype.hasOwnProperty.call(data, "id_estado");
+    setUseSnakeCase(snake);
+
+    return {
+      nombre: data.nombre ?? "",
+      apellido: data.apellido ?? "",
+      documento: String(data.documento ?? ""),
+      peso: data.peso ?? "",
+      altura: data.altura ?? "",
+      lesiones: data.lesiones ?? "",
+      enfermedades: data.enfermedades ?? "",
+      informeMedico:
+        (data.informeMedico ?? data.informe_medico ?? false) ? true : false,
+      telefono: data.telefono ?? "",
+      estado: data.estado ?? (snake && data.id_estado ? { id_estado: data.id_estado } : undefined),
+    };
+  }
+
+  const buildPayload = () => {
+    const peso = alumno.peso === "" ? null : Number(alumno.peso);
+    const altura = alumno.altura === "" ? null : Number(alumno.altura);
+    const base = {
+      nombre: alumno.nombre.trim(),
+      apellido: alumno.apellido.trim(),
+      documento: alumno.documento, // deshabilitado en UI pero lo mandamos
+      peso,
+      altura,
+      lesiones: alumno.lesiones?.trim() || null,
+      enfermedades: alumno.enfermedades?.trim() || null,
+      telefono: alumno.telefono?.trim(),
+      entrenador: null,
+    };
+
+    if (useSnakeCase) {
+      // API espera snake_case
+      return {
+        ...base,
+        informe_medico: !!alumno.informeMedico,
+        id_estado: alumno.estado?.id_estado ?? 1,
+      };
+    } else {
+      // API espera camelCase (Jackson por defecto)
+      return {
+        ...base,
+        informeMedico: !!alumno.informeMedico,
+        estado: alumno.estado || { id_estado: 1 },
+      };
+    }
+  };
+
+  // --- effects ---
   useEffect(() => {
     const fetchAlumno = async () => {
       try {
-        const res = await axios.get(`${apiBaseUrl}/alumnos/${id}`);
-        setAlumno({ ...res.data, telefono: res.data.telefono || "" });
+        const { data } = await axios.get(`${apiBaseUrl}/alumnos/${id}`);
+        setAlumno(normalizeAlumno(data));
       } catch (err) {
-        toast({ status: "error", title: "Error al cargar alumno", description: err.message, position: "top" });
+        toast({
+          status: "error",
+          title: "Error al cargar alumno",
+          description: err.message,
+          position: "top",
+        });
       }
     };
     fetchAlumno();
   }, [id, apiBaseUrl, toast]);
 
+  // --- validation ---
   const errors = useMemo(() => {
     const e = {};
     if (!alumno.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!alumno.apellido?.trim()) e.apellido = "El apellido es obligatorio";
-    if (alumno.peso && !/^[0-9]+$/.test(alumno.peso)) e.peso = "El peso debe ser numérico";
-    if (alumno.altura && !/^[0-9]+$/.test(alumno.altura)) e.altura = "La altura debe ser numérica";
+    if (alumno.peso !== "" && !/^[0-9]+$/.test(String(alumno.peso))) e.peso = "El peso debe ser numérico";
+    if (alumno.altura !== "" && !/^[0-9]+$/.test(String(alumno.altura))) e.altura = "La altura debe ser numérica";
     if (alumno.telefono && !/^\+?\d+$/.test(alumno.telefono)) e.telefono = "El teléfono debe ser numérico y puede incluir +";
     return e;
   }, [alumno]);
 
   const isValid = Object.keys(errors).length === 0;
   const handleChange = (e) => setAlumno((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const buildPayload = () => ({
-    nombre: alumno.nombre.trim(),
-    apellido: alumno.apellido.trim(),
-    documento: alumno.documento,
-    peso: alumno.peso ? Number(alumno.peso) : null,
-    altura: alumno.altura ? Number(alumno.altura) : null,
-    lesiones: alumno.lesiones?.trim() || null,
-    enfermedades: alumno.enfermedades?.trim() || null,
-    informeMedico: alumno.informeMedico,
-    telefono: alumno.telefono?.trim(),
-    estado: alumno.estado || { id_estado: 1 },
-    entrenador: null,
-  });
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +130,7 @@ export function EditarAlumnoForm({
     }
   };
 
+  // --- UI ---
   return (
     <Box py={{ base: 8, md: 12 }}>
       <Container maxW="container.sm">
@@ -116,13 +166,15 @@ export function EditarAlumnoForm({
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.peso}>
                     <FormLabel>Peso (kg)</FormLabel>
-                    <Input type="number" name="peso" value={alumno.peso || ""} onChange={handleChange}/>
+                    <Input type="number" name="peso" value={alumno.peso === null ? "" : alumno.peso} onChange={handleChange}/>
+                    {submitted && <FormErrorMessage>{errors.peso}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.altura}>
                     <FormLabel>Altura (cm)</FormLabel>
-                    <Input type="number" name="altura" value={alumno.altura || ""} onChange={handleChange}/>
+                    <Input type="number" name="altura" value={alumno.altura === null ? "" : alumno.altura} onChange={handleChange}/>
+                    {submitted && <FormErrorMessage>{errors.altura}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem colSpan={{ base: 1, md: 2 }}>
@@ -130,6 +182,7 @@ export function EditarAlumnoForm({
                     <FormLabel>Teléfono</FormLabel>
                     <Input name="telefono" placeholder="+541112345678"
                       value={alumno.telefono} onChange={handleChange}/>
+                    {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem colSpan={{ base: 1, md: 2 }}>
@@ -148,7 +201,7 @@ export function EditarAlumnoForm({
                   <FormControl>
                     <Checkbox
                       name="informeMedico"
-                      isChecked={alumno.informeMedico}
+                      isChecked={!!alumno.informeMedico}
                       onChange={(e) => setAlumno((p) => ({ ...p, informeMedico: e.target.checked }))}
                     >
                       Entregó informe médico
