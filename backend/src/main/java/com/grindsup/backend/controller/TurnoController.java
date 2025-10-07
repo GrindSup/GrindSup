@@ -2,12 +2,10 @@ package com.grindsup.backend.controller;
 
 import com.grindsup.backend.model.Turno;
 import com.grindsup.backend.model.Entrenador;
-import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.TipoTurno;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.repository.TurnoRepository;
 import com.grindsup.backend.repository.EntrenadorRepository;
-import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.TipoTurnoRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +22,6 @@ public class TurnoController {
 
     @Autowired
     private EntrenadorRepository entrenadorRepository;
-
-    @Autowired
-    private AlumnoRepository alumnoRepository;
 
     @Autowired
     private TipoTurnoRepository tipoTurnoRepository;
@@ -51,10 +46,6 @@ public class TurnoController {
                     .orElse(null);
             turno.setEntrenador(entrenador);
         }
-        if (turno.getAlumno() != null) {
-            Alumno alumno = alumnoRepository.findById(turno.getAlumno().getId_alumno()).orElse(null);
-            turno.setAlumno(alumno);
-        }
         if (turno.getTipoTurno() != null) {
             TipoTurno tipo = tipoTurnoRepository.findById(turno.getTipoTurno().getId_tipoturno()).orElse(null);
             turno.setTipoTurno(tipo);
@@ -75,10 +66,6 @@ public class TurnoController {
                 Entrenador entrenador = entrenadorRepository.findById(turno.getEntrenador().getId_entrenador())
                         .orElse(null);
                 existing.setEntrenador(entrenador);
-            }
-            if (turno.getAlumno() != null) {
-                Alumno alumno = alumnoRepository.findById(turno.getAlumno().getId_alumno()).orElse(null);
-                existing.setAlumno(alumno);
             }
             if (turno.getTipoTurno() != null) {
                 TipoTurno tipo = tipoTurnoRepository.findById(turno.getTipoTurno().getId_tipoturno()).orElse(null);

@@ -16,10 +16,6 @@ public class Turno {
     private Entrenador entrenador;
 
     @ManyToOne
-    @JoinColumn(name = "id_alumno")
-    private Alumno alumno;
-
-    @ManyToOne
     @JoinColumn(name = "id_tipoturno")
     private TipoTurno tipoTurno;
 
@@ -54,14 +50,6 @@ public class Turno {
 
     public void setEntrenador(Entrenador entrenador) {
         this.entrenador = entrenador;
-    }
-
-    public Alumno getAlumno() {
-        return alumno;
-    }
-
-    public void setAlumno(Alumno alumno) {
-        this.alumno = alumno;
     }
 
     public TipoTurno getTipoTurno() {

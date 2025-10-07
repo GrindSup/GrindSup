@@ -66,54 +66,139 @@ public class Alumno {
     private String motivoBaja;
 
     // ====== Getters y Setters ======
-    public Long getId_alumno() { return id_alumno; }
-    public void setId_alumno(Long id_alumno) { this.id_alumno = id_alumno; }
+    public Long getId_alumno() {
+        return id_alumno;
+    }
 
-    public Entrenador getEntrenador() { return entrenador; }
-    public void setEntrenador(Entrenador entrenador) { this.entrenador = entrenador; }
+    public void setId_alumno(Long id_alumno) {
+        this.id_alumno = id_alumno;
+    }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public Entrenador getEntrenador() {
+        return entrenador;
+    }
 
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
+    public void setEntrenador(Entrenador entrenador) {
+        this.entrenador = entrenador;
+    }
 
-    public String getDocumento() { return documento; }
-    public void setDocumento(String documento) { this.documento = documento; }
+    public String getNombre() {
+        return nombre;
+    }
 
-    public String getTelefono() { return telefono; }
-    public void setTelefono(String telefono) { this.telefono = telefono; }
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
-    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public String getApellido() {
+        return apellido;
+    }
 
-    public Double getPeso() { return peso; }
-    public void setPeso(Double peso) { this.peso = peso; }
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
 
-    public Double getAltura() { return altura; }
-    public void setAltura(Double altura) { this.altura = altura; }
+    public String getDocumento() {
+        return documento;
+    }
 
-    public String getLesiones() { return lesiones; }
-    public void setLesiones(String lesiones) { this.lesiones = lesiones; }
+    public void setDocumento(String documento) {
+        this.documento = documento;
+    }
 
-    public String getEnfermedades() { return enfermedades; }
-    public void setEnfermedades(String enfermedades) { this.enfermedades = enfermedades; }
+    public String getTelefono() {
+        return telefono;
+    }
 
-    public Boolean getInformeMedico() { return informeMedico; }
-    public void setInformeMedico(Boolean informeMedico) { this.informeMedico = informeMedico; }
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
 
-    public Estado getEstado() { return estado; }
-    public void setEstado(Estado estado) { this.estado = estado; }
+    public LocalDate getFechaNacimiento() {
+        return fechaNacimiento;
+    }
 
-    public OffsetDateTime getCreated_at() { return created_at; }
-    public void setCreated_at(OffsetDateTime created_at) { this.created_at = created_at; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
+    }
 
-    public OffsetDateTime getUpdated_at() { return updated_at; }
-    public void setUpdated_at(OffsetDateTime updated_at) { this.updated_at = updated_at; }
+    public Double getPeso() {
+        return peso;
+    }
 
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public void setPeso(Double peso) {
+        this.peso = peso;
+    }
 
-    public String getMotivoBaja() { return motivoBaja; }
-    public void setMotivoBaja(String motivoBaja) { this.motivoBaja = motivoBaja; }
+    public Double getAltura() {
+        return altura;
+    }
+
+    public void setAltura(Double altura) {
+        this.altura = altura;
+    }
+
+    public String getLesiones() {
+        return lesiones;
+    }
+
+    public void setLesiones(String lesiones) {
+        this.lesiones = lesiones;
+    }
+
+    public String getEnfermedades() {
+        return enfermedades;
+    }
+
+    public void setEnfermedades(String enfermedades) {
+        this.enfermedades = enfermedades;
+    }
+
+    public Boolean getInformeMedico() {
+        return informeMedico;
+    }
+
+    public void setInformeMedico(Boolean informeMedico) {
+        this.informeMedico = informeMedico;
+    }
+
+    public Estado getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Estado estado) {
+        this.estado = estado;
+    }
+
+    public OffsetDateTime getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(OffsetDateTime created_at) {
+        this.created_at = created_at;
+    }
+
+    public OffsetDateTime getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(OffsetDateTime updated_at) {
+        this.updated_at = updated_at;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public String getMotivoBaja() {
+        return motivoBaja;
+    }
+
+    public void setMotivoBaja(String motivoBaja) {
+        this.motivoBaja = motivoBaja;
+    }
 }

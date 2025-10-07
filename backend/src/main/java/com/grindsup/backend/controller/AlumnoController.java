@@ -52,19 +52,22 @@ public class AlumnoController {
         alumno.setCreated_at(ahora);
         alumno.setUpdated_at(ahora);
 
-        if (alumno.getNombre() != null) alumno.setNombre(alumno.getNombre().trim());
-        if (alumno.getApellido() != null) alumno.setApellido(alumno.getApellido().trim());
-        if (alumno.getDocumento() != null) alumno.setDocumento(alumno.getDocumento().trim());
-        if (alumno.getTelefono() != null) alumno.setTelefono(alumno.getTelefono().trim());
+        if (alumno.getNombre() != null)
+            alumno.setNombre(alumno.getNombre().trim());
+        if (alumno.getApellido() != null)
+            alumno.setApellido(alumno.getApellido().trim());
+        if (alumno.getDocumento() != null)
+            alumno.setDocumento(alumno.getDocumento().trim());
+        if (alumno.getTelefono() != null)
+            alumno.setTelefono(alumno.getTelefono().trim());
 
         try {
             return alumnoRepository.save(alumno);
         } catch (DataIntegrityViolationException ex) {
             throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "No se pudo crear el alumno (verificá si el documento ya existe).",
-                ex
-            );
+                    HttpStatus.CONFLICT,
+                    "No se pudo crear el alumno (verificá si el documento ya existe).",
+                    ex);
         }
     }
 
@@ -97,10 +100,9 @@ public class AlumnoController {
                 return alumnoRepository.save(existing);
             } catch (DataIntegrityViolationException ex) {
                 throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "No se pudo actualizar el alumno (verificá si el documento ya existe).",
-                    ex
-                );
+                        HttpStatus.CONFLICT,
+                        "No se pudo actualizar el alumno (verificá si el documento ya existe).",
+                        ex);
             }
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
