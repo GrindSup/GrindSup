@@ -37,7 +37,7 @@ export default function App() {
             {!usuario ? (
               showLogin ? ( <Login setUsuario={setUsuario} />
               ) : (
-                <PantallaInicio setUsuario={setUsuario} /> // tu landing pública
+                <PantallaInicio onLoginClick={() => setShowLogin(true)} />
               )
             ) : (
               <Routes user={usuario} setUser={setUsuario}>

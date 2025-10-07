@@ -81,28 +81,26 @@ const AlumnoList = () => {
   }, []);
 
   const handleEstadoChange = (idAlumno, idEstado) => {
-    axios
-      .put(`http://localhost:8080/api/alumnos/${idAlumno}`, {
-        estado: { id_estado: Number(idEstado) },
-      })
-      .then(() => {
-        toast({
-          title: "Estado actualizado",
-          status: "success",
-          duration: 2000,
-          isClosable: true,
-        });
-        fetchAlumnos();
-      })
-      .catch(() =>
-        toast({
-          title: "Error al actualizar estado",
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        })
-      );
+  const alumnoActual = alumnos.find(a => a.id_alumno === idAlumno);
+  if (!alumnoActual) return;
+
+  // armamos payload completo, cambiando solo el estado
+  const payload = {
+    ...alumnoActual,
+    estado: { id_estado: Number(idEstado) },
   };
+
+  axios
+    .put(`http://localhost:8080/api/alumnos/${idAlumno}`, payload)
+    .then(() => {
+      toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
+      fetchAlumnos();
+    })
+    .catch(() =>
+      toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
+    );
+};
+
 
   // ✅ Ahora usa PATCH al nuevo endpoint
   const handleInformeChange = (idAlumno, checked) => {

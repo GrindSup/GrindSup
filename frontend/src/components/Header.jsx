@@ -1,22 +1,8 @@
+// Header.jsx
 import {
-  Box,
-  Container,
-  Flex,
-  HStack,
-  Text,
-  Button,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
+  Box, Container, Flex, HStack, Text, Button, IconButton, Menu,
+  MenuButton, MenuList, MenuItem, Modal, ModalOverlay, ModalContent,
+  ModalHeader, ModalBody, ModalFooter, useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
@@ -26,23 +12,30 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
   const isLoggedIn = !!usuario;
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const goHome = () => {
+    // Mostrar la landing pública o el dashboard, pero SIN el modal de login
+    setShowLogin(false);
+    navigate("/");
+  };
+
+  const goLogin = () => {
+    // Mostrar el login y asegurarnos de estar en "/"
+    setShowLogin(true);
+    navigate("/");
+    // opcional: window.scrollTo(0,0);
+  };
+
   const handleLogout = async () => {
     onClose();
-
     const sesionId = localStorage.getItem("sesionId");
     if (sesionId) {
-      try {
-        await fetch(`http://localhost:8080/api/usuarios/logout/${sesionId}`, { method: "PUT" });
-      } catch (err) {
-        console.error("Error de red al cerrar sesión:", err);
-      }
+      try { await fetch(`http://localhost:8080/api/usuarios/logout/${sesionId}`, { method: "PUT" }); }
+      catch (err) { console.error("Error de red al cerrar sesión:", err); }
     }
-
     localStorage.removeItem("usuario");
     localStorage.removeItem("sesionId");
     setUsuario(null);
-
-    navigate("/"); 
+    goHome();
   };
 
   const menuItems = [
@@ -56,24 +49,22 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
         <Flex align="center" minH="64px">
+          {/* Logo: hace home */}
           <Flex w={{ base: "auto", md: "220px" }} align="center">
-            <Text fontWeight="bold" fontSize="xl" color="brand.600">
+            <Text fontWeight="bold" fontSize="xl" color="brand.600"
+                  _hover={{ cursor: "pointer", color: "brand.700" }}
+                  onClick={goHome}>
               GrindSup
             </Text>
           </Flex>
 
           <Flex flex="1" justify="center">
-            <HStack
-              spacing={8}
-              display={{ base: "none", md: "flex" }}
-              fontWeight={500}
-              color="gray.700"
-            >
+            <HStack spacing={8} display={{ base: "none", md: "flex" }} fontWeight={500} color="gray.700">
               {menuItems.map((item) => (
                 <Text
                   key={item.label}
                   _hover={{ color: "brand.600", cursor: "pointer" }}
-                  onClick={() => navigate(item.path)}
+                  onClick={item.path === "/" ? goHome : () => navigate(item.path)}
                 >
                   {item.label}
                 </Text>
@@ -90,7 +81,10 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
               />
               <MenuList>
                 {menuItems.map((item) => (
-                  <MenuItem key={item.label} onClick={() => navigate(item.path)}>
+                  <MenuItem
+                    key={item.label}
+                    onClick={item.path === "/" ? goHome : () => navigate(item.path)}
+                  >
                     {item.label}
                   </MenuItem>
                 ))}
@@ -100,11 +94,7 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
 
           <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
             {!isLoggedIn ? (
-              <Button
-                size="sm"
-                colorScheme="brand"
-                onClick={() => setShowLogin(true)}
-              >
+              <Button size="sm" colorScheme="brand" onClick={goLogin}>
                 Iniciar sesión
               </Button>
             ) : (
@@ -117,13 +107,9 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
                   <ModalOverlay />
                   <ModalContent>
                     <ModalHeader>Confirmar cierre de sesión</ModalHeader>
-                    <ModalBody>
-                      ¿Estás seguro de que quieres cerrar sesión?
-                    </ModalBody>
+                    <ModalBody>¿Estás seguro de que quieres cerrar sesión?</ModalBody>
                     <ModalFooter>
-                      <Button colorScheme="red" mr={3} onClick={handleLogout}>
-                        Sí
-                      </Button>
+                      <Button colorScheme="red" mr={3} onClick={handleLogout}>Sí</Button>
                       <Button onClick={onClose}>No</Button>
                     </ModalFooter>
                   </ModalContent>
