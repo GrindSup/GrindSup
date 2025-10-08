@@ -7,7 +7,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "alumnos")
+@Table(
+    name = "alumnos",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"documento", "id_entrenador"})
+    }
+)
 public class Alumno {
 
     @Id
@@ -24,7 +29,8 @@ public class Alumno {
     @Column(length = 100)
     private String apellido;
 
-    @Column(nullable = false, length = 20, unique = true) // DNI único
+    // ⬇️  QUITAR unique = true
+    @Column(nullable = false, length = 20)
     private String documento;
 
     @Column(length = 50)
@@ -44,10 +50,10 @@ public class Alumno {
     private String lesiones;
 
     @Column(columnDefinition = "TEXT")
-    private String enfermedades; // ✅ Nuevo campo
+    private String enfermedades;
 
     @Column(name = "informe_medico", nullable = false)
-    private Boolean informeMedico = false; // ✅ Nuevo campo
+    private Boolean informeMedico = false;
 
     @ManyToOne
     @JoinColumn(name = "id_estado")
@@ -65,140 +71,57 @@ public class Alumno {
     @Column(name = "motivo_baja", columnDefinition = "TEXT")
     private String motivoBaja;
 
+    // getters & setters ...
+
     // ====== Getters y Setters ======
-    public Long getId_alumno() {
-        return id_alumno;
-    }
+    public Long getId_alumno() { return id_alumno; }
+    public void setId_alumno(Long id_alumno) { this.id_alumno = id_alumno; }
 
-    public void setId_alumno(Long id_alumno) {
-        this.id_alumno = id_alumno;
-    }
+    public Entrenador getEntrenador() { return entrenador; }
+    public void setEntrenador(Entrenador entrenador) { this.entrenador = entrenador; }
 
-    public Entrenador getEntrenador() {
-        return entrenador;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public void setEntrenador(Entrenador entrenador) {
-        this.entrenador = entrenador;
-    }
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public String getDocumento() { return documento; }
+    public void setDocumento(String documento) { this.documento = documento; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
-    public String getApellido() {
-        return apellido;
-    }
+    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
-    public void setApellido(String apellido) {
-        this.apellido = apellido;
-    }
+    public Double getPeso() { return peso; }
+    public void setPeso(Double peso) { this.peso = peso; }
 
-    public String getDocumento() {
-        return documento;
-    }
+    public Double getAltura() { return altura; }
+    public void setAltura(Double altura) { this.altura = altura; }
 
-    public void setDocumento(String documento) {
-        this.documento = documento;
-    }
+    public String getLesiones() { return lesiones; }
+    public void setLesiones(String lesiones) { this.lesiones = lesiones; }
 
-    public String getTelefono() {
-        return telefono;
-    }
+    public String getEnfermedades() { return enfermedades; }
+    public void setEnfermedades(String enfermedades) { this.enfermedades = enfermedades; }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
+    public Boolean getInformeMedico() { return informeMedico; }
+    public void setInformeMedico(Boolean informeMedico) { this.informeMedico = informeMedico; }
 
-    public LocalDate getFechaNacimiento() {
-        return fechaNacimiento;
-    }
+    public Estado getEstado() { return estado; }
+    public void setEstado(Estado estado) { this.estado = estado; }
 
-    public void setFechaNacimiento(LocalDate fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
-    }
+    public OffsetDateTime getCreated_at() { return created_at; }
+    public void setCreated_at(OffsetDateTime created_at) { this.created_at = created_at; }
 
-    public Double getPeso() {
-        return peso;
-    }
+    public OffsetDateTime getUpdated_at() { return updated_at; }
+    public void setUpdated_at(OffsetDateTime updated_at) { this.updated_at = updated_at; }
 
-    public void setPeso(Double peso) {
-        this.peso = peso;
-    }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
-    public Double getAltura() {
-        return altura;
-    }
-
-    public void setAltura(Double altura) {
-        this.altura = altura;
-    }
-
-    public String getLesiones() {
-        return lesiones;
-    }
-
-    public void setLesiones(String lesiones) {
-        this.lesiones = lesiones;
-    }
-
-    public String getEnfermedades() {
-        return enfermedades;
-    }
-
-    public void setEnfermedades(String enfermedades) {
-        this.enfermedades = enfermedades;
-    }
-
-    public Boolean getInformeMedico() {
-        return informeMedico;
-    }
-
-    public void setInformeMedico(Boolean informeMedico) {
-        this.informeMedico = informeMedico;
-    }
-
-    public Estado getEstado() {
-        return estado;
-    }
-
-    public void setEstado(Estado estado) {
-        this.estado = estado;
-    }
-
-    public OffsetDateTime getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(OffsetDateTime created_at) {
-        this.created_at = created_at;
-    }
-
-    public OffsetDateTime getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(OffsetDateTime updated_at) {
-        this.updated_at = updated_at;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public String getMotivoBaja() {
-        return motivoBaja;
-    }
-
-    public void setMotivoBaja(String motivoBaja) {
-        this.motivoBaja = motivoBaja;
-    }
+    public String getMotivoBaja() { return motivoBaja; }
+    public void setMotivoBaja(String motivoBaja) { this.motivoBaja = motivoBaja; }
 }

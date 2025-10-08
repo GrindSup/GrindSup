@@ -1,43 +1,53 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { SearchIcon, EditIcon, DeleteIcon, AddIcon } from "@chakra-ui/icons";
 import {
-  Heading,
-  InputGroup,
-  InputLeftElement,
-  Input,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
-  Select,
-  Button,
-  HStack,
-  Box,
-  Flex,
-  Spinner,
-  Center,
-  Text,
-  useToast,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
-  Textarea,
-  Checkbox,
+  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon,
+} from "@chakra-ui/icons";
+import {
+  Box, Button, Card, CardBody, CardHeader, CardFooter, Collapse, Container,
+  Flex, Heading, HStack, IconButton, Input, InputGroup, InputLeftElement,
+  SimpleGrid, Spacer, Spinner, Text, useToast, Tag, TagLabel, Badge,
+  Select, Checkbox, AlertDialog, AlertDialogBody, AlertDialogContent,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Textarea, Center,
 } from "@chakra-ui/react";
+import { getUsuario, getEntrenadorId } from "../context/auth.js";
 
-const AlumnoList = () => {
+const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
+
+/* ---- helpers JSON <-> items ---- */
+function parseNotes(raw) {
+  if (!raw) return [];
+  try {
+    const j = JSON.parse(raw);
+    if (Array.isArray(j?.items)) {
+      return j.items
+        .map(it => ({ text: String(it.text ?? "").trim(), important: !!it.important }))
+        .filter(it => it.text);
+    }
+  } catch {}
+  // compat: viejo texto -> 1 ítem
+  const t = String(raw).trim();
+  return t ? [{ text: t, important: false }] : [];
+}
+function importantSummary(a) {
+  const imp = [
+    ...parseNotes(a.lesiones),
+    ...parseNotes(a.enfermedades),
+  ].filter(i => i.important).map(i => i.text);
+  return imp;
+}
+
+export default function AlumnoList() {
   const [alumnos, setAlumnos] = useState([]);
   const [estados, setEstados] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // expansión por tarjeta
+  const [expanded, setExpanded] = useState(() => new Set());
+
+  // eliminar
   const [isOpen, setIsOpen] = useState(false);
   const [alumnoToDelete, setAlumnoToDelete] = useState(null);
   const [motivo, setMotivo] = useState("");
@@ -46,84 +56,83 @@ const AlumnoList = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const fetchAlumnos = () => {
-    axios
-      .get("http://localhost:8080/api/alumnos")
-      .then((res) => setAlumnos(res.data))
-      .catch(() =>
-        toast({
-          title: "Error al cargar alumnos",
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        })
-      )
-      .finally(() => setLoading(false));
+  const usuario = useMemo(() => getUsuario(), []);
+  const entrenadorId = useMemo(() => getEntrenadorId(usuario), [usuario]);
+
+  const getAlumnoEntrenadorId = (a) =>
+    a?.entrenador?.id_entrenador ?? a?.entrenador?.id ?? a?.id_entrenador ?? a?.entrenadorId ?? null;
+
+  const fetchAlumnos = async () => {
+    try {
+      const { data } = await axios.get(`${API}/alumnos`, {
+        params: entrenadorId ? { entrenadorId } : {},
+      });
+      const rows = Array.isArray(data) ? data : [];
+      const propios = entrenadorId ? rows.filter((a) => getAlumnoEntrenadorId(a) === entrenadorId) : rows;
+      setAlumnos(propios);
+    } catch {
+      toast({ title: "Error al cargar alumnos", status: "error", duration: 2000, isClosable: true });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fetchEstados = () => {
-    axios
-      .get("http://localhost:8080/api/estados")
-      .then((res) => setEstados(res.data))
-      .catch(() =>
-        toast({
-          title: "Error al cargar estados",
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        })
-      );
+  const fetchEstados = async () => {
+    try {
+      const { data } = await axios.get(`${API}/estados`);
+      setEstados(data || []);
+    } catch {
+      toast({ title: "Error al cargar estados", status: "error", duration: 2000, isClosable: true });
+    }
   };
 
   useEffect(() => {
+    if (!entrenadorId) {
+      toast({ title: "No se encontró el entrenador de la sesión.", status: "warning" });
+    }
     fetchAlumnos();
     fetchEstados();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entrenadorId]);
 
-  const handleEstadoChange = (idAlumno, idEstado) => {
-  const alumnoActual = alumnos.find(a => a.id_alumno === idAlumno);
-  if (!alumnoActual) return;
-
-  // armamos payload completo, cambiando solo el estado
-  const payload = {
-    ...alumnoActual,
-    estado: { id_estado: Number(idEstado) },
+  const toggleExpand = (id) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
-  axios
-    .put(`http://localhost:8080/api/alumnos/${idAlumno}`, payload)
-    .then(() => {
-      toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
-      fetchAlumnos();
-    })
-    .catch(() =>
-      toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
-    );
-};
+  const handleEstadoChange = (idAlumno, idEstado) => {
+    const alumnoActual = alumnos.find((a) => a.id_alumno === idAlumno);
+    if (!alumnoActual) return;
 
+    const payload = {
+      ...alumnoActual,
+      estado: { id_estado: Number(idEstado) },
+      entrenador: alumnoActual.entrenador ?? (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null),
+    };
 
-  // ✅ Ahora usa PATCH al nuevo endpoint
-  const handleInformeChange = (idAlumno, checked) => {
     axios
-      .patch(`http://localhost:8080/api/alumnos/${idAlumno}/informe`, {
-        informeMedico: checked,
-      })
+      .put(`${API}/alumnos/${idAlumno}`, payload)
       .then(() => {
-        toast({
-          title: "Informe médico actualizado",
-          status: "success",
-          duration: 2000,
-          isClosable: true,
-        });
+        toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
         fetchAlumnos();
       })
       .catch(() =>
-        toast({
-          title: "Error al actualizar informe médico",
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        })
+        toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
+      );
+  };
+
+  const handleInformeChange = (idAlumno, checked) => {
+    axios
+      .patch(`${API}/alumnos/${idAlumno}/informe`, { informeMedico: checked })
+      .then(() => {
+        toast({ title: "Informe médico actualizado", status: "success", duration: 2000, isClosable: true });
+        fetchAlumnos();
+      })
+      .catch(() =>
+        toast({ title: "Error al actualizar informe médico", status: "error", duration: 2000, isClosable: true })
       );
   };
 
@@ -135,19 +144,12 @@ const AlumnoList = () => {
 
   const confirmDelete = () => {
     if (!motivo.trim()) {
-      toast({
-        title: "Debe ingresar un motivo",
-        status: "warning",
-        duration: 2000,
-        isClosable: true,
-      });
+      toast({ title: "Debe ingresar un motivo", status: "warning", duration: 2000, isClosable: true });
       return;
     }
 
     axios
-      .delete(`http://localhost:8080/api/alumnos/${alumnoToDelete.id_alumno}`, {
-        data: { motivo },
-      })
+      .delete(`${API}/alumnos/${alumnoToDelete.id_alumno}`, { data: { motivo } })
       .then(() => {
         toast({
           title: "Alumno eliminado",
@@ -158,23 +160,16 @@ const AlumnoList = () => {
         });
         fetchAlumnos();
       })
-      .catch(() =>
-        toast({
-          title: "Error al eliminar",
-          status: "error",
-          duration: 2000,
-          isClosable: true,
-        })
-      )
+      .catch(() => toast({ title: "Error al eliminar", status: "error", duration: 2000, isClosable: true }))
       .finally(() => setIsOpen(false));
   };
 
   const filteredAlumnos = alumnos.filter((alumno) => {
-    const query = search.toLowerCase();
+    const q = search.toLowerCase();
     return (
-      alumno.nombre?.toLowerCase().includes(query) ||
-      alumno.apellido?.toLowerCase().includes(query) ||
-      String(alumno.documento)?.toLowerCase().includes(query)
+      alumno.nombre?.toLowerCase().includes(q) ||
+      alumno.apellido?.toLowerCase().includes(q) ||
+      String(alumno.documento ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -187,12 +182,11 @@ const AlumnoList = () => {
   }
 
   return (
-    <Box mt={10} w="100%">
-      <Flex justify="space-between" align="center" mb={6} px={8}>
-        <Heading as="h2" size="lg" color="teal.600">
-          Lista de Alumnos
-        </Heading>
-        <InputGroup w="350px">
+    <Container maxW="7xl" py={8}>
+      <Flex gap={4} align="center" mb={6} wrap="wrap">
+        <Heading size="lg" color="teal.600">Lista de Alumnos</Heading>
+        <Spacer />
+        <InputGroup w={{ base: "100%", sm: "360px" }}>
           <InputLeftElement pointerEvents="none">
             <SearchIcon color="gray.400" />
           </InputLeftElement>
@@ -205,138 +199,169 @@ const AlumnoList = () => {
             boxShadow="sm"
           />
         </InputGroup>
-      </Flex>
-
-      {filteredAlumnos.length === 0 ? (
-        <Center py={10}>
-          <Text fontSize="lg" color="gray.500">
-            No se encontraron alumnos.
-          </Text>
-        </Center>
-      ) : (
-        <TableContainer w="100%" maxW="100%" px={8}>
-          <Table variant="striped" colorScheme="teal" size="md">
-            <Thead>
-              <Tr>
-                <Th>Nombre</Th>
-                <Th>Apellido</Th>
-                <Th>Documento</Th>
-                <Th>Teléfono</Th>
-                <Th>Enfermedades</Th>
-                <Th>Informe Médico</Th>
-                <Th>Estado</Th>
-                <Th textAlign="center">Opciones</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {filteredAlumnos.map((alumno) => (
-                <Tr key={alumno.id_alumno} _hover={{ bg: "teal.50" }}>
-                  <Td>{alumno.nombre}</Td>
-                  <Td>{alumno.apellido}</Td>
-                  <Td>{alumno.documento}</Td>
-                  <Td>{alumno.telefono}</Td>
-                  <Td>{alumno.enfermedades || "—"}</Td>
-                  <Td>
-                    <Checkbox
-                      isChecked={alumno.informeMedico}
-                      onChange={(e) =>
-                        handleInformeChange(alumno.id_alumno, e.target.checked)
-                      }
-                    >
-                      Entregado
-                    </Checkbox>
-                  </Td>
-                  <Td>
-                    <Select
-                      size="sm"
-                      value={alumno.estado?.id_estado || ""}
-                      onChange={(e) =>
-                        handleEstadoChange(alumno.id_alumno, e.target.value)
-                      }
-                    >
-                      {estados.map((estado) => (
-                        <option
-                          key={estado.id_estado}
-                          value={estado.id_estado}
-                        >
-                          {estado.nombre}
-                        </option>
-                      ))}
-                    </Select>
-                  </Td>
-                  <Td>
-                    <HStack spacing={3} justify="center">
-                      <Button
-                        size="sm"
-                        colorScheme="blue"
-                        leftIcon={<EditIcon />}
-                        onClick={() =>
-                          navigate(`/alumno/editar/${alumno.id_alumno}`)
-                        }
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        colorScheme="red"
-                        leftIcon={<DeleteIcon />}
-                        onClick={() => openDeleteDialog(alumno)}
-                      >
-                        Eliminar
-                      </Button>
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableContainer>
-      )}
-
-      <Flex justify="center" px={8} mt={6}>
-        <Button
-          colorScheme="teal"
-          leftIcon={<AddIcon />}
-          onClick={() => navigate("/alumno/registrar")}
-        >
+        <Button colorScheme="teal" leftIcon={<AddIcon />} onClick={() => navigate("/alumno/registrar")}>
           Agregar Alumno
         </Button>
       </Flex>
 
-      <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={() => setIsOpen(false)}
-      >
+      {filteredAlumnos.length === 0 ? (
+        <Center py={10}>
+          <Text fontSize="lg" color="gray.500">No se encontraron alumnos.</Text>
+        </Center>
+      ) : (
+        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={5}>
+          {filteredAlumnos.map((a) => {
+            const isOpen = expanded.has(a.id_alumno);
+            const imp = importantSummary(a);
+            const impText =
+              imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
+
+            return (
+              <Card key={a.id_alumno} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
+                <CardHeader pb={3}>
+                  <Flex align="center" gap={3}>
+                    <Box>
+                      <Heading size="md">{a.nombre} {a.apellido}</Heading>
+
+                      {/* Importantes */}
+                      {imp.length > 0 && (
+                        <Tag mt={2} size="sm" colorScheme="red" borderRadius="full">
+                          <TagLabel>Importante: {impText}</TagLabel>
+                        </Tag>
+                      )}
+
+                      <HStack spacing={2} mt={2}>
+                        <Tag size="sm" colorScheme="teal" variant="subtle">
+                          <TagLabel>DNI: {a.documento}</TagLabel>
+                        </Tag>
+                        {a.estado?.nombre && (
+                          <Badge colorScheme="purple">{a.estado.nombre}</Badge>
+                        )}
+                      </HStack>
+                    </Box>
+                    <Spacer />
+                    <IconButton
+                      aria-label={isOpen ? "Ocultar detalles" : "Ver detalles"}
+                      icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                      variant="ghost"
+                      onClick={() => toggleExpand(a.id_alumno)}
+                    />
+                  </Flex>
+                </CardHeader>
+
+                <Collapse in={isOpen} animateOpacity>
+                  <CardBody pt={0}>
+                    <Box fontSize="sm" color="gray.700">
+                      <Detail label="Teléfono" value={a.telefono || "—"} />
+                      <Detail label="Altura (cm)" value={a.altura ?? "—"} />
+                      <Detail label="Peso (kg)" value={a.peso ?? "—"} />
+
+                      <NotesList label="Lesiones" items={parseNotes(a.lesiones)} />
+                      <NotesList label="Enfermedades" items={parseNotes(a.enfermedades)} />
+
+                      <Box mt={3}>
+                        <Checkbox
+                          isChecked={!!a.informeMedico}
+                          onChange={(e) => handleInformeChange(a.id_alumno, e.target.checked)}
+                        >
+                          Informe médico entregado
+                        </Checkbox>
+                      </Box>
+
+                      <Box mt={3}>
+                        <Text mb={1} fontWeight="medium">Estado</Text>
+                        <Select
+                          size="sm"
+                          value={a.estado?.id_estado || ""}
+                          onChange={(e) => handleEstadoChange(a.id_alumno, e.target.value)}
+                        >
+                          {estados.map((estado) => (
+                            <option key={estado.id_estado} value={estado.id_estado}>
+                              {estado.nombre}
+                            </option>
+                          ))}
+                        </Select>
+                      </Box>
+                    </Box>
+                  </CardBody>
+                </Collapse>
+
+                <CardFooter pt={0}>
+                  <HStack spacing={3} w="full" justify="flex-end">
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      leftIcon={<EditIcon />}
+                      onClick={() => navigate(`/alumno/editar/${a.id_alumno}`)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      leftIcon={<DeleteIcon />}
+                      onClick={() => openDeleteDialog(a)}
+                    >
+                      Eliminar
+                    </Button>
+                  </HStack>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </SimpleGrid>
+      )}
+
+      {/* diálogo eliminar */}
+      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={() => setIsOpen(false)}>
         <AlertDialogOverlay>
           <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Eliminar Alumno
-            </AlertDialogHeader>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">Eliminar Alumno</AlertDialogHeader>
             <AlertDialogBody>
               <Text mb={2}>
                 Ingrese el motivo de la eliminación del alumno{" "}
-                <strong>{alumnoToDelete?.nombre}</strong>:
+                <strong>{alumnoToDelete?.nombre} {alumnoToDelete?.apellido}</strong>:
               </Text>
               <Textarea
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ej: alumno no continúa con el curso..."
+                placeholder="Ej: alumno no continúa…"
               />
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>
-                Cancelar
-              </Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
-                Eliminar
-              </Button>
+              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>Cancelar</Button>
+              <Button colorScheme="red" onClick={confirmDelete} ml={3}>Eliminar</Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+    </Container>
+  );
+}
+
+/** Item “label: value” prolijito */
+function Detail({ label, value }) {
+  return (
+    <Flex as="dl" gap={2} mt={1}>
+      <Text as="dt" minW="140px" color="gray.500">{label}</Text>
+      <Text as="dd" fontWeight="medium">{String(value)}</Text>
+    </Flex>
+  );
+}
+
+function NotesList({ label, items }) {
+  if (!items?.length) return <Detail label={label} value="—" />;
+  return (
+    <Box mt={2}>
+      <Text mb={1} color="gray.500">{label}</Text>
+      <Box pl={2}>
+        {items.map((it, i) => (
+          <HStack key={i} spacing={2} mb={1}>
+            <Text>• {it.text}</Text>
+            {it.important && <Badge colorScheme="red">Importante</Badge>}
+          </HStack>
+        ))}
+      </Box>
     </Box>
   );
-};
-
-export default AlumnoList;
+}

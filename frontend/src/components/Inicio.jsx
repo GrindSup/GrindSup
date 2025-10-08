@@ -43,7 +43,7 @@ export default function Inicio({ onLoginClick }) {
               size="lg"
               colorScheme="green"
             >
-              Registrarme
+              Registrar
             </Button>
 
             {/* Iniciar sesión: usa tu login actual */}

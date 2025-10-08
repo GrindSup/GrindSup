@@ -1,8 +1,10 @@
 package com.grindsup.backend.controller;
 
 import com.grindsup.backend.model.Alumno;
+import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.repository.AlumnoRepository;
+import com.grindsup.backend.repository.EntrenadorRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,9 +27,30 @@ public class AlumnoController {
     @Autowired
     private EstadoRepository estadoRepository;
 
-    // 🚩 Solo activos
+    @Autowired
+    private EntrenadorRepository entrenadorRepository;
+
+    /**
+     * GET con filtros opcionales:
+     *  - documento: devuelve 0/1 elemento en una lista
+     *  - entrenadorId: lista de activos del entrenador
+     *  - sin filtros: lista de activos
+     */
     @GetMapping
-    public List<Alumno> getAll() {
+    public List<Alumno> getAll(
+            @RequestParam(required = false) Long entrenadorId,
+            @RequestParam(required = false) String documento
+    ) {
+        if (documento != null && !documento.isBlank()) {
+            return alumnoRepository.findByDocumento(documento)
+                    .map(List::of)
+                    .orElseGet(List::of);
+        }
+
+        if (entrenadorId != null) {
+            return alumnoRepository.findActivosByEntrenador(entrenadorId);
+        }
+
         return alumnoRepository.findByDeletedAtIsNull();
     }
 
@@ -36,7 +59,6 @@ public class AlumnoController {
         return alumnoRepository.findById(id).orElse(null);
     }
 
-    // 🚩 Solo eliminados
     @GetMapping("/eliminados")
     public List<Alumno> getEliminados() {
         return alumnoRepository.findByDeletedAtIsNotNull();
@@ -44,22 +66,19 @@ public class AlumnoController {
 
     @PostMapping
     public Alumno create(@RequestBody Alumno alumno) {
+        // Estado por defecto: Activo (id = 1)
         Estado estadoActivo = estadoRepository.findById(1L).orElse(null);
         alumno.setEstado(estadoActivo);
-        alumno.setEntrenador(null);
 
+        // NO pisamos entrenador: respetamos lo que envíe el front
         OffsetDateTime ahora = OffsetDateTime.now();
         alumno.setCreated_at(ahora);
         alumno.setUpdated_at(ahora);
 
-        if (alumno.getNombre() != null)
-            alumno.setNombre(alumno.getNombre().trim());
-        if (alumno.getApellido() != null)
-            alumno.setApellido(alumno.getApellido().trim());
-        if (alumno.getDocumento() != null)
-            alumno.setDocumento(alumno.getDocumento().trim());
-        if (alumno.getTelefono() != null)
-            alumno.setTelefono(alumno.getTelefono().trim());
+        if (alumno.getNombre() != null) alumno.setNombre(alumno.getNombre().trim());
+        if (alumno.getApellido() != null) alumno.setApellido(alumno.getApellido().trim());
+        if (alumno.getDocumento() != null) alumno.setDocumento(alumno.getDocumento().trim());
+        if (alumno.getTelefono() != null) alumno.setTelefono(alumno.getTelefono().trim());
 
         try {
             return alumnoRepository.save(alumno);
@@ -67,7 +86,8 @@ public class AlumnoController {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "No se pudo crear el alumno (verificá si el documento ya existe).",
-                    ex);
+                    ex
+            );
         }
     }
 
@@ -84,14 +104,17 @@ public class AlumnoController {
             existing.setLesiones(alumno.getLesiones());
             existing.setEnfermedades(alumno.getEnfermedades());
             existing.setInformeMedico(alumno.getInformeMedico());
-            existing.setEntrenador(null);
 
-            if (alumno.getEstado() != null) {
-                Long estadoId = alumno.getEstado().getId_estado();
-                if (estadoId != null) {
-                    Estado nuevoEstado = estadoRepository.findById(estadoId).orElse(existing.getEstado());
-                    existing.setEstado(nuevoEstado);
-                }
+            // Actualizar entrenador solo si viene en el body
+            if (alumno.getEntrenador() != null) {
+                existing.setEntrenador(alumno.getEntrenador());
+            }
+
+            if (alumno.getEstado() != null && alumno.getEstado().getId_estado() != null) {
+                Estado nuevoEstado = estadoRepository
+                        .findById(alumno.getEstado().getId_estado())
+                        .orElse(existing.getEstado());
+                existing.setEstado(nuevoEstado);
             }
 
             existing.setUpdated_at(OffsetDateTime.now());
@@ -102,12 +125,13 @@ public class AlumnoController {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "No se pudo actualizar el alumno (verificá si el documento ya existe).",
-                        ex);
+                        ex
+                );
             }
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
 
-    // 🚩 PATCH: actualizar solo el informe médico
+    /** PATCH: actualizar solo el informe médico */
     @PatchMapping("/{id}/informe")
     public Alumno updateInforme(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         return alumnoRepository.findById(id).map(existing -> {
@@ -121,7 +145,7 @@ public class AlumnoController {
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
 
-    // 🚩 Baja lógica
+    /** Baja lógica */
     @DeleteMapping("/{id}")
     public Alumno delete(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         return alumnoRepository.findById(id).map(alumno -> {
@@ -133,5 +157,33 @@ public class AlumnoController {
             alumno.setDeletedAt(LocalDateTime.now());
             return alumnoRepository.save(alumno);
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+    }
+
+    /**
+     * Vincular alumno ↔ entrenador (ManyToOne actual)
+     * - Si no tiene entrenador: se asigna
+     * - Si ya tiene y es el mismo: idempotente
+     * - Si ya tiene y es otro: 409
+     */
+    @PostMapping("/{alumnoId}/entrenadores/{entrenadorId}")
+    public Alumno vincular(@PathVariable Long alumnoId, @PathVariable Long entrenadorId) {
+        Alumno a = alumnoRepository.findById(alumnoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+        Entrenador e = entrenadorRepository.findById(entrenadorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado"));
+
+        if (a.getEntrenador() == null) {
+            a.setEntrenador(e);
+        } else {
+            Long actual = a.getEntrenador().getId_entrenador();
+            if (actual != null && !actual.equals(entrenadorId)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Este alumno ya pertenece a otro entrenador. Para múltiples entrenadores migrá a ManyToMany."
+                );
+            }
+        }
+        a.setUpdated_at(OffsetDateTime.now());
+        return alumnoRepository.save(a);
     }
 }

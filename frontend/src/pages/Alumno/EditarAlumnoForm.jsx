@@ -2,101 +2,126 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem,
   Heading, Input, Stack, Text, useToast, FormControl, FormLabel,
-  FormErrorMessage, Textarea, Checkbox
+  FormErrorMessage, Checkbox, HStack, IconButton, Divider, Badge
 } from "@chakra-ui/react";
+import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { getUsuario, getEntrenadorId } from "../../context/auth.js";
 
-export function EditarAlumnoForm({
-  apiBaseUrl = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api",
+const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
+
+/* ---- helpers JSON <-> items ---- */
+function parseNotes(raw) {
+  if (!raw) return [];
+  try {
+    const j = JSON.parse(raw);
+    if (Array.isArray(j?.items)) {
+      return j.items
+        .map(it => ({ text: String(it.text ?? "").trim(), important: !!it.important }))
+        .filter(it => it.text);
+    }
+  } catch {}
+  const t = String(raw).trim();
+  return t ? [{ text: t, important: false }] : [];
+}
+function stringifyNotes(items) {
+  const list = (items || [])
+    .map(i => ({ text: String(i.text ?? "").trim(), important: !!i.important }))
+    .filter(i => i.text);
+  return JSON.stringify({ items: list });
+}
+
+export default function EditarAlumnoForm({
+  apiBaseUrl = API,
 }) {
   const { id } = useParams();
   const toast = useToast();
   const navigate = useNavigate();
 
+  const usuario = getUsuario();
+  const entrenadorId = getEntrenadorId(usuario);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [useSnakeCase, setUseSnakeCase] = useState(false); // detecta naming del backend
+  const [useSnakeCase, setUseSnakeCase] = useState(false);
 
   const [alumno, setAlumno] = useState({
     nombre: "", apellido: "", documento: "", peso: "", altura: "",
-    lesiones: "", enfermedades: "", informeMedico: false, telefono: "",
-    estado: undefined,
+    telefono: "", informeMedico: false, estado: undefined,
   });
 
-  // --- helpers ---
+  const [lesiones, setLesiones] = useState([]);        // [{text, important}]
+  const [enfermedades, setEnfermedades] = useState([]);// [{text, important}]
+
   function normalizeAlumno(data = {}) {
-    // detecta automáticamente snake_case vs camelCase
-    const snake = Object.prototype.hasOwnProperty.call(data, "informe_medico")
-              || Object.prototype.hasOwnProperty.call(data, "id_estado");
+    const snake =
+      Object.prototype.hasOwnProperty.call(data, "informe_medico") ||
+      Object.prototype.hasOwnProperty.call(data, "id_estado");
     setUseSnakeCase(snake);
 
+    const toStr = (v) => (v === null || v === undefined ? "" : String(v));
+
+    setLesiones(parseNotes(data.lesiones));
+    setEnfermedades(parseNotes(data.enfermedades));
+
     return {
-      nombre: data.nombre ?? "",
-      apellido: data.apellido ?? "",
-      documento: String(data.documento ?? ""),
-      peso: data.peso ?? "",
-      altura: data.altura ?? "",
-      lesiones: data.lesiones ?? "",
-      enfermedades: data.enfermedades ?? "",
-      informeMedico:
-        (data.informeMedico ?? data.informe_medico ?? false) ? true : false,
-      telefono: data.telefono ?? "",
+      nombre: toStr(data.nombre),
+      apellido: toStr(data.apellido),
+      documento: toStr(data.documento ?? data.dni ?? data.doc ?? data.numero_documento),
+      peso: toStr(data.peso),
+      altura: toStr(data.altura),
+      informeMedico: (data.informeMedico ?? data.informe_medico ?? false) ? true : false,
+      telefono: toStr(data.telefono ?? data.contacto ?? data.telefono_contacto ?? data.phone),
       estado: data.estado ?? (snake && data.id_estado ? { id_estado: data.id_estado } : undefined),
     };
   }
 
   const buildPayload = () => {
+    const entrenadorRef = entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null;
     const peso = alumno.peso === "" ? null : Number(alumno.peso);
     const altura = alumno.altura === "" ? null : Number(alumno.altura);
+
     const base = {
       nombre: alumno.nombre.trim(),
       apellido: alumno.apellido.trim(),
-      documento: alumno.documento, // deshabilitado en UI pero lo mandamos
-      peso,
-      altura,
-      lesiones: alumno.lesiones?.trim() || null,
-      enfermedades: alumno.enfermedades?.trim() || null,
+      documento: alumno.documento,
+      peso, altura,
       telefono: alumno.telefono?.trim(),
-      entrenador: null,
+      // guardamos JSON en TEXT:
+      lesiones: stringifyNotes(lesiones),
+      enfermedades: stringifyNotes(enfermedades),
     };
 
     if (useSnakeCase) {
-      // API espera snake_case
       return {
         ...base,
         informe_medico: !!alumno.informeMedico,
         id_estado: alumno.estado?.id_estado ?? 1,
+        entrenador: entrenadorRef,
       };
     } else {
-      // API espera camelCase (Jackson por defecto)
       return {
         ...base,
         informeMedico: !!alumno.informeMedico,
         estado: alumno.estado || { id_estado: 1 },
+        entrenador: entrenadorRef,
       };
     }
   };
 
-  // --- effects ---
   useEffect(() => {
     const fetchAlumno = async () => {
       try {
         const { data } = await axios.get(`${apiBaseUrl}/alumnos/${id}`);
         setAlumno(normalizeAlumno(data));
       } catch (err) {
-        toast({
-          status: "error",
-          title: "Error al cargar alumno",
-          description: err.message,
-          position: "top",
-        });
+        toast({ status: "error", title: "Error al cargar alumno", description: err.message, position: "top" });
       }
     };
     fetchAlumno();
   }, [id, apiBaseUrl, toast]);
 
-  // --- validation ---
   const errors = useMemo(() => {
     const e = {};
     if (!alumno.nombre?.trim()) e.nombre = "El nombre es obligatorio";
@@ -130,14 +155,27 @@ export function EditarAlumnoForm({
     }
   };
 
-  // --- UI ---
+  const addItem = (which) => {
+    (which === "les") ? setLesiones((p) => [...p, { text: "", important: false }])
+                      : setEnfermedades((p) => [...p, { text: "", important: false }]);
+  };
+  const setItem = (which, idx, patch) => {
+    (which === "les")
+      ? setLesiones(p => p.map((it,i)=> i===idx? {...it, ...patch}: it))
+      : setEnfermedades(p => p.map((it,i)=> i===idx? {...it, ...patch}: it));
+  };
+  const removeItem = (which, idx) => {
+    (which === "les")
+      ? setLesiones(p => p.filter((_,i)=> i!==idx))
+      : setEnfermedades(p => p.filter((_,i)=> i!==idx));
+  };
+
   return (
     <Box py={{ base: 8, md: 12 }}>
-      <Container maxW="container.sm">
+      <Container maxW="container.md">
         <Card>
           <CardHeader textAlign="center" pb={0}>
-            <Heading size="2xl" color="brand.700">GrindSup</Heading>
-            <Heading size="lg" mt={2}>Editar Alumno</Heading>
+            <Heading size="lg">Editar Alumno</Heading>
             <Text color="gray.600" mt={2}>Modificá los datos necesarios y guardá los cambios.</Text>
           </CardHeader>
           <CardBody pt={6} px={{ base: 6, md: 10 }} pb={8}>
@@ -146,73 +184,110 @@ export function EditarAlumnoForm({
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
                     <FormLabel>Nombre</FormLabel>
-                    <Input name="nombre" value={alumno.nombre} onChange={handleChange}/>
+                    <Input name="nombre" value={alumno.nombre} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.nombre}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
                     <FormLabel>Apellido</FormLabel>
-                    <Input name="apellido" value={alumno.apellido} onChange={handleChange}/>
+                    <Input name="apellido" value={alumno.apellido} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.apellido}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem>
                   <FormControl isRequired>
-                    <FormLabel>Documento (DNI)</FormLabel>
-                    <Input name="documento" value={alumno.documento} isDisabled/>
+                    <FormLabel>DNI</FormLabel>
+                    <Input name="documento" value={alumno.documento} isDisabled />
                   </FormControl>
                 </GridItem>
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.peso}>
                     <FormLabel>Peso (kg)</FormLabel>
-                    <Input type="number" name="peso" value={alumno.peso === null ? "" : alumno.peso} onChange={handleChange}/>
+                    <Input type="number" name="peso" value={alumno.peso === null ? "" : alumno.peso} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.peso}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.altura}>
                     <FormLabel>Altura (cm)</FormLabel>
-                    <Input type="number" name="altura" value={alumno.altura === null ? "" : alumno.altura} onChange={handleChange}/>
+                    <Input type="number" name="altura" value={alumno.altura === null ? "" : alumno.altura} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.altura}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
                     <FormLabel>Teléfono</FormLabel>
-                    <Input name="telefono" placeholder="+541112345678"
-                      value={alumno.telefono} onChange={handleChange}/>
+                    <Input name="telefono" placeholder="+541112345678" value={alumno.telefono} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
+
+                {/* Lesiones (repeater) */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl>
-                    <FormLabel>Historial de lesiones</FormLabel>
-                    <Textarea name="lesiones" value={alumno.lesiones || ""} onChange={handleChange} rows={3}/>
-                  </FormControl>
+                  <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
+                  {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
+                  {lesiones.map((it, idx) => (
+                    <HStack key={idx} mt={2} align="center">
+                      <Input
+                        placeholder="Detalle de la lesión…"
+                        value={it.text}
+                        onChange={(e)=>setItem("les", idx, { text: e.target.value })}
+                      />
+                      <Checkbox
+                        isChecked={it.important}
+                        onChange={(e)=>setItem("les", idx, { important: e.target.checked })}
+                      >
+                        Importante
+                      </Checkbox>
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("les", idx)} />
+                    </HStack>
+                  ))}
                 </GridItem>
                 <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl>
-                    <FormLabel>Enfermedades</FormLabel>
-                    <Textarea name="enfermedades" value={alumno.enfermedades || ""} onChange={handleChange} rows={3}/>
-                  </FormControl>
+                  <Divider />
                 </GridItem>
+
+                {/* Enfermedades (repeater) */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl>
-                    <Checkbox
-                      name="informeMedico"
-                      isChecked={!!alumno.informeMedico}
-                      onChange={(e) => setAlumno((p) => ({ ...p, informeMedico: e.target.checked }))}
-                    >
-                      Entregó informe médico
-                    </Checkbox>
-                  </FormControl>
+                  <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
+                  {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
+                  {enfermedades.map((it, idx) => (
+                    <HStack key={idx} mt={2} align="center">
+                      <Input
+                        placeholder="Detalle de la enfermedad…"
+                        value={it.text}
+                        onChange={(e)=>setItem("dis", idx, { text: e.target.value })}
+                      />
+                      <Checkbox
+                        isChecked={it.important}
+                        onChange={(e)=>setItem("dis", idx, { important: e.target.checked })}
+                      >
+                        Importante
+                      </Checkbox>
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("dis", idx)} />
+                    </HStack>
+                  ))}
+                </GridItem>
+
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <Checkbox
+                    name="informeMedico"
+                    isChecked={!!alumno.informeMedico}
+                    onChange={(e) => setAlumno((p) => ({ ...p, informeMedico: e.target.checked }))}
+                  >
+                    Entregó informe médico
+                  </Checkbox>
                 </GridItem>
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10}>Guardar cambios</Button>
-                <Button variant="ghost" onClick={() => navigate("/alumnos")}>Cancelar</Button>
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10}>
+                  Guardar cambios
+                </Button>
+                <Button variant="ghost" onClick={() => navigate("/alumnos")}>
+                  Cancelar
+                </Button>
               </Stack>
             </Box>
           </CardBody>
@@ -222,4 +297,11 @@ export function EditarAlumnoForm({
   );
 }
 
-export default EditarAlumnoForm;
+function SectionHeader({ title, onAdd }) {
+  return (
+    <HStack justify="space-between">
+      <FormLabel m={0}>{title}</FormLabel>
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd}>Agregar</Button>
+    </HStack>
+  );
+}
