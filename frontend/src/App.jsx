@@ -8,7 +8,10 @@ import Login from "./components/Login";
 import PantallaInicio from "./components/Inicio";
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
-import RegistrarTurno from "./pages/Turnos/RegistrarTurno";
+import ListaTurnos from "./pages/Turnos/ListaTurnos.jsx";
+import RegistrarTurno from "./pages/Turnos/RegistrarTurno.jsx";
+import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
+import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 
 export default function App() {
@@ -38,7 +41,10 @@ export default function App() {
                 <Route path="/alumnos" element={<AlumnoList />} />
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
+                <Route path="/turnos" element={<ListaTurnos />} />
                 <Route path="/turnos/registrar" element={<RegistrarTurno />} />
+                <Route path="/turnos/:id" element={<DetalleTurno />} />
+                <Route path="/turnos/calendario" element={<CalendarioTurnos />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
         </Box>

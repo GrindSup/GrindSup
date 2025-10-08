@@ -50,7 +50,7 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
     { label: "Contacto", path: "/contacto" },
-    { label: "Turnos", path: "/turnos/registrar" },  // 👈 NUEVO
+    { label: "Turnos", path: "/turnos" },  // 👈 NUEVO
   ];
 
   return (

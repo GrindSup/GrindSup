@@ -3,16 +3,15 @@ package com.grindsup.backend.dto;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-
 public class TurnoResponseDTO {
     private Long id_turno;
     private String entrenador;
     private String tipo_turno;
     private OffsetDateTime fecha;
-    private List<String> alumnos; 
+    private List<AlumnoMinDTO> alumnos; // <-- ahora con id
 
     public TurnoResponseDTO(Long id_turno, String entrenador, String tipo_turno,
-                            OffsetDateTime fecha, List<String> alumnos) {
+                            OffsetDateTime fecha, List<AlumnoMinDTO> alumnos) {
         this.id_turno = id_turno;
         this.entrenador = entrenador;
         this.tipo_turno = tipo_turno;
@@ -24,5 +23,5 @@ public class TurnoResponseDTO {
     public String getEntrenador() { return entrenador; }
     public String getTipo_turno() { return tipo_turno; }
     public OffsetDateTime getFecha() { return fecha; }
-    public List<String> getAlumnos() { return alumnos; }
+    public List<AlumnoMinDTO> getAlumnos() { return alumnos; }
 }
