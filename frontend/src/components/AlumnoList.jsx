@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
-  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon,
+  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon, ArrowBackIcon,
 } from "@chakra-ui/icons";
 import {
   Box, Button, Card, CardBody, CardHeader, CardFooter, Collapse, Container,
@@ -15,6 +15,7 @@ import { getUsuario, getEntrenadorId } from "../context/auth.js";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
+// ... (el resto de tu código no cambia) ...
 /* ---- helpers JSON <-> items ---- */
 function parseNotes(raw) {
   if (!raw) return [];
@@ -184,6 +185,13 @@ export default function AlumnoList() {
   return (
     <Container maxW="7xl" py={8}>
       <Flex gap={4} align="center" mb={6} wrap="wrap">
+        <Button
+          leftIcon={<ArrowBackIcon />}
+          onClick={() => navigate(-1)}
+          colorScheme="whiteAlpha"
+        >
+          Volver
+        </Button>
         <Heading size="lg" color="teal.600">Lista de Alumnos</Heading>
         <Spacer />
         <InputGroup w={{ base: "100%", sm: "360px" }}>
@@ -297,7 +305,9 @@ export default function AlumnoList() {
                     </Button>
                     <Button
                       size="sm"
-                      colorScheme="red"
+                      bg="red.500"
+                      color="white"
+                      _hover={{ bg: "red.600" }}
                       leftIcon={<DeleteIcon />}
                       onClick={() => openDeleteDialog(a)}
                     >
@@ -311,7 +321,6 @@ export default function AlumnoList() {
         </SimpleGrid>
       )}
 
-      {/* diálogo eliminar */}
       <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={() => setIsOpen(false)}>
         <AlertDialogOverlay>
           <AlertDialogContent>
@@ -328,8 +337,16 @@ export default function AlumnoList() {
               />
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>Eliminar</Button>
+              <Button ref={cancelRef} colorScheme="whiteAlpha" onClick={() => setIsOpen(false)}>Cancelar</Button>
+              <Button 
+                bg="red.500"
+                color="white"
+                _hover={{ bg: "red.600" }}
+                onClick={confirmDelete} 
+                ml={3}
+              >
+                Eliminar
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
@@ -338,7 +355,6 @@ export default function AlumnoList() {
   );
 }
 
-/** Item “label: value” prolijito */
 function Detail({ label, value }) {
   return (
     <Flex as="dl" gap={2} mt={1}>
