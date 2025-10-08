@@ -1,7 +1,7 @@
 package com.grindsup.backend.controller;
 
-import com.grindsup.backend.DTO.TurnoRequestDTO;
-import com.grindsup.backend.DTO.TurnoResponseDTO;
+import com.grindsup.backend.dto.TurnoRequestDTO;
+import com.grindsup.backend.dto.TurnoResponseDTO;
 import com.grindsup.backend.service.TurnoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

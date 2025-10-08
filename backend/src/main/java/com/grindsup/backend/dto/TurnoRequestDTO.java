@@ -1,4 +1,4 @@
-package com.grindsup.backend.DTO;
+package com.grindsup.backend.dto;
 
 import java.time.OffsetDateTime;
 import java.util.List;
