@@ -7,6 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { ChevronDownIcon, AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { getUsuario, getEntrenadorId } from "../../context/auth.js";
+import { useNavigate } from "react-router-dom";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
@@ -22,6 +23,8 @@ export default function RegistrarAlumnoForm({
   apiBaseUrl = API,
   usarMock = false,
 }) {
+
+  const navigate = useNavigate();
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -99,7 +102,6 @@ export default function RegistrarAlumnoForm({
       altura: form.altura ? Number(form.altura) : null,
       informeMedico: form.informeMedico,
       telefono: form.codigoArea + form.contactoNumero,
-      // guardamos JSON en TEXT:
       lesiones: stringifyNotes(lesiones),
       enfermedades: stringifyNotes(enfermedades),
       estado: { id_estado: 1 },
@@ -143,13 +145,7 @@ export default function RegistrarAlumnoForm({
       }
 
       toast({ status: "success", title: "Alumno registrado", position: "top" });
-      setForm({
-        nombre: "", apellido: "", documento: "", fechaNac: "",
-        peso: "", altura: "", telefono: "", informeMedico: false,
-        codigoArea: "+54", contactoNumero: "",
-      });
-      setLesiones([]); setEnfermedades([]);
-      setSubmitted(false);
+      navigate("/alumnos");
     } catch (err) {
       toast({ status: "error", title: "No se pudo registrar", description: err.message, position: "top" });
     } finally {
@@ -230,7 +226,6 @@ export default function RegistrarAlumnoForm({
                   </FormControl>
                 </GridItem>
 
-                {/* Teléfono con código */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <FormControl isInvalid={submitted && !!errors.contactoNumero}>
                     <FormLabel>Contacto</FormLabel>
@@ -258,7 +253,6 @@ export default function RegistrarAlumnoForm({
                   </FormControl>
                 </GridItem>
 
-                {/* Lesiones */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
                   {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -283,7 +277,6 @@ export default function RegistrarAlumnoForm({
                   <Divider />
                 </GridItem>
 
-                {/* Enfermedades */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
                   {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -322,15 +315,8 @@ export default function RegistrarAlumnoForm({
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    setForm({
-                      nombre: "", apellido: "", documento: "", fechaNac: "",
-                      peso: "", altura: "", telefono: "", informeMedico: false,
-                      codigoArea:"+54", contactoNumero:""
-                    });
-                    setLesiones([]); setEnfermedades([]);
-                    setSubmitted(false);
-                  }}
+                  type="button"
+                  onClick={() => navigate(-1)}
                 >
                   Cancelar
                 </Button>
