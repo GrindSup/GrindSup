@@ -1,4 +1,4 @@
-package com.grindsup.backend.dto;
+package com.grindsup.backend.DTO;
 
 public class LoginResponse {
     private String mensaje;

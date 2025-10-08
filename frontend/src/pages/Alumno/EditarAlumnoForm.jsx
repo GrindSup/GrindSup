@@ -126,8 +126,8 @@ export default function EditarAlumnoForm({
     const e = {};
     if (!alumno.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!alumno.apellido?.trim()) e.apellido = "El apellido es obligatorio";
-    if (alumno.peso !== "" && !/^[0-9]+$/.test(String(alumno.peso))) e.peso = "El peso debe ser numérico";
-    if (alumno.altura !== "" && !/^[0-9]+$/.test(String(alumno.altura))) e.altura = "La altura debe ser numérica";
+    if (alumno.peso !== "" && !/^\d+(\.\d+)?$/.test(String(alumno.peso))) e.peso = "El peso debe ser numérico";
+    if (alumno.altura !== "" && !/^\d+(\.\d+)?$/.test(String(alumno.altura))) e.altura = "La altura debe ser numérica";
     if (alumno.telefono && !/^\+?\d+$/.test(alumno.telefono)) e.telefono = "El teléfono debe ser numérico y puede incluir +";
     return e;
   }, [alumno]);
