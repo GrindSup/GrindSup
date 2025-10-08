@@ -148,3 +148,27 @@
 .cancel-button:hover {
   background-color: #95a5a6;
 }
+.button-group {
+  display: flex;
+  justify-content: space-between; /* O 'center', 'flex-start', etc. */
+  gap: 10px; /* Espacio entre los botones */
+  width: 100%;
+}
+
+.login-button, .back-button {
+  flex-grow: 1; /* Hace que ambos botones ocupen el mismo espacio */
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.back-button {
+  background-color: #6c757d; /* Un color gris para diferenciarlo */
+  color: white;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}

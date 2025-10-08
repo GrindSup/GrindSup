@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
-export default function Login({ setUsuario }) {
+export default function Login({ setUsuario, onVolverClick }) {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState(false);
@@ -19,7 +19,6 @@ export default function Login({ setUsuario }) {
       return;
     }
 
-
     try {
       const response = await fetch("http://localhost:8080/api/usuarios/login", {
         method: "POST",
@@ -35,7 +34,6 @@ export default function Login({ setUsuario }) {
         setUsuario(data.usuario);
         localStorage.setItem("sesionId", data.idSesion);
         navigate("/");
-
       } else {
         setError(true);
         setErrorMensaje(data.mensaje);
@@ -48,7 +46,10 @@ export default function Login({ setUsuario }) {
 
     setCorreo("");
     setContrasena("");
-
+  };
+  
+  const handleVolver = () => {
+    onVolverClick();
   };
 
   return (
@@ -72,7 +73,12 @@ export default function Login({ setUsuario }) {
             name="contrasena"
             className="login-input"
           />
-          <button type="submit" className="login-button">Iniciar Sesión</button>
+          <div className="button-group">
+            <button type="submit" className="login-button">Iniciar Sesión</button>
+            <button type="button" className="back-button" onClick={handleVolver}>
+              Volver
+            </button>
+          </div>
         </form>
         {error && <p className="login-error">{errorMensaje}</p>}
       </div>

@@ -1,7 +1,7 @@
 import { Box, Container } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import InicioDashboard from "./pages/InicioDashboard"; // ⬅️ nuevo
+import InicioDashboard from "./pages/InicioDashboard"; 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
@@ -35,7 +35,11 @@ export default function App() {
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
           <Container maxW="container.xl">
             {!usuario ? (
-              showLogin ? ( <Login setUsuario={setUsuario} />
+              showLogin ? ( 
+                <Login 
+                  setUsuario={setUsuario} 
+                  onVolverClick={() => setShowLogin(false)} 
+                />
               ) : (
                 <PantallaInicio onLoginClick={() => setShowLogin(true)} />
               )
