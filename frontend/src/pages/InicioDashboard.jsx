@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
   Box, Container, Grid, Heading, Text, Card, CardBody, Icon,
-  chakra, useColorModeValue
+  chakra, useColorModeValue, Image
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { AddIcon, ViewIcon, CalendarIcon, SettingsIcon, InfoOutlineIcon } from "@chakra-ui/icons";
@@ -31,7 +31,14 @@ export default function InicioDashboard() {
       <Container maxW="container.xl">
         {/* Hero / bienvenida */}
         <Box textAlign="center" mb={{ base: 8, md: 12 }}>
-          <Heading size="2xl" letterSpacing="tight">GrindSup</Heading>
+          <Image
+            src="/vite2.png"
+            alt="Logo de GrindSup"
+            boxSize="280px" 
+            mx="auto"       
+            mb={2}          
+          />
+          {/* <Heading size="2xl" letterSpacing="tight">GrindSup</Heading> */}
           <Text mt={3} fontSize="lg" color="gray.500">
             Bienvenido/a a la <b>autogestión de tus alumnos</b>. Organizá turnos, registrá avances y centralizá todo en un solo lugar.
           </Text>

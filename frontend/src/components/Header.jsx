@@ -2,7 +2,7 @@
 import {
   Box, Container, Flex, HStack, Text, Button, IconButton, Menu,
   MenuButton, MenuList, MenuItem, Modal, ModalOverlay, ModalContent,
-  ModalHeader, ModalBody, ModalFooter, useDisclosure,
+  ModalHeader, ModalBody, ModalFooter, useDisclosure, Image,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +51,12 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
         <Flex align="center" minH="64px">
           {/* Logo */}
           <Flex w={{ base: "auto", md: "220px" }} align="center">
+            <Image
+              src="/vite2.png" 
+              alt="Logo de GrindSup"
+              boxSize="30px" 
+              objectFit="contain"
+            />
             <Text
               fontWeight="bold"
               fontSize="xl"
@@ -58,7 +64,7 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
               _hover={{ cursor: "pointer", color: "brand.700" }}
               onClick={goHome}
             >
-              GrindSup
+                 GrindSup
             </Text>
           </Flex>
 

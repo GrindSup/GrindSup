@@ -10,6 +10,7 @@ import {
   CardBody,
   Icon,
   useColorModeValue,
+  Image,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { CheckCircleIcon } from "@chakra-ui/icons";
@@ -29,14 +30,19 @@ export default function Inicio({ onLoginClick }) {
       <Container maxW="container.xl">
         {/* HERO */}
         <Stack spacing={5} textAlign="center" align="center" mb={{ base: 10, md: 14 }}>
-          <Heading size="2xl" letterSpacing="tight">GrindSup</Heading>
+          <Image
+            src="/vite2.png" 
+            alt="Logo de GrindSup"
+            boxSize="280px" 
+            objectFit="contain"
+          />
+          {/* <Heading size="2xl" letterSpacing="tight">GrindSup</Heading> */}
           <Text maxW="3xl" fontSize={{ base: "md", md: "lg" }} color="gray.600">
             Bienvenido/a a <b>GrindSup</b>, la plataforma para entrenadores y personal trainers.
             Autogestioná <b>alumnos</b>, <b>turnos</b> y <b>progreso</b> de forma simple y desde cualquier dispositivo.
           </Text>
 
           <Stack direction={{ base: "column", sm: "row" }} spacing={4} mt={2}>
-            {/* Registrar: placeholder por ahora */}
             <Button
               as={RouterLink}
               to="/registro"
@@ -45,8 +51,6 @@ export default function Inicio({ onLoginClick }) {
             >
               Registrar
             </Button>
-
-            {/* Iniciar sesión: usa tu login actual */}
             <Button
               size="lg"
               variant="outline"
@@ -77,7 +81,6 @@ export default function Inicio({ onLoginClick }) {
           ))}
         </Grid>
 
-        {/* Pie chiquito */}
         <Text textAlign="center" mt={10} color="gray.500" fontSize="sm">
           ¿Listo/a para empezar? Creá tu cuenta o iniciá sesión y probá GrindSup.
         </Text>
