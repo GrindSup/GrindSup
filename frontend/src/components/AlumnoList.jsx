@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
   AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon,
@@ -9,7 +9,7 @@ import {
   Flex, Heading, HStack, IconButton, Input, InputGroup, InputLeftElement,
   SimpleGrid, Spacer, Spinner, Text, useToast, Tag, TagLabel, Badge,
   Select, Checkbox, AlertDialog, AlertDialogBody, AlertDialogContent,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Textarea, Center,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Textarea, Center, Link,
 } from "@chakra-ui/react";
 import { getUsuario, getEntrenadorId } from "../context/auth.js";
 
@@ -220,25 +220,24 @@ export default function AlumnoList() {
               <Card key={a.id_alumno} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
                 <CardHeader pb={3}>
                   <Flex align="center" gap={3}>
-                    <Box>
-                      <Heading size="md">{a.nombre} {a.apellido}</Heading>
-
-                      {/* Importantes */}
-                      {imp.length > 0 && (
-                        <Tag mt={2} size="sm" colorScheme="red" borderRadius="full">
-                          <TagLabel>Importante: {impText}</TagLabel>
-                        </Tag>
-                      )}
-
-                      <HStack spacing={2} mt={2}>
-                        <Tag size="sm" colorScheme="teal" variant="subtle">
-                          <TagLabel>DNI: {a.documento}</TagLabel>
-                        </Tag>
-                        {a.estado?.nombre && (
-                          <Badge colorScheme="purple">{a.estado.nombre}</Badge>
+                    <Link as={RouterLink} to={`/alumno/perfil/${a.id_alumno}`} flex="1" _hover={{ textDecor: 'none' }}>
+                      <Box>
+                        <Heading size="md">{a.nombre} {a.apellido}</Heading>
+                        {imp.length > 0 && (
+                          <Tag mt={2} size="sm" colorScheme="red" borderRadius="full">
+                            <TagLabel>Importante: {impText}</TagLabel>
+                          </Tag>
                         )}
-                      </HStack>
-                    </Box>
+                        <HStack spacing={2} mt={2}>
+                          <Tag size="sm" colorScheme="teal" variant="subtle">
+                            <TagLabel>DNI: {a.documento}</TagLabel>
+                          </Tag>
+                          {a.estado?.nombre && (
+                            <Badge colorScheme="purple">{a.estado.nombre}</Badge>
+                          )}
+                        </HStack>
+                      </Box>
+                    </Link>
                     <Spacer />
                     <IconButton
                       aria-label={isOpen ? "Ocultar detalles" : "Ver detalles"}

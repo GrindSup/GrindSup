@@ -9,6 +9,7 @@ import PantallaInicio from "./components/Inicio";
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
+import PerfilAlumno from "./pages/Alumno/PerfilAlumno"; 
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
                 <Route path="*" element={<Navigate to="/" />} />
+                <Route path="/alumno/perfil/:id" element={<PerfilAlumno />} />
               </Routes>
             )}
           </Container>
