@@ -2,6 +2,8 @@ package com.grindsup.backend.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "turnos")
@@ -14,10 +16,6 @@ public class Turno {
     @ManyToOne
     @JoinColumn(name = "id_entrenador", nullable = false)
     private Entrenador entrenador;
-
-    @ManyToOne
-    @JoinColumn(name = "id_alumno")
-    private Alumno alumno;
 
     @ManyToOne
     @JoinColumn(name = "id_tipoturno")
@@ -39,76 +37,39 @@ public class Turno {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
+    @ManyToMany
+    @JoinTable(
+        name = "turno_alumno",
+        joinColumns = @JoinColumn(name = "id_turno"),
+        inverseJoinColumns = @JoinColumn(name = "id_alumno")
+    )
+    private List<Alumno> alumnos = new ArrayList<>();
+
     // Getters y Setters
-    public Long getId_turno() {
-        return id_turno;
-    }
+    public Long getId_turno() { return id_turno; }
+    public void setId_turno(Long id_turno) { this.id_turno = id_turno; }
 
-    public void setId_turno(Long id_turno) {
-        this.id_turno = id_turno;
-    }
+    public Entrenador getEntrenador() { return entrenador; }
+    public void setEntrenador(Entrenador entrenador) { this.entrenador = entrenador; }
 
-    public Entrenador getEntrenador() {
-        return entrenador;
-    }
+    public TipoTurno getTipoTurno() { return tipoTurno; }
+    public void setTipoTurno(TipoTurno tipoTurno) { this.tipoTurno = tipoTurno; }
 
-    public void setEntrenador(Entrenador entrenador) {
-        this.entrenador = entrenador;
-    }
+    public OffsetDateTime getFecha() { return fecha; }
+    public void setFecha(OffsetDateTime fecha) { this.fecha = fecha; }
 
-    public Alumno getAlumno() {
-        return alumno;
-    }
+    public Estado getEstado() { return estado; }
+    public void setEstado(Estado estado) { this.estado = estado; }
 
-    public void setAlumno(Alumno alumno) {
-        this.alumno = alumno;
-    }
+    public OffsetDateTime getCreated_at() { return created_at; }
+    public void setCreated_at(OffsetDateTime created_at) { this.created_at = created_at; }
 
-    public TipoTurno getTipoTurno() {
-        return tipoTurno;
-    }
+    public OffsetDateTime getUpdated_at() { return updated_at; }
+    public void setUpdated_at(OffsetDateTime updated_at) { this.updated_at = updated_at; }
 
-    public void setTipoTurno(TipoTurno tipoTurno) {
-        this.tipoTurno = tipoTurno;
-    }
+    public OffsetDateTime getDeleted_at() { return deleted_at; }
+    public void setDeleted_at(OffsetDateTime deleted_at) { this.deleted_at = deleted_at; }
 
-    public OffsetDateTime getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(OffsetDateTime fecha) {
-        this.fecha = fecha;
-    }
-
-    public Estado getEstado() {
-        return estado;
-    }
-
-    public void setEstado(Estado estado) {
-        this.estado = estado;
-    }
-
-    public OffsetDateTime getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(OffsetDateTime created_at) {
-        this.created_at = created_at;
-    }
-
-    public OffsetDateTime getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(OffsetDateTime updated_at) {
-        this.updated_at = updated_at;
-    }
-
-    public OffsetDateTime getDeleted_at() {
-        return deleted_at;
-    }
-
-    public void setDeleted_at(OffsetDateTime deleted_at) {
-        this.deleted_at = deleted_at;
-    }
+    public List<Alumno> getAlumnos() { return alumnos; }
+    public void setAlumnos(List<Alumno> alumnos) { this.alumnos = alumnos; }
 }

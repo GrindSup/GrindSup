@@ -9,6 +9,8 @@ import com.grindsup.backend.repository.RolRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.SesionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -115,5 +117,22 @@ public class UsuarioController {
     public String delete(@PathVariable Long id) {
         usuarioRepository.deleteById(id);
         return "Usuario eliminado con id " + id;
+    }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
+        String correo = loginData.get("correo");
+        String contrasena = loginData.get("contrasena");
+
+        Usuario usuario = usuarioRepository.findByCorreo(correo);
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
+        }
+
+        if (!usuario.getContrasena().equals(contrasena)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Contraseña incorrecta");
+        }
+
+        return ResponseEntity.ok(usuario);
     }
 }
