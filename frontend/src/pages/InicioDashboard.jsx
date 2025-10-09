@@ -10,9 +10,9 @@ import { motion } from "framer-motion";
 const MotionBox = motion(chakra.div);
 
 export default function InicioDashboard() {
-  const bg = useColorModeValue("gray.50", "gray.800");
+  const bg = useColorModeValue("gray.60", "gray.800");
   const cardBg = useColorModeValue("white", "gray.700");
-  const glow = useColorModeValue("rgba(56,161,105,0.35)", "rgba(72,187,120,0.45)");
+  const glow = useColorModeValue("rgba(0, 0, 0, 0.82)", "rgba(6, 253, 109, 0.63)");
 
   const acciones = useMemo(() => ([
     { label: "Registrar Alumno", to: "/alumno/registrar", icon: AddIcon, desc: "Cargá nuevos alumnos." },
@@ -39,7 +39,7 @@ export default function InicioDashboard() {
             mb={2}          
           />
           {/* <Heading size="2xl" letterSpacing="tight">GrindSup</Heading> */}
-          <Text mt={3} fontSize="lg" color="gray.500">
+          <Text mt={3} fontSize="lg" color="blackAlpha.800">
             Bienvenido/a a la <b>autogestión de tus alumnos</b>. Organizá turnos, registrá avances y centralizá todo en un solo lugar.
           </Text>
         </Box>

@@ -16,7 +16,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 
 export default function Inicio({ onLoginClick }) {
-  const bg = useColorModeValue("gray.50", "gray.800");
+  const bg = useColorModeValue("gray.60", "gray.800");
   const cardBg = useColorModeValue("white", "gray.700");
 
   const features = [
@@ -37,7 +37,7 @@ export default function Inicio({ onLoginClick }) {
             objectFit="contain"
           />
           {/* <Heading size="2xl" letterSpacing="tight">GrindSup</Heading> */}
-          <Text maxW="3xl" fontSize={{ base: "md", md: "lg" }} color="gray.600">
+          <Text maxW="3xl" fontSize={{ base: "md", md: "lg" }} color="blackAlpha.800">
             Bienvenido/a a <b>GrindSup</b>, la plataforma para entrenadores y personal trainers.
             Autogestioná <b>alumnos</b>, <b>turnos</b> y <b>progreso</b> de forma simple y desde cualquier dispositivo.
           </Text>
@@ -47,13 +47,16 @@ export default function Inicio({ onLoginClick }) {
               as={RouterLink}
               to="/registro"
               size="lg"
-              colorScheme="green"
+              bg="#38A169"       
+              color="white"
             >
               Registrar
             </Button>
             <Button
               size="lg"
-              variant="outline"
+              variant="solid"
+              bg="#38A169"
+              color="white"
               onClick={() => onLoginClick?.()}
             >
               Iniciar sesión
@@ -67,7 +70,7 @@ export default function Inicio({ onLoginClick }) {
           gap={6}
         >
           {features.map((f) => (
-            <Card key={f.t} bg={cardBg} borderRadius="2xl" shadow="sm" _hover={{ shadow: "md" }}>
+            <Card key={f.t} bg={cardBg} borderRadius="2xl" shadow="2xl" _hover={{ shadow: "md" }}>
               <CardBody>
                 <Stack direction="row" spacing={4} align="start">
                   <Icon as={CheckCircleIcon} color="green.500" boxSize={6} />
@@ -81,7 +84,7 @@ export default function Inicio({ onLoginClick }) {
           ))}
         </Grid>
 
-        <Text textAlign="center" mt={10} color="gray.500" fontSize="sm">
+        <Text textAlign="center" mt={10} color="blackAlpha.800" fontSize="sm">
           ¿Listo/a para empezar? Creá tu cuenta o iniciá sesión y probá GrindSup.
         </Text>
       </Container>

@@ -188,11 +188,13 @@ export default function AlumnoList() {
         <Button
           leftIcon={<ArrowBackIcon />}
           onClick={() => navigate(-1)}
+          bg="#38A169"
+          color="white"
           colorScheme="whiteAlpha"
         >
           Volver
         </Button>
-        <Heading size="lg" color="teal.600">Lista de Alumnos</Heading>
+        <Heading size="lg" color="gray.900">Lista de Alumnos</Heading>
         <Spacer />
         <InputGroup w={{ base: "100%", sm: "360px" }}>
           <InputLeftElement pointerEvents="none">
@@ -207,7 +209,7 @@ export default function AlumnoList() {
             boxShadow="sm"
           />
         </InputGroup>
-        <Button colorScheme="teal" leftIcon={<AddIcon />} onClick={() => navigate("/alumno/registrar")}>
+        <Button colorScheme="teal" leftIcon={<AddIcon />} onClick={() => navigate("/alumno/registrar")} bg="#38A169" color="white">
           Agregar Alumno
         </Button>
       </Flex>

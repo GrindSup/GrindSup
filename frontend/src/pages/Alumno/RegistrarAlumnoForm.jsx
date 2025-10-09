@@ -80,8 +80,8 @@ export default function RegistrarAlumnoForm({
       const hoy = new Date().toISOString().split("T")[0];
       if (form.fechaNac > hoy) e.fechaNac = "La fecha no puede ser futura";
     }
-    if (form.peso && !/^[0-9]+$/.test(form.peso)) e.peso = "El peso debe ser numérico";
-    if (form.altura && !/^[0-9]+$/.test(form.altura)) e.altura = "La altura debe ser numérica";
+    if (form.peso && !/^\d+(\.\d+)?$/.test(form.peso)) e.peso = "El peso debe ser numérico";
+    if (form.altura && !/^\d+(\.\d+)?$/.test(form.altura)) e.altura = "La altura debe ser numérica";
     if (form.contactoNumero && !/^[0-9]+$/.test(form.contactoNumero)) e.contactoNumero = "El número debe ser numérico";
     return e;
   }, [form]);
