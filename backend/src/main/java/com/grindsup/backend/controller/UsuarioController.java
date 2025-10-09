@@ -89,7 +89,7 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+        Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(request.getCorreo())
                 .orElse(null);
 
         if (usuario == null) {

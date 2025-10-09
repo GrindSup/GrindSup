@@ -51,12 +51,14 @@ backend/
 │   │   │   │   └── UsuarioController.java              # agregado
 │   │   │   ├── config/
 │   │   │   │   ├── CorsConfig.java
-│   │   │   │   └── GoogleCalendarConfig.java
+│   │   │   │   ├── GoogleCalendarConfig.java
+|   |   |   |   └── SecurityConfig.java          # agregado
 │   │   │   ├── service/
 │   │   │   │   ├── GoogleCalendarService.java
 │   │   │   │   ├── GoogleCalendarNotificationService.java
 │   │   │   │   ├── GoogleCalendarCredentialService.java
-│   │   │   │   └── UserService.java
+│   │   │   │   ├── UserService.java
+|   |   |   |   └── RecuperarContrasenaService.java        # agregado
 │   │   │   ├── model/              # Entidades JPA (tablas)
 │   │   │   │   ├── Alumno.java
 │   │   │   │   ├── Agenda.java
@@ -70,21 +72,27 @@ backend/
 │   │   │   │   ├── Turno.java
 │   │   │   │   ├── Rol.java                             # agregado
 │   │   │   │   ├── TipoTurno.java                       # agregado
-│   │   │   │   └── Usuario.java                         # agregado
-│   │   │   └── repository/         # Interfaces de acceso a datos
-│   │   │       ├── AlumnoRepository.java
-│   │   │       ├── AgendaRepository.java
-│   │   │       ├── EntrenadorRepository.java
-│   │   │       ├── EjercicioRepository.java
-│   │   │       ├── PlanEntrenamientoRepository.java
-│   │   │       ├── RutinaRepository.java
-│   │   │       ├── RutinaEjercicioRepository.java
-│   │   │       ├── EstadoRepository.java
-│   │   │       ├── SesionRepository.java                
-│   │   │       ├── TurnoRepository.java
-│   │   │       ├── RolRepository.java                   # agregado
-│   │   │       ├── TipoTurnoRepository.java             # agregado
-│   │   │       └── UsuarioRepository.java               # agregado
+│   │   │   │   ├── Usuario.java                         # agregado
+|   |   |   |   └── TokenRecuperacionContrasena.java     # agregado
+│   │   │   ├── repository/         # Interfaces de acceso a datos
+│   │   │   |   ├── AlumnoRepository.java
+│   │   │   |   ├── AgendaRepository.java
+│   │   │   |   ├── EntrenadorRepository.java
+│   │   │   |   ├── EjercicioRepository.java
+│   │   │   |   ├── PlanEntrenamientoRepository.java
+│   │   │   |   ├── RutinaRepository.java
+│   │   │   |   ├── RutinaEjercicioRepository.java
+│   │   │   |   ├── EstadoRepository.java
+│   │   │   |   ├── SesionRepository.java                
+│   │   │   |   ├── TurnoRepository.java
+│   │   │   |   ├── RolRepository.java                   # agregado
+│   │   │   |   ├── TipoTurnoRepository.java             # agregado
+│   │   │   |   ├── UsuarioRepository.java               # agregado
+|   |   |   |   └── TokenRecuperacionContrasenaRepository.java   # agregado
+|   |   |   |
+|   |   |   └── util/
+|   |   |        └── TokenUtil.java                    # agregado
+|   |   |
 │   │   └── resources/              
 │   │       ├── application.properties
 │   │       ├── credentials.json  
