@@ -8,6 +8,10 @@ import Login from "./components/Login";
 import PantallaInicio from "./components/Inicio";
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
+import ListaTurnos from "./pages/Turnos/ListaTurnos.jsx";
+import RegistrarTurno from "./pages/Turnos/RegistrarTurno.jsx";
+import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
+import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno"; 
 
@@ -22,7 +26,7 @@ export default function App() {
   useEffect(() => {
     if (usuario) {
       localStorage.setItem("usuario", JSON.stringify(usuario));
-      setShowLogin(false); // oculta login al loguearse
+      setShowLogin(false);
     } else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
@@ -46,10 +50,14 @@ export default function App() {
               )
             ) : (
               <Routes user={usuario} setUser={setUsuario}>
-                <Route path="/" element={<InicioDashboard />} />   
+                <Route path="/" element={<InicioDashboard />} />  
                 <Route path="/alumnos" element={<AlumnoList />} />
                 <Route path="/alumno/registrar" element={<RegistrarAlumnoForm />} />
                 <Route path="/alumno/editar/:id" element={<EditarAlumnoForm />} />
+                <Route path="/turnos" element={<ListaTurnos />} />
+                <Route path="/turnos/registrar" element={<RegistrarTurno />} />
+                <Route path="/turnos/:id" element={<DetalleTurno />} />
+                <Route path="/turnos/calendario" element={<CalendarioTurnos />} />
                 <Route path="*" element={<Navigate to="/" />} />
                 <Route path="/alumno/perfil/:id" element={<PerfilAlumno />} />
               </Routes>

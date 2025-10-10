@@ -4,11 +4,11 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public class TurnoRequestDTO {
-    private Long entrenadorId;          
-    private Long tipoTurnoId;           
-    private OffsetDateTime fecha;       
-    private List<Long> alumnosIds;      
-    private Long estadoId;              
+    private Long entrenadorId;
+    private Long tipoTurnoId;
+    private OffsetDateTime fecha;
+    private List<Long> alumnosIds;
+    private Long estadoId;
 
     // Getters y Setters
     public Long getEntrenadorId() {

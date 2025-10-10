@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 // frontend/src/lib/auth.js
 export function getUsuario() {
   try { return JSON.parse(localStorage.getItem("usuario") || "null"); }
@@ -15,4 +17,15 @@ export function getEntrenadorId(user) {
     user?.id ??
     null
   );
+}
+
+export default function useAuth() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  return { isLoggedIn, setIsLoggedIn };
 }

@@ -52,10 +52,6 @@ Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desd
 
 ## Dependencias
 ### Backend
-* **Compilar y empaquetar:** `mvn clean package`
-* **Ejecutar en desarrollo:** `mvn spring-boot:run`
-* **Ejecutar jar generado:** `java -jar target/backend-0.0.1-SNAPSHOT.jar`
-
+- Compilar y empaquetar: `./mvnw clean package`
+- Ejecutar directamente con Maven: `./mvnw spring-boot:run`
 ### Frontend
-* **Instalar dependencias de UI y animaciones:** `npm install @chakra-ui/react @chakra-ui/icons @emotion/react @emotion/styled framer-motion`
-* **Instalar enrutamiento de React:** `npm install react-router-dom`
