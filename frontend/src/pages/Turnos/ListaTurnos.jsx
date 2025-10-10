@@ -51,10 +51,10 @@ export default function ListaTurnos() {
   return (
     <Container maxW="6xl" py={8}>
       <HStack justify="space-between" mb={6}>
-        <Heading size="lg" color="brand.600">Turnos</Heading>
+        <Heading size="lg" color="gray.900">Turnos</Heading>
         <HStack>
-          <Button variant="outline" onClick={() => navigate("/turnos/calendario")}>Calendario</Button>
-          <Button colorScheme="brand" onClick={() => navigate("/turnos/registrar")}>
+          <Button variant="solid" onClick={() => navigate("/turnos/calendario")} bg="#38A169" color="white">Calendario</Button>
+          <Button colorScheme="brand" onClick={() => navigate("/turnos/registrar")} bg="#38A169" color="white">
             + Nuevo turno
           </Button>
         </HStack>

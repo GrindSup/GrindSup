@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f5f6fa;
+  background-color: #15803D;
 }
 
 /* Caja blanca centrada */
@@ -48,7 +48,7 @@
 /* Botón */
 .login-button {
   padding: 0.8rem;
-  background-color: #2ecc71;
+  background-color: #38A169;
   color: white;
   font-weight: bold;
   border: none;

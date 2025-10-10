@@ -11,7 +11,7 @@ const theme = extendTheme({
     global: {
       "html, body, #root": { height: "100%" },
       // 👇 Fondo claro neutro (NO gradientes)
-      body: { bg: "#F6F7F9", color: "gray.800" },
+      body: { bg: "#15803D", color: "gray.800" },
     },
   },
   colors: {

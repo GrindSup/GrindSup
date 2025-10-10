@@ -52,19 +52,19 @@ export default function CalendarioTurnos() {
   return (
     <Container maxW="6xl" py={8}>
       <HStack justify="space-between" mb={6}>
-        <Heading size="lg" color="brand.600">Calendario de Turnos</Heading>
+        <Heading size="lg" color="gray.900">Calendario de Turnos</Heading>
         <HStack>
-          <Button onClick={prevMonth}>◀</Button>
+          <Button onClick={prevMonth} bg="#38A169" color="white">◀</Button>
           <Text w="220px" textAlign="center" fontWeight="semibold" textTransform="capitalize">
             {monthName}
           </Text>
-          <Button onClick={nextMonth}>▶</Button>
-          <Button variant="outline" onClick={()=>navigate("/turnos")}>Ver lista</Button>
-          <Button colorScheme="brand" onClick={()=>navigate("/turnos/registrar")}>+ Nuevo turno</Button>
+          <Button onClick={nextMonth} bg="#38A169" color="white">▶</Button>
+          <Button variant="solid" onClick={()=>navigate("/turnos")} bg="#38A169" color="white">Ver lista</Button>
+          <Button colorScheme="brand" onClick={()=>navigate("/turnos/registrar")} bg="#38A169" color="white">+ Nuevo turno</Button>
         </HStack>
       </HStack>
 
-      <Grid templateColumns="repeat(7, 1fr)" gap={2} fontWeight="semibold" color="gray.600" mb={2}>
+      <Grid templateColumns="repeat(7, 1fr)" gap={2} fontWeight="semibold" color="gray.900" mb={2}>
         {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"].map(d => <Box key={d} textAlign="center">{d}</Box>)}
       </Grid>
 
@@ -78,7 +78,7 @@ export default function CalendarioTurnos() {
           return (
             <GridItem key={day}>
               <Box borderWidth="1px" borderRadius="md" p={2} minH="110px" bg="white">
-                <Text fontSize="sm" color="gray.500" mb={1}>{day}</Text>
+                <Text fontSize="sm" color="gray.700" mb={1}>{day}</Text>
                 <VStack align="stretch" spacing={1}>
                   {items.slice(0,4).map(t=>{
                     const hhmm = new Date(t.fecha).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
