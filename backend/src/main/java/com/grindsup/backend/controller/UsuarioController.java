@@ -2,23 +2,17 @@ package com.grindsup.backend.controller;
 
 import com.grindsup.backend.model.Usuario;
 import com.grindsup.backend.model.Rol;
-import com.grindsup.backend.model.Sesion;
-import com.grindsup.backend.DTO.LoginRequest;
-import com.grindsup.backend.DTO.LoginResponse;
-import com.grindsup.backend.DTO.LogoutResponse;
-import com.grindsup.backend.DTO.UsuarioDTO;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.repository.UsuarioRepository;
 import com.grindsup.backend.repository.RolRepository;
-import com.grindsup.backend.repository.SesionRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -32,9 +26,6 @@ public class UsuarioController {
 
     @Autowired
     private EstadoRepository estadoRepository;
-
-    @Autowired
-    private SesionRepository sesionRepository;
 
     @GetMapping
     public List<Usuario> getAll() {
@@ -88,49 +79,20 @@ public class UsuarioController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(request.getCorreo())
-                .orElse(null);
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginData) {
+        String correo = loginData.get("correo");
+        String contrasena = loginData.get("contrasena");
+
+        Usuario usuario = usuarioRepository.findByCorreo(correo);
 
         if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new LoginResponse("Usuario no encontrado", false, null, null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
         }
 
-        if (!usuario.getContrasena().equals(request.getContrasena())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new LoginResponse("Contraseña incorrecta", false, null, null));
+        if (!usuario.getContrasena().equals(contrasena)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Contraseña incorrecta");
         }
 
-        Sesion sesion = new Sesion();
-        sesion.setUsuario(usuario);
-        sesion.setInicio(OffsetDateTime.now());
-        sesion.setCreated_at(OffsetDateTime.now());
-        sesion.setUpdated_at(OffsetDateTime.now());
-        sesionRepository.save(sesion);
-
-        UsuarioDTO usuarioDTO = new UsuarioDTO(
-                usuario.getId_usuario(),
-                usuario.getNombre(),
-                usuario.getApellido(),
-                usuario.getCorreo());
-
-        LoginResponse respuesta = new LoginResponse("Sesión iniciada correctamente", true, sesion.getId_sesion(),
-                usuarioDTO);
-        return ResponseEntity.ok(respuesta);
+        return ResponseEntity.ok(usuario);
     }
-
-    @PutMapping("/logout/{idSesion}")
-    public ResponseEntity<LogoutResponse> logout(@PathVariable Long idSesion) {
-        return sesionRepository.findById(idSesion).map(sesion -> {
-            if (sesion.getFin() != null) {
-                return ResponseEntity.badRequest().body(new LogoutResponse("Sesión ya está cerrada", false));
-            }
-            sesion.setFin(OffsetDateTime.now());
-            sesion.setUpdated_at(OffsetDateTime.now());
-            sesionRepository.save(sesion);
-            return ResponseEntity.ok(new LogoutResponse("Sesión cerrada correctamente", true));
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(new LogoutResponse("Sesión no encontrada", false)));
-    }
-
 }

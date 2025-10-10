@@ -2,6 +2,8 @@ package com.grindsup.backend.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "turnos")
@@ -34,6 +36,10 @@ public class Turno {
 
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
+
+    @ManyToMany
+    @JoinTable(name = "turno_alumno", joinColumns = @JoinColumn(name = "id_turno"), inverseJoinColumns = @JoinColumn(name = "id_alumno"))
+    private List<Alumno> alumnos = new ArrayList<>();
 
     // Getters y Setters
     public Long getId_turno() {
@@ -98,5 +104,13 @@ public class Turno {
 
     public void setDeleted_at(OffsetDateTime deleted_at) {
         this.deleted_at = deleted_at;
+    }
+
+    public List<Alumno> getAlumnos() {
+        return alumnos;
+    }
+
+    public void setAlumnos(List<Alumno> alumnos) {
+        this.alumnos = alumnos;
     }
 }

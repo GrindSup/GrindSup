@@ -3,6 +3,8 @@ package com.grindsup.backend.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -23,6 +25,9 @@ public class Alumno {
     @JoinColumn(name = "id_entrenador", nullable = true)
     private Entrenador entrenador;
 
+    @ManyToMany(mappedBy = "alumnos")
+    private List<Turno> turnos = new ArrayList<>();
+    
     @Column(nullable = false, length = 100)
     private String nombre;
 

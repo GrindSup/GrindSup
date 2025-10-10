@@ -1,14 +1,10 @@
 package com.grindsup.backend.controller;
 
-import com.grindsup.backend.model.Turno;
-import com.grindsup.backend.model.Entrenador;
-import com.grindsup.backend.model.TipoTurno;
-import com.grindsup.backend.model.Estado;
-import com.grindsup.backend.repository.TurnoRepository;
-import com.grindsup.backend.repository.EntrenadorRepository;
-import com.grindsup.backend.repository.TipoTurnoRepository;
-import com.grindsup.backend.repository.EstadoRepository;
+import com.grindsup.backend.DTO.TurnoRequestDTO;
+import com.grindsup.backend.DTO.TurnoResponseDTO;
+import com.grindsup.backend.service.TurnoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,70 +14,37 @@ import java.util.List;
 public class TurnoController {
 
     @Autowired
-    private TurnoRepository turnoRepository;
+    private TurnoService turnoService;
 
-    @Autowired
-    private EntrenadorRepository entrenadorRepository;
+    public ResponseEntity<TurnoResponseDTO> createTurno(@RequestBody TurnoRequestDTO turnoDTO) {
+        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO));
+    }
 
-    @Autowired
-    private TipoTurnoRepository tipoTurnoRepository;
+    // Asignar alumnos a un turno existente
+    @PostMapping("/{turnoId}/alumnos")
+    public ResponseEntity<TurnoResponseDTO> asignarAlumnos(
+            @PathVariable Long turnoId,
+            @RequestBody List<Long> alumnosIds) {
+        return ResponseEntity.ok(turnoService.asignarAlumnos(turnoId, alumnosIds));
 
-    @Autowired
-    private EstadoRepository estadoRepository;
+    }
 
+    // Obtener todos los turnos
     @GetMapping
-    public List<Turno> getAll() {
-        return turnoRepository.findAll();
+    public List<TurnoResponseDTO> getAll() {
+        return turnoService.getAllTurnos();
     }
 
+    // Obtener turno por ID
     @GetMapping("/{id}")
-    public Turno getById(@PathVariable Long id) {
-        return turnoRepository.findById(id).orElse(null);
+    public TurnoResponseDTO getById(@PathVariable Long id) {
+        return turnoService.getTurnoById(id);
     }
 
-    @PostMapping
-    public Turno create(@RequestBody Turno turno) {
-        if (turno.getEntrenador() != null) {
-            Entrenador entrenador = entrenadorRepository.findById(turno.getEntrenador().getId_entrenador())
-                    .orElse(null);
-            turno.setEntrenador(entrenador);
-        }
-        if (turno.getTipoTurno() != null) {
-            TipoTurno tipo = tipoTurnoRepository.findById(turno.getTipoTurno().getId_tipoturno()).orElse(null);
-            turno.setTipoTurno(tipo);
-        }
-        if (turno.getEstado() != null) {
-            Estado estado = estadoRepository.findById(turno.getEstado().getId_estado()).orElse(null);
-            turno.setEstado(estado);
-        }
-        return turnoRepository.save(turno);
-    }
-
-    @PutMapping("/{id}")
-    public Turno update(@PathVariable Long id, @RequestBody Turno turno) {
-        return turnoRepository.findById(id).map(existing -> {
-            existing.setFecha(turno.getFecha());
-
-            if (turno.getEntrenador() != null) {
-                Entrenador entrenador = entrenadorRepository.findById(turno.getEntrenador().getId_entrenador())
-                        .orElse(null);
-                existing.setEntrenador(entrenador);
-            }
-            if (turno.getTipoTurno() != null) {
-                TipoTurno tipo = tipoTurnoRepository.findById(turno.getTipoTurno().getId_tipoturno()).orElse(null);
-                existing.setTipoTurno(tipo);
-            }
-            if (turno.getEstado() != null) {
-                Estado estado = estadoRepository.findById(turno.getEstado().getId_estado()).orElse(null);
-                existing.setEstado(estado);
-            }
-            return turnoRepository.save(existing);
-        }).orElse(null);
-    }
-
+    // Eliminar turno
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        turnoRepository.deleteById(id);
-        return "Turno eliminado con id " + id;
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        turnoService.deleteTurno(id);
+        return ResponseEntity.ok("Turno eliminado con id " + id);
     }
 }
