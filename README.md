@@ -30,7 +30,11 @@ Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desd
 * Implementar el backend en Spring Boot con conexión a MySQL y peticiones CRUD.
 
 **Historias de Usuarios implementadas**
-* HU - 
+* HU-1: Registrar alumno.
+* HU-4: Listar alumnos.
+* HU-5: Editar alumno.
+* HU-42: Iniciar sesion.
+* HU-43: Cerrar sesion.
 
 **Roles:**
 
