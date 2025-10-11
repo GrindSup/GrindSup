@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map; // <-- IMPORT NECESARIO
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/turnos")
@@ -19,6 +21,7 @@ public class TurnoController {
     @Autowired
     private TurnoService turnoService;
 
+    @PostMapping
     public ResponseEntity<TurnoResponseDTO> createTurno(@RequestBody TurnoRequestDTO turnoDTO) {
         return ResponseEntity.ok(turnoService.crearTurno(turnoDTO));
     }

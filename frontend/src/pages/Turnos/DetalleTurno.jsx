@@ -106,8 +106,8 @@ export default function DetalleTurno() {
   return (
     <Container maxW="3xl" py={8}>
       <HStack justify="space-between" mb={4}>
-        <Heading size="lg" color="brand.600">Detalle del turno</Heading>
-        <Button variant="outline" onClick={() => navigate("/turnos")}>Volver</Button>
+        <Heading size="lg" color="gray.900">Detalle del turno</Heading>
+        <Button variant="solid" onClick={() => navigate("/turnos")} bg="#38A169" color="white">Volver</Button>
       </HStack>
 
       <Box p={5} borderWidth="1px" borderRadius="lg" bg="white" mb={5}>

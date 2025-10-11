@@ -31,7 +31,7 @@ export default function Inicio({ onLoginClick }) {
         {/* HERO */}
         <Stack spacing={5} textAlign="center" align="center" mb={{ base: 10, md: 14 }}>
           <Image
-            src="/vite2.png" 
+            src="/vite.png" 
             alt="Logo de GrindSup"
             boxSize="280px" 
             objectFit="contain"

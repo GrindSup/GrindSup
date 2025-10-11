@@ -32,7 +32,7 @@ export default function InicioDashboard() {
         {/* Hero / bienvenida */}
         <Box textAlign="center" mb={{ base: 8, md: 12 }}>
           <Image
-            src="/vite2.png"
+            src="/vite.png"
             alt="Logo de GrindSup"
             boxSize="280px" 
             mx="auto"       

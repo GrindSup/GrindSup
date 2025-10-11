@@ -53,7 +53,7 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
           {/* Logo */}
           <Flex w={{ base: "auto", md: "220px" }} align="center">
             <Image
-              src="/vite2.png" 
+              src="/vite.png" 
               alt="Logo de GrindSup"
               boxSize="30px" 
               objectFit="contain"
