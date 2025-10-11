@@ -95,9 +95,9 @@ frontend/
 │   ├── config/
 │   │   └── axios.config.js
 │   └── theme/
-│       ├── theme.js
-│       ├── theme.md
-│       └── muiTheme.js
+        ├── theme.js
+        ├── theme.md
+        └── muiTheme.js
 
 ```
 
