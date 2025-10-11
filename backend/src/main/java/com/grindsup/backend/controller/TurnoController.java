@@ -18,8 +18,11 @@ public class TurnoController {
 
     // Crear turno vacío (sin alumnos)
     @PostMapping
-    public ResponseEntity<TurnoResponseDTO> createTurno(@RequestBody TurnoRequestDTO turnoDTO) {
-        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO));
+    public ResponseEntity<TurnoResponseDTO> createTurno(
+        @RequestBody TurnoRequestDTO turnoDTO,
+        @RequestParam String userId) throws Exception {
+
+    return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, userId));
     }
 
     // Asignar alumnos a un turno existente
@@ -47,6 +50,22 @@ public class TurnoController {
     public ResponseEntity<String> delete(@PathVariable Long id) {
         turnoService.deleteTurno(id);
         return ResponseEntity.ok("Turno eliminado con id " + id);
+    }
+    //modificar turno
+    @PostMapping("/{turnoId}/alumnos/{alumnoId}")
+    public void addAlumno(@PathVariable Long turnoId, @PathVariable Long alumnoId) {
+        turnoService.addAlumnoToTurno(turnoId, alumnoId);
+    }
+
+    @DeleteMapping("/{turnoId}/alumnos/{alumnoId}")
+    public void removeAlumno(@PathVariable Long turnoId, @PathVariable Long alumnoId) {
+        turnoService.removeAlumnoFromTurno(turnoId, alumnoId);
+    }
+    @PutMapping("/{id}")
+    public TurnoResponseDTO modificarTurno(@PathVariable Long id,
+                                       @RequestBody TurnoRequestDTO turnoDTO,
+                                       @RequestParam String userId) throws Exception {
+    return turnoService.modificarTurno(id, turnoDTO, userId);
     }
 }
  

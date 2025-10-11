@@ -37,6 +37,9 @@ public class Turno {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
+    @Column(name = "google_event_id")
+    private String googleEventId;
+
     @ManyToMany
     @JoinTable(
         name = "turno_alumno",
@@ -72,4 +75,7 @@ public class Turno {
 
     public List<Alumno> getAlumnos() { return alumnos; }
     public void setAlumnos(List<Alumno> alumnos) { this.alumnos = alumnos; }
+
+    public String getGoogleEventId() {return googleEventId;}
+    public void setGoogleEventId(String googleEventId) {this.googleEventId = googleEventId;}
 }

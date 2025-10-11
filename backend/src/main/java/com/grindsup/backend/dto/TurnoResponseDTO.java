@@ -25,4 +25,6 @@ public class TurnoResponseDTO {
     public String getTipo_turno() { return tipo_turno; }
     public OffsetDateTime getFecha() { return fecha; }
     public List<String> getAlumnos() { return alumnos; }
+
+    
 }
