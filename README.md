@@ -26,11 +26,11 @@ Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desd
 * Comenzar el **Frontend** con vistas iniciales e integración básica (React).
 * Actualizar y completar **Documentación**.
 * Implementar HU-42 (Iniciar sesión) y HU-43 (Cerrar sesión) con usuarios precargados.
-* Desarrollar funcionalidades de Gestión de Alumnos:
-  - HU-1 Registrar alumno
-  - HU-4 Visualizar lista de alumnos
-  - HU-5 Editar alumno
+* Desarrollar funcionalidades de Gestión de Alumnos
 * Implementar el backend en Spring Boot con conexión a MySQL y peticiones CRUD.
+
+**Historias de Usuarios implementadas**
+* HU - 
 
 **Roles:**
 
@@ -44,11 +44,67 @@ Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desd
 
 ## 🟦 Sprint 2 –  (2 semanas)
 
+**Objetivo:** Ampliar el MVP incorporando la gestión completa de turnos, el sistema de recuperación de contraseña y la mejora en la administración de alumnos.
+
+* Implementar nuevas funcionalidades en el Backend (Spring Boot) y conectarlas con la base de datos MySQL.
+* Crear y vincular las tablas necesarias para la gestión de turnos y el control de estado de los alumnos.
+* Desarrollar el flujo completo de recuperación de contraseña mediante tokens y envío de correo electrónico.
+* Integrar Google Calendar API para generar notificaciones automáticas de turnos.
+* Agregar nuevas vistas en el Frontend (React) para la gestión de turnos y recuperación de contraseña.
+* Actualizar y completar la documentación técnica y funcional.
+* Probar e integrar las funcionalidades en un entorno unificado.
+
+**Historias de Usuario implementadas:**
+* HU-6: Dar de baja alumno.
+* HU-3: Reactivar alumno.
+* HU-45: Recuperar contraseña.
+* HU-8: Registrar turno.
+* HU-9: Modificar turno.
+* HU-11: Visualizar turnos.
+* HU-10: Notificación de turno (Google Calendar).
+
+**Roles:**
+* Product Owner: Dana Montesinos.
+* Scrum Master: Azul Oyola.
+* Programación backend: Martín Gamboa, Agustina Silva, Azul Oyola.
+* Programación frontend: Betina Yost, Dana Montesinos.
+
+---
+
+## 🟦 Sprint 3 –  (2 semanas)
 **Objetivo:**
+Ampliar las funcionalidades del sistema incorporando la gestión completa de ejercicios y rutinas, permitiendo al entrenador crear, modificar, asignar y consultar rutinas personalizadas para cada alumno. Además, registrar nuevos entrenadores para la administración general de la plataforma.
 
+* Implementar en el Backend (Spring Boot) las entidades y relaciones correspondientes a Ejercicios, Rutinas y Entrenadores.
+* Desarrollar los endpoints CRUD para la administración de ejercicios y rutinas.
+* Crear la vista en el Frontend (React) para la búsqueda, registro, modificación y visualización de ejercicios.
+* Implementar la funcionalidad de asignar rutinas a los alumnos desde el panel del entrenador.
+* Incorporar filtros para facilitar la búsqueda de rutinas según distintos criterios.
+* Integrar validaciones y manejo de estados (activo/inactivo) para ejercicios y rutinas.
+* Actualizar la base de datos MySQL con las nuevas tablas y relaciones.
+* Completar la documentación técnica y actualizar el manual de usuario con las nuevas funcionalidades.
 
+**Historias de Usuario implementadas:**
+* HU-14: Buscar ejercicios.
+* HU-13: Visualizar ejercicios.
+* HU-16: Consultar ejercicios.
+* HU-15: Registrar ejercicio.
+* HU-17: Modificar ejercicio.
+* HU-18: Desactivar ejercicio.
+* HU-19: Eliminar ejercicio.
+* HU-82: Registrar entrenador.
+* HU-21: Registrar rutina.
+* HU-22: Eliminar rutina.
+* HU-23: Modificar rutina.
+* HU-27: Filtrar rutina.
+* HU-24: Visualizar rutinas.
+* HU-26: Asignar rutina.
 
-
+**Roles:**
+* Product Owner: Betina Yost.
+* Scrum Master: Azul Oyola.
+* Programación backend: Martín Gamboa, Agustina Silva, Azul Oyola.
+* Programación frontend: Betina Yost, Dana Montesinos.
 
 ## Dependencias
 ### Backend
