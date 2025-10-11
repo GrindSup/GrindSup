@@ -32,7 +32,8 @@ backend/
 ├── src/                            
 │   ├── main/
 │   │   ├── java/com/grindsup/backend/
-│   │   │   ├── GrindSupBackendApplication.java   
+│   │   │   ├── GrindSupBackendApplication.java
+│   │   │   ├── TestController.java   
 │   │   │   ├── controller/         # Controladores REST
 │   │   │   │   ├── GoogleCalendarController.java
 │   │   │   │   ├── GoogleCalendarNotificationController.java
@@ -46,20 +47,27 @@ backend/
 │   │   │   │   ├── EstadoController.java
 │   │   │   │   ├── SesionController.java   
 │   │   │   │   ├── TurnoController.java
-│   │   │   │   ├── RolController.java                   # agregado
-│   │   │   │   ├── TipoTurnoController.java            # agregado
-│   │   │   │   └── UsuarioController.java              # agregado
+│   │   │   │   ├── TurnoAlumnoController.java
+│   │   │   │   ├── RolController.java                   
+│   │   │   │   ├── TipoTurnoController.java            
+│   │   │   │   └── UsuarioController.java              
 │   │   │   ├── config/
 │   │   │   │   ├── CorsConfig.java
 │   │   │   │   ├── GoogleCalendarConfig.java
-|   |   |   |   └── SecurityConfig.java          # agregado
+|   |   |   |   └── SecurityConfig.java          
 │   │   │   ├── service/
 │   │   │   │   ├── GoogleCalendarService.java
 │   │   │   │   ├── GoogleCalendarNotificationService.java
 │   │   │   │   ├── GoogleCalendarCredentialService.java
 │   │   │   │   ├── UserService.java
-|   |   |   |   └── RecuperarContrasenaService.java        # agregado
-│   │   │   ├── model/              # Entidades JPA (tablas)
+│   │   │   │   ├── TurnoService.java
+|   |   |   |   └── RecuperarContrasenaService.java
+│   │   │   ├── mail/
+│   │   │   │   ├── ConsoleMailAdapter.java
+│   │   │   │   ├── MailPort.java
+│   │   │   │   ├── MailTemplate.java
+|   |   |   |   └── SmtpMailAdapter.java      
+│   │   │   ├── model/              
 │   │   │   │   ├── Alumno.java
 │   │   │   │   ├── Agenda.java
 │   │   │   │   ├── Entrenador.java
@@ -70,11 +78,23 @@ backend/
 │   │   │   │   ├── RutinaEjercicioId.java
 │   │   │   │   ├── Estado.java
 │   │   │   │   ├── Turno.java
-│   │   │   │   ├── Rol.java                             # agregado
-│   │   │   │   ├── TipoTurno.java                       # agregado
-│   │   │   │   ├── Usuario.java                         # agregado
-|   |   |   |   └── TokenRecuperacionContrasena.java     # agregado
-│   │   │   ├── repository/         # Interfaces de acceso a datos
+│   │   │   │   ├── Rol.java                             
+│   │   │   │   ├── TipoTurno.java                       
+│   │   │   │   ├── Usuario.java
+│   │   │   │   ├── Sesion.java
+│   │   │   │   ├── TurnoAlumno.java
+│   │   │   │   ├── TurnoAlumnoId.java                           
+|   |   |   |   └── TokenRecuperacionContrasena.java
+│   │   │   ├── DTO/
+│   │   │   │   ├── AlumnoMiniDTO.java
+│   │   │   │   ├── LoginRequest.java
+│   │   │   │   ├── LoginResponse.java
+│   │   │   │   ├── LogoutResponse.java
+│   │   │   │   ├── RecuperarContrasenaDTO.java
+│   │   │   │   ├── TurnoRequestDTO.java
+│   │   │   │   ├── TurnoResponseDTO.java
+|   |   |   |   └── UsuarioDTO.java
+│   │   │   ├── repository/         
 │   │   │   |   ├── AlumnoRepository.java
 │   │   │   |   ├── AgendaRepository.java
 │   │   │   |   ├── EntrenadorRepository.java
@@ -85,13 +105,14 @@ backend/
 │   │   │   |   ├── EstadoRepository.java
 │   │   │   |   ├── SesionRepository.java                
 │   │   │   |   ├── TurnoRepository.java
-│   │   │   |   ├── RolRepository.java                   # agregado
-│   │   │   |   ├── TipoTurnoRepository.java             # agregado
-│   │   │   |   ├── UsuarioRepository.java               # agregado
-|   |   |   |   └── TokenRecuperacionContrasenaRepository.java   # agregado
+│   │   │   |   ├── TurnoAlumnoRepository.java
+│   │   │   |   ├── RolRepository.java                   
+│   │   │   |   ├── TipoTurnoRepository.java            
+│   │   │   |   ├── UsuarioRepository.java           
+|   |   |   |   └── TokenRecuperacionContrasenaRepository.java   
 |   |   |   |
 |   |   |   └── util/
-|   |   |        └── TokenUtil.java                    # agregado
+|   |   |        └── TokenUtil.java                    
 |   |   |
 │   │   └── resources/              
 │   │       ├── application.properties
