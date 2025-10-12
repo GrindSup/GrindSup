@@ -1,4 +1,5 @@
 ## 🗂️ Estructura del proyecto
+```.
 frontend/
 ├── .gitignore
 ├── eslint.config.js
@@ -7,23 +8,28 @@ frontend/
 ├── package-lock.json
 ├── vite.config.js
 ├── public/
-│   ├── vite.png
-│   └── react.svg
+│   └── vite.png
 ├── src/
 │   ├── App.css
 │   ├── App.jsx
 │   ├── index.css
 │   ├── main.jsx
 │   ├── assets/
+│   │   ├── react.png
 │   │   └── react.png
 │   ├── components/
 │   │   ├── AccionesFormulario.jsx
+│   │   ├── AlumnoList.jsx
 │   │   ├── DialogoConfirmacion.jsx
 │   │   ├── TablaDatos.jsx
+│   │   ├── Inicio.jsx
+│   │   ├── Login.jsx
+│   │   ├── Login.css
 │   │   ├── Footer.jsx
 │   │   └── Header.jsx
 │   ├── context/
 │   │   ├── AuthContext.jsx
+│   │   ├── auth.js
 │   │   ├── SnackbarContext.jsx
 │   │   └── context.md
 │   ├── layout/
@@ -34,12 +40,15 @@ frontend/
 │   ├── pages/
 │   │   ├── pages.md
 │   │   ├── Alumno/
-│   │   │   └── DetalleRegistrarAlumnoForm.jsx
+│   │   │   ├── EditarAlumno.jsx
+│   │   │   ├── PerfilAlumno.jsx
+│   │   │   └── RegistrarAlumnoForm.jsx
 │   │   ├── Ejercicios/
 │   │   │   ├── FormularioEjercicios.jsx
 │   │   │   └── ListaEjercicios.jsx
 │   │   ├── Entrenadores/
-│   │   │   └── FormularioEntrenadores.jsx
+│   │   │   ├── FormularioEntrenaodres.jsx
+│   │   │   └── ListaEntrenadores.jsx
 │   │   ├── Notificaciones/
 │   │   │   └── CentroNotificaciones.jsx
 │   │   ├── Planes/
@@ -54,14 +63,20 @@ frontend/
 │   │   ├── Tablero/
 │   │   │   └── PaginaTablero.jsx
 │   │   ├── TiposEntrenamiento/
-│   │   │   └── FormularioTipoEntrenamiento.jsx
+│   │   │   ├── FormularioTipoEntrenamiento.jsx
+│   │   │   └── ListaTiposEntrenamiento.jsx
 │   │   ├── Turnos/
 │   │   │   ├── CalendarioTurnos.jsx
+│   │   │   ├── DetalleTurno.jsx
+│   │   │   ├── ListaTurnos.jsx
+│   │   │   ├── RegistrarTurno.jsx
 │   │   │   └── FormularioTurno.jsx
 │   │   └── Usuarios/
 │   │       ├── DetalleUsuario.jsx
 │   │       ├── FormularioUsuario.jsx
 │   │       └── ListaUsuarios.jsx
+│   ├── InicioDashboard.jsx
+│   ├── pages.md
 │   ├── routes/
 │   │   └── router.jsx
 │   ├── services/
@@ -72,14 +87,19 @@ frontend/
 │   │   ├── rutinas.servicio.js
 │   │   ├── tipoEntrenamiento.servicio.js
 │   │   ├── turnos.servicio.js
+│   │   ├── alumno.js
+│   │   ├── clienteApi.js
+│   │   ├── entrenadores.servicio.js
+│   │   ├── service.md
 │   │   └── usuarios.servicio.js
-│   ├── styles/
-│   │   └── styles.md
+│   ├── config/
+│   │   └── axios.config.js
 │   └── theme/
-│       ├── theme.js
-│       ├── theme.md
-│       └── muiTheme.js
+        ├── theme.js
+        ├── theme.md
+        └── muiTheme.js
 
+```
 
 ## 🛠️ Dependencias principales 
 
