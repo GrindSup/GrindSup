@@ -1,92 +1,209 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Box, Button, Container, Heading, HStack, VStack, Input, Select,
-  Table, Thead, Tbody, Tr, Th, Td, Tag, Alert, AlertIcon, Text
+  Box,
+  Button,
+  Container,
+  Heading,
+  HStack,
+  Input,
+  Select,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  Text,
+  Tag,
+  Alert,
+  AlertIcon,
+  Spacer,
+  InputGroup,
+  InputLeftElement,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { listarTurnos } from "/src/services/turnos.servicio.js";
+import { SearchIcon, CalendarIcon, AddIcon } from "@chakra-ui/icons";
+import { listarTurnos } from "../../services/turnos.servicio.js";
+import { ensureEntrenadorId } from "../../context/auth.js";
 
-function fullName(a = {}) {
-  return `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim();
+function getTurnoEntrenadorId(t) {
+  return (
+    t?.entrenador?.id_entrenador ??
+    t?.entrenador?.id ??
+    t?.id_entrenador ??
+    t?.idEntrenador ??
+    t?.entrenadorId ??
+    t?.entrenador_id ??
+    null
+  );
 }
 
 export default function ListaTurnos() {
   const navigate = useNavigate();
-  const [turnos, setTurnos] = useState([]);
-  const [error, setError] = useState("");
 
-  // filtros
-  const [desde, setDesde] = useState(() => new Date().toISOString().slice(0, 10)); // hoy
+  const [entrenadorId, setEntrenadorId] = useState(null);
+  const [turnos, setTurnos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Inicializamos vacío para ver todos (pasados y futuros)
+  const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const [tipo, setTipo] = useState(""); // "grupal"/"individual" o vacío
+  const [tipo, setTipo] = useState("");
+  const [q, setQ] = useState("");
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
+      const id = await ensureEntrenadorId();
+      setEntrenadorId(id);
+
+      if (!id) {
+        setTurnos([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const { data } = await listarTurnos();
-        setTurnos(data || []);
-      } catch (e) {
-        console.error(e);
-        setError("No se pudieron cargar los turnos");
+        // usa /api/turnos/entrenador/{id}
+        const { data } = await listarTurnos(id, {
+          desde: desde || undefined,
+          hasta: hasta || undefined,
+          tipo: tipo || undefined,
+        });
+
+        const rows = Array.isArray(data) ? data : [];
+        setTurnos(rows);
+      } catch {
+        setTurnos([]);
+      } finally {
+        setLoading(false);
       }
     })();
-  }, []);
+  }, [desde, hasta, tipo]);
 
-  const filtrados = useMemo(() => {
-    const hoy0000 = new Date();
-    hoy0000.setHours(0, 0, 0, 0);
+  const normalizarTipo = (t) =>
+    (t?.nombre ?? t?.tipo ?? t ?? "").toString().trim().toLowerCase();
 
-    return (turnos || [])
-      // ocultar pasados
-      .filter(t => new Date(t.fecha) >= hoy0000)
-      // rango fecha
-      .filter(t => !desde || new Date(t.fecha) >= new Date(`${desde}T00:00:00`))
-      .filter(t => !hasta || new Date(t.fecha) <= new Date(`${hasta}T23:59:59`))
-      // tipo
-      .filter(t => !tipo || (t.tipo_turno || "").toLowerCase() === tipo)
-      // opcional: ordenar por fecha asc
-      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-  }, [turnos, desde, hasta, tipo]);
+  const view = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return turnos.filter((t) => {
+      if (!needle) return true;
+
+      const alumnos = Array.isArray(t.alumnos)
+        ? t.alumnos.map((a) => `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim()).join(" ")
+        : t.alumnosNombres ?? "";
+
+      // t.entrenador llega como string desde el backend
+      const entrenadorNombre = t?.entrenador ?? "";
+
+      const tipoStr = normalizarTipo(t.tipoTurno ?? t.tipo_turno);
+
+      const hay = [
+        alumnos,
+        entrenadorNombre,
+        tipoStr,
+        new Date(t.fecha).toLocaleDateString(),
+        new Date(t.fecha).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return hay.includes(needle);
+    });
+  }, [turnos, q]);
+
+  const fmtFecha = (iso) => new Date(iso).toLocaleDateString();
+  const fmtHora = (iso) =>
+    new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <Container maxW="6xl" py={8}>
-      <HStack justify="space-between" mb={6}>
-        <Heading size="lg" color="gray.900">Turnos</Heading>
-        <HStack>
-          <Button variant="solid" onClick={() => navigate("/turnos/calendario")} bg="#38A169" color="white">Calendario</Button>
-          <Button colorScheme="brand" onClick={() => navigate("/turnos/registrar")} bg="#38A169" color="white">
-            + Nuevo turno
-          </Button>
-        </HStack>
+    <Container maxW="7xl" py={8}>
+      {!entrenadorId && (
+        <Alert status="warning" mb={6} borderRadius="lg">
+          <AlertIcon />
+          Tu usuario no está vinculado a un entrenador. Por eso no se muestran turnos.
+        </Alert>
+      )}
+
+      <HStack mb={6} gap={3} wrap="wrap">
+        <Heading size="lg" color="gray.900">
+          Turnos
+        </Heading>
+        <Spacer />
+        <Button
+          leftIcon={<CalendarIcon />}
+          onClick={() => navigate("/turnos/calendario")}
+          bg="#38A169"
+          color="white"
+          isDisabled={!entrenadorId}
+        >
+          Calendario
+        </Button>
+        <Button
+          leftIcon={<AddIcon />}
+          onClick={() => navigate("/turnos/registrar")}
+          bg="#38A169"
+          color="white"
+          isDisabled={!entrenadorId}
+        >
+          + Nuevo turno
+        </Button>
       </HStack>
 
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mb={5}>
-        <VStack align="stretch" spacing={3}>
-          <HStack>
-            <Box flex="1">
-              <Text mb={1} fontSize="sm" color="gray.600">Desde</Text>
-              <Input type="date" value={desde} onChange={e => setDesde(e.target.value)} />
-            </Box>
-            <Box flex="1">
-              <Text mb={1} fontSize="sm" color="gray.600">Hasta</Text>
-              <Input type="date" value={hasta} onChange={e => setHasta(e.target.value)} />
-            </Box>
-            <Box w="220px">
-              <Text mb={1} fontSize="sm" color="gray.600">Tipo</Text>
-              <Select placeholder="Todos" value={tipo} onChange={e => setTipo(e.target.value)}>
-                <option value="individual">Individual</option>
-                <option value="grupal">Grupal</option>
-              </Select>
-            </Box>
-          </HStack>
-        </VStack>
-      </Box>
+      <HStack gap={3} mb={4} wrap="wrap">
+        <Box>
+          <Text fontSize="sm" mb={1}>
+            Desde
+          </Text>
+          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+        </Box>
 
-      {error && <Alert status="error" mb={4}><AlertIcon />{error}</Alert>}
+        <Box>
+          <Text fontSize="sm" mb={1}>
+            Hasta
+          </Text>
+          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+        </Box>
 
-      <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="white">
-        <Table size="md">
-          <Thead>
+        <Box>
+          <Text fontSize="sm" mb={1}>
+            Tipo
+          </Text>
+          <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="individual">Individual</option>
+            <option value="grupal">Grupal</option>
+          </Select>
+        </Box>
+
+        <Spacer />
+
+        <Box minW="280px" flex="1">
+          <Text fontSize="sm" mb={1}>
+            Buscar
+          </Text>
+          <InputGroup>
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.400" />
+            </InputLeftElement>
+            <Input
+              placeholder="Alumno, entrenador, tipo…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </InputGroup>
+        </Box>
+      </HStack>
+
+      <Box
+        borderWidth="1px"
+        borderRadius="lg"
+        bg="white"
+        overflow="hidden"
+        opacity={entrenadorId ? 1 : 0.6}
+      >
+        <Table variant="simple">
+          <Thead bg="gray.50">
             <Tr>
               <Th>Fecha</Th>
               <Th>Hora</Th>
@@ -96,42 +213,64 @@ export default function ListaTurnos() {
               <Th isNumeric>Acciones</Th>
             </Tr>
           </Thead>
+
           <Tbody>
-            {filtrados.map(t => {
-              const d = new Date(t.fecha);
-              const fecha = d.toLocaleDateString();
-              const hora = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            {!loading &&
+              view.map((t) => {
+                const tipoStr = normalizarTipo(t.tipoTurno ?? t.tipo_turno);
+                const color = tipoStr === "grupal" ? "purple" : "teal";
 
-              // alumnos ahora son objetos: armamos texto amigable
-              const alumnos = (t.alumnos || []);
-              const primeros = alumnos.slice(0, 3).map(fullName).filter(Boolean).join(", ");
-              const resto = alumnos.length > 3 ? `  +${alumnos.length - 3} más` : "";
+                const entrenadorNombre = t?.entrenador || "—";
 
-              return (
-                <Tr key={t.id_turno}>
-                  <Td>{fecha}</Td>
-                  <Td>{hora}</Td>
-                  <Td>
-                    <Tag colorScheme={(t.tipo_turno || "").toLowerCase() === "grupal" ? "purple" : "teal"}>
-                      {t.tipo_turno}
-                    </Tag>
-                  </Td>
-                  <Td>{t.entrenador}</Td>
-                  <Td>{primeros}{resto}</Td>
-                  <Td isNumeric>
-                    <Button size="sm" onClick={() => navigate(`/turnos/${t.id_turno}`)}>
-                      Editar
-                    </Button>
-                  </Td>
-                </Tr>
-              );
-            })}
+                const alumnosNombres = Array.isArray(t.alumnos)
+                  ? t.alumnos
+                      .map((a) => `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim())
+                      .join(", ")
+                  : t.alumnosNombres ?? "—";
+
+                return (
+                  <Tr key={t.id_turno}>
+                    <Td>{fmtFecha(t.fecha)}</Td>
+                    <Td>{fmtHora(t.fecha)}</Td>
+                    <Td>
+                      <Tag size="sm" colorScheme={color}>
+                        {tipoStr || "—"}
+                      </Tag>
+                    </Td>
+                    <Td>{entrenadorNombre}</Td>
+                    <Td>{alumnosNombres || "—"}</Td>
+                    <Td isNumeric>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/turnos/editar/${t.id_turno}`)}
+                      >
+                        Editar
+                      </Button>
+                    </Td>
+                  </Tr>
+                );
+              })}
+
+            {!loading && view.length === 0 && (
+              <Tr>
+                <Td colSpan={6}>
+                  <Text p={4} color="gray.500">
+                    No hay turnos con los filtros seleccionados.
+                  </Text>
+                </Td>
+              </Tr>
+            )}
+
+            {loading && (
+              <Tr>
+                <Td colSpan={6}>
+                  <Text p={4}>Cargando…</Text>
+                </Td>
+              </Tr>
+            )}
           </Tbody>
         </Table>
-
-        {filtrados.length === 0 && (
-          <Box p={6}><Text color="gray.500">No hay turnos con los filtros seleccionados.</Text></Box>
-        )}
       </Box>
     </Container>
   );

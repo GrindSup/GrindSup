@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map; // <-- IMPORT NECESARIO
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/turnos")
@@ -20,6 +18,26 @@ public class TurnoController {
 
     @Autowired
     private TurnoService turnoService;
+
+    // --- NUEVO ENDPOINT PARA FILTRAR POR ENTRENADOR ---
+    @GetMapping("/entrenador/{entrenadorId}")
+    public List<TurnoResponseDTO> getByEntrenador(
+            @PathVariable Long entrenadorId,
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta,
+            @RequestParam(required = false) String tipo) {
+
+        // Conversión básica de String a OffsetDateTime para filtros
+        OffsetDateTime desdeDT = (desde != null && !desde.isEmpty()) 
+                                ? OffsetDateTime.parse(desde + "T00:00:00Z") 
+                                : null;
+        OffsetDateTime hastaDT = (hasta != null && !hasta.isEmpty()) 
+                                ? OffsetDateTime.parse(hasta + "T23:59:59Z") 
+                                : null;
+
+        return turnoService.getTurnosByEntrenador(entrenadorId, desdeDT, hastaDT, tipo);
+    }
+    // ----------------------------------------------------
 
     @PostMapping
     public ResponseEntity<TurnoResponseDTO> createTurno(@RequestBody TurnoRequestDTO turnoDTO) {
@@ -32,7 +50,6 @@ public class TurnoController {
             @PathVariable Long turnoId,
             @RequestBody List<Long> alumnosIds) {
         return ResponseEntity.ok(turnoService.asignarAlumnos(turnoId, alumnosIds));
-
     }
 
     // Quitar 1 alumno
@@ -43,6 +60,8 @@ public class TurnoController {
         return ResponseEntity.ok(turnoService.quitarAlumno(turnoId, alumnoId));
     }
 
+    // 💡 IMPORTANTE: Si esta ruta se sigue usando en el frontend (ej. para admins),
+    // el servicio deberá usar la nueva consulta optimizada.
     @GetMapping
     public List<TurnoResponseDTO> getAll() {
         return turnoService.getAllTurnos();

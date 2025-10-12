@@ -1,174 +1,69 @@
-/* Fondo centrado */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #15803D;
 }
 
-/* Caja blanca centrada */
 .login-box {
-  background: white;
+  background: #fff;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 350px;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.15);
+  width: 360px;
   text-align: center;
 }
 
-/* Título */
-.login-title {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
+.login-title { font-size: 1.9rem; margin-bottom: .8rem; color:#1f2937; }
+.login-form { display:flex; flex-direction:column; gap:1rem; }
 
-/* Formulario */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Inputs */
 .login-input {
-  padding: 0.8rem;
-  border: 1px solid #bdc3c7;
-  border-radius: 8px;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
   font-size: 1rem;
+  transition: box-shadow .15s, border-color .15s;
 }
-
 .login-input:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.4);
+  border-color: #38A169;
+  box-shadow: 0 0 0 3px rgba(56,161,105,.25);
   outline: none;
 }
 
-/* Botón */
-.login-button {
-  padding: 0.8rem;
-  background-color: #38A169;
-  color: white;
-  font-weight: bold;
+.password-wrapper { position: relative; }
+.login-input-password { padding-right: 44px; }
+.toggle-visibility {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  background: transparent;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 18px;
+  line-height: 1;
 }
 
-.login-button:hover {
-  background-color: #27ae60;
-}
-
-.inicio-button {
-    margin-top: 20px;
-    padding: 0.8rem;
-    background-color: #2ecc71;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-    width: 200px;
-    margin-left: 1000px;
-}
-
-.inicio-button:hover {
-    background-color: #27ae60;
-}
-
-/* Error */
-.login-error {
-  margin-top: 1rem;
-  color: #e74c3c;
-  font-weight: bold;
-}
-
-/* Confirmación de cierre de sesión */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  width: 300px;
-  text-align: center;
-}
-
-.modal-box p {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
-  color: #2c3e50;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-around;
-  gap: 1rem;
-}
-
-.confirm-button,
-.cancel-button {
-  padding: 0.8rem 1.5rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.confirm-button {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.confirm-button:hover {
-  background-color: #c0392b;
-}
-
-.cancel-button {
-  background-color: #bdc3c7;
-  color: #2c3e50;
-}
-
-.cancel-button:hover {
-  background-color: #95a5a6;
-}
-.button-group {
-  display: flex;
-  justify-content: space-between; /* O 'center', 'flex-start', etc. */
-  gap: 10px; /* Espacio entre los botones */
-  width: 100%;
-}
-
+.button-group { display: flex; gap: 10px; }
 .login-button, .back-button {
-  flex-grow: 1; /* Hace que ambos botones ocupen el mismo espacio */
-  padding: 10px;
+  flex: 1;
+  padding: .85rem;
+  border-radius: 10px;
   border: none;
-  border-radius: 5px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 16px;
 }
+.login-button { background:#38A169; color:#fff; }
+.login-button:hover { background:#2f855a; }
+.back-button { background:#6c757d; color:#fff; text-align:center; }
+.back-button:hover { background:#5a6268; }
 
-.back-button {
-  background-color: #6c757d; /* Un color gris para diferenciarlo */
-  color: white;
-}
+.forgot-link { display:block; margin-top:.75rem; color:#2563eb; text-decoration:none; }
+.forgot-link:hover { text-decoration:underline; }
 
-.back-button:hover {
-  background-color: #5a6268;
-}
+.login-error { margin-top: .9rem; color:#e11d48; font-weight:700; }
+.as-link { text-decoration:none; }

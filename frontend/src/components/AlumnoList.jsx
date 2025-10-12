@@ -1,3 +1,4 @@
+// src/components/AlumnoList.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
@@ -9,13 +10,13 @@ import {
   Flex, Heading, HStack, IconButton, Input, InputGroup, InputLeftElement,
   SimpleGrid, Spacer, Spinner, Text, useToast, Tag, TagLabel, Badge,
   Select, Checkbox, AlertDialog, AlertDialogBody, AlertDialogContent,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Textarea, Center, Link,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, Textarea,
+  Center, Link, Alert, AlertIcon
 } from "@chakra-ui/react";
 import { getUsuario, getEntrenadorId } from "../context/auth.js";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
-// ... (el resto de tu código no cambia) ...
 /* ---- helpers JSON <-> items ---- */
 function parseNotes(raw) {
   if (!raw) return [];
@@ -27,15 +28,13 @@ function parseNotes(raw) {
         .filter(it => it.text);
     }
   } catch {}
-  // compat: viejo texto -> 1 ítem
   const t = String(raw).trim();
   return t ? [{ text: t, important: false }] : [];
 }
 function importantSummary(a) {
-  const imp = [
-    ...parseNotes(a.lesiones),
-    ...parseNotes(a.enfermedades),
-  ].filter(i => i.important).map(i => i.text);
+  const imp = [...parseNotes(a.lesiones), ...parseNotes(a.enfermedades)]
+    .filter(i => i.important)
+    .map(i => i.text);
   return imp;
 }
 
@@ -45,10 +44,8 @@ export default function AlumnoList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // expansión por tarjeta
   const [expanded, setExpanded] = useState(() => new Set());
 
-  // eliminar
   const [isOpen, setIsOpen] = useState(false);
   const [alumnoToDelete, setAlumnoToDelete] = useState(null);
   const [motivo, setMotivo] = useState("");
@@ -65,11 +62,18 @@ export default function AlumnoList() {
 
   const fetchAlumnos = async () => {
     try {
+      // Si NO hay entrenador → no traemos nada y mostramos empty state
+      if (!entrenadorId) {
+        setAlumnos([]);
+        return;
+      }
       const { data } = await axios.get(`${API}/alumnos`, {
-        params: entrenadorId ? { entrenadorId } : {},
+        params: { entrenadorId }, // si el backend lo ignora, filtramos abajo
       });
       const rows = Array.isArray(data) ? data : [];
-      const propios = entrenadorId ? rows.filter((a) => getAlumnoEntrenadorId(a) === entrenadorId) : rows;
+      const propios = rows.filter(
+        (a) => Number(getAlumnoEntrenadorId(a)) === Number(entrenadorId)
+      );
       setAlumnos(propios);
     } catch {
       toast({ title: "Error al cargar alumnos", status: "error", duration: 2000, isClosable: true });
@@ -88,9 +92,6 @@ export default function AlumnoList() {
   };
 
   useEffect(() => {
-    if (!entrenadorId) {
-      toast({ title: "No se encontró el entrenador de la sesión.", status: "warning" });
-    }
     fetchAlumnos();
     fetchEstados();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,7 +112,9 @@ export default function AlumnoList() {
     const payload = {
       ...alumnoActual,
       estado: { id_estado: Number(idEstado) },
-      entrenador: alumnoActual.entrenador ?? (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null),
+      entrenador:
+        alumnoActual.entrenador ??
+        (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null),
     };
 
     axios
@@ -184,14 +187,15 @@ export default function AlumnoList() {
 
   return (
     <Container maxW="7xl" py={8}>
+      {!entrenadorId && (
+        <Alert status="warning" mb={6} borderRadius="lg">
+          <AlertIcon />
+          Tu usuario no está vinculado a un entrenador. Por eso no se muestran alumnos.
+        </Alert>
+      )}
+
       <Flex gap={4} align="center" mb={6} wrap="wrap">
-        <Button
-          leftIcon={<ArrowBackIcon />}
-          onClick={() => navigate(-1)}
-          bg="#38A169"
-          color="white"
-          colorScheme="whiteAlpha"
-        >
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#38A169" color="white">
           Volver
         </Button>
         <Heading size="lg" color="gray.900">Lista de Alumnos</Heading>
@@ -209,28 +213,36 @@ export default function AlumnoList() {
             boxShadow="sm"
           />
         </InputGroup>
-        <Button colorScheme="teal" leftIcon={<AddIcon />} onClick={() => navigate("/alumno/registrar")} bg="#38A169" color="white">
+        <Button
+          colorScheme="teal"
+          leftIcon={<AddIcon />}
+          onClick={() => navigate("/alumno/registrar")}
+          bg="#38A169"
+          color="white"
+          isDisabled={!entrenadorId}
+        >
           Agregar Alumno
         </Button>
       </Flex>
 
       {filteredAlumnos.length === 0 ? (
         <Center py={10}>
-          <Text fontSize="lg" color="gray.500">No se encontraron alumnos.</Text>
+          <Text fontSize="lg" color="gray.500">
+            {entrenadorId ? "No se encontraron alumnos." : "No hay alumnos para mostrar."}
+          </Text>
         </Center>
       ) : (
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={5}>
           {filteredAlumnos.map((a) => {
             const isOpen = expanded.has(a.id_alumno);
             const imp = importantSummary(a);
-            const impText =
-              imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
+            const impText = imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
 
             return (
               <Card key={a.id_alumno} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
                 <CardHeader pb={3}>
                   <Flex align="center" gap={3}>
-                    <Link as={RouterLink} to={`/alumno/perfil/${a.id_alumno}`} flex="1" _hover={{ textDecor: 'none' }}>
+                    <Link as={RouterLink} to={`/alumno/perfil/${a.id_alumno}`} flex="1" _hover={{ textDecor: "none" }}>
                       <Box>
                         <Heading size="md">{a.nombre} {a.apellido}</Heading>
                         {imp.length > 0 && (
@@ -242,9 +254,7 @@ export default function AlumnoList() {
                           <Tag size="sm" colorScheme="teal" variant="subtle">
                             <TagLabel>DNI: {a.documento}</TagLabel>
                           </Tag>
-                          {a.estado?.nombre && (
-                            <Badge colorScheme="purple">{a.estado.nombre}</Badge>
-                          )}
+                          {a.estado?.nombre && <Badge colorScheme="purple">{a.estado.nombre}</Badge>}
                         </HStack>
                       </Box>
                     </Link>
@@ -332,21 +342,11 @@ export default function AlumnoList() {
                 Ingrese el motivo de la eliminación del alumno{" "}
                 <strong>{alumnoToDelete?.nombre} {alumnoToDelete?.apellido}</strong>:
               </Text>
-              <Textarea
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Ej: alumno no continúa…"
-              />
+              <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej: alumno no continúa…" />
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} colorScheme="whiteAlpha" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button 
-                bg="red.500"
-                color="white"
-                _hover={{ bg: "red.600" }}
-                onClick={confirmDelete} 
-                ml={3}
-              >
+              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>Cancelar</Button>
+              <Button bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={confirmDelete} ml={3}>
                 Eliminar
               </Button>
             </AlertDialogFooter>

@@ -1,113 +1,79 @@
-// Header.jsx
 import {
   Box, Container, Flex, HStack, Text, Button, IconButton, Menu,
-  MenuButton, MenuList, MenuItem, Modal, ModalOverlay, ModalContent,
-  ModalHeader, ModalBody, ModalFooter, useDisclosure, Image,
+  MenuButton, MenuList, MenuItem, useDisclosure, Image,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 
-export default function Header({ usuario, setUsuario, setShowLogin }) {
+export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
-  const isLoggedIn = !!usuario;
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const isLoggedIn = !!usuario;
 
-  const goHome = () => {
-    setShowLogin(false);
-    navigate("/");
-  };
-
-  const goLogin = () => {
-    setShowLogin(true);
-    navigate("/");
-  };
+  const go = (path) => navigate(path);
 
   const handleLogout = async () => {
     onClose();
     const sesionId = localStorage.getItem("sesionId");
-    if (sesionId) {
-      try {
+    try {
+      if (sesionId) {
         await fetch(`http://localhost:8080/api/usuarios/logout/${sesionId}`, { method: "PUT" });
-      } catch (err) {
-        console.error("Error de red al cerrar sesión:", err);
       }
+    } catch (e) {
+      console.error("Error al cerrar sesión", e);
+    } finally {
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sesionId");
+      setUsuario?.(null);
+      go("/login");
     }
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("sesionId");
-    setUsuario(null);
-    goHome();
   };
 
-  const menuItems = [
+  const items = [
     { label: "Inicio", path: "/" },
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
     { label: "Contacto", path: "/contacto" },
-    { label: "Turnos", path: "/turnos" },  // 👈 NUEVO
+    { label: "Turnos", path: "/turnos" },
   ];
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
         <Flex align="center" minH="64px">
-          {/* Logo */}
-          <Flex w={{ base: "auto", md: "220px" }} align="center">
-            <Image
-              src="/vite.png" 
-              alt="Logo de GrindSup"
-              boxSize="30px" 
-              objectFit="contain"
-            />
-            <Text
-              fontWeight="bold"
-              fontSize="xl"
-              color="brand.600"
-              _hover={{ cursor: "pointer", color: "brand.700" }}
-              onClick={goHome}
-            >
-                 GrindSup
-            </Text>
+          {/* Logo / Home */}
+          <Flex w={{ base: "auto", md: "220px" }} align="center" gap={2} onClick={() => go("/")} cursor="pointer">
+            <Image src="/vite.png" alt="GrindSup" boxSize="30px" />
+            <Text fontWeight="bold" fontSize="xl" color="green.700">GrindSup</Text>
           </Flex>
 
-          {/* Nav central: SOLO si está logueado */}
+          {/* Nav central (solo logueado) */}
           <Flex flex="1" justify="center">
             {isLoggedIn && (
               <>
-                <HStack
-                  spacing={8}
-                  display={{ base: "none", md: "flex" }}
-                  fontWeight={500}
-                  color="gray.700"
-                >
-                  {menuItems.map((item) => (
-                    <Text
-                      key={item.label}
-                      _hover={{ color: "brand.600", cursor: "pointer" }}
-                      onClick={item.path === "/" ? goHome : () => navigate(item.path)}
-                    >
-                      {item.label}
+                <HStack spacing={8} display={{ base: "none", md: "flex" }} fontWeight={500} color="gray.700">
+                  {items.map(i => (
+                    <Text key={i.path} _hover={{ color: "green.600", cursor: "pointer" }} onClick={() => go(i.path)}>
+                      {i.label}
                     </Text>
                   ))}
                 </HStack>
 
                 {/* Menú mobile */}
-                <Menu>
+                <Menu isOpen={isOpen} onClose={onClose}>
                   <MenuButton
                     as={IconButton}
                     icon={<HamburgerIcon />}
                     aria-label="Abrir menú"
                     display={{ base: "inline-flex", md: "none" }}
                     variant="ghost"
+                    onClick={onOpen}
                   />
                   <MenuList>
-                    {menuItems.map((item) => (
-                      <MenuItem
-                        key={item.label}
-                        onClick={item.path === "/" ? goHome : () => navigate(item.path)}
-                      >
-                        {item.label}
-                      </MenuItem>
+                    {items.map(i => (
+                      <MenuItem key={i.path} onClick={() => go(i.path)}>{i.label}</MenuItem>
                     ))}
+                    <MenuItem onClick={handleLogout} color="red.600">Cerrar sesión</MenuItem>
                   </MenuList>
                 </Menu>
               </>
@@ -117,29 +83,13 @@ export default function Header({ usuario, setUsuario, setShowLogin }) {
           {/* Botón derecho */}
           <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
             {!isLoggedIn ? (
-              <Button size="sm" colorScheme="brand" onClick={goLogin}>
+              <Button size="sm" colorScheme="green" onClick={() => go("/login")}>
                 Iniciar sesión
               </Button>
             ) : (
-              <>
-                <Button size="sm" colorScheme="red" onClick={onOpen}>
-                  Cerrar sesión
-                </Button>
-
-                <Modal isOpen={isOpen} onClose={onClose} isCentered>
-                  <ModalOverlay />
-                  <ModalContent>
-                    <ModalHeader>Confirmar cierre de sesión</ModalHeader>
-                    <ModalBody>¿Estás seguro de que quieres cerrar sesión?</ModalBody>
-                    <ModalFooter>
-                      <Button colorScheme="red" mr={3} onClick={handleLogout}>
-                        Sí
-                      </Button>
-                      <Button onClick={onClose}>No</Button>
-                    </ModalFooter>
-                  </ModalContent>
-                </Modal>
-              </>
+              <Button size="sm" colorScheme="red" onClick={handleLogout}>
+                Cerrar sesión
+              </Button>
             )}
           </Flex>
         </Flex>

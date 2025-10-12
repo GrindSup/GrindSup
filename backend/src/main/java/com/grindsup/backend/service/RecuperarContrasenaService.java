@@ -98,6 +98,7 @@ public class RecuperarContrasenaService {
 
         // Guardar la nueva contraseña en HASH (bcrypt)
         usuario.setContrasena(encoder.encode(nuevaPassword));
+        usuario.setUpdated_at(OffsetDateTime.now());
         usuarioRepository.save(usuario);
 
         // Marcar token como usado

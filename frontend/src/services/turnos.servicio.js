@@ -1,38 +1,84 @@
-// src/services/turnos.servicio.js
 import axios from "axios";
 
-// Normalizo la base para evitar dobles barras si viene con '/' al final
-const RAW_API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
-const API = RAW_API.replace(/\/+$/, "");
+// Base URL (env o fallback local)
+const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
-// Podés usar esta instancia si querés interceptores luego
-const http = axios.create({ baseURL: API });
+/**
+import axios from "axios";
+const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
-/** --- Catálogos --- */
-export const listarAlumnos = () => http.get("/alumnos");
-export const listarTiposTurno = () => http.get("/tipos-turno");
+// ----------------------------------------------------------------------------------
+// FUNCIONES NECESARIAS PARA DetalleTurno.jsx (NUEVAS)
+// ----------------------------------------------------------------------------------
 
-/** --- Turnos --- */
+/**
+ * Obtiene un turno específico por ID.
+ * Corresponde a GET /api/turnos/{id}
+ */
+export function obtenerTurno(id) {
+    return axios.get(`${API}/turnos/${id}`);
+}
 
-// Crea el turno SIN alumnos (DTO TurnoRequestDTO: entrenadorId, tipoTurnoId, fecha(ISO), estadoId)
-export const crearTurno = (payload) => http.post("/turnos", payload);
+/**
+ * Actualiza la fecha y hora de un turno.
+ * Corresponde a PUT /api/turnos/{id}/fecha
+ * @param {string} isoDateTime La nueva fecha en formato ISO (ej: "2025-10-10T15:00:00+00:00")
+ */
+export function actualizarFechaTurno(id, isoDateTime) {
+    // El backend espera un objeto JSON con la propiedad 'fecha'
+    return axios.put(`${API}/turnos/${id}/fecha`, { fecha: isoDateTime });
+}
 
-// Asigna alumnos a un turno existente (body = [ids])
-export const asignarAlumnos = (turnoId, alumnosIds = []) =>
-  http.post(`/turnos/${turnoId}/alumnos`, alumnosIds);
+/**
+ * Quita un alumno de un turno.
+ * Corresponde a DELETE /api/turnos/{turnoId}/alumnos/{alumnoId}
+ */
+export function quitarAlumnoDeTurno(turnoId, alumnoId) {
+    return axios.delete(`${API}/turnos/${turnoId}/alumnos/${alumnoId}`);
+}
 
-// Opcionales / utilitarios (por si los necesitás ahora o después)
-export const listarTurnos = () => http.get("/turnos");
-export const obtenerTurno = (id) => http.get(`/turnos/${id}`);
-export const eliminarTurno = (id) => http.delete(`/turnos/${id}`);
+// ----------------------------------------------------------------------------------
+// FUNCIONES YA EXISTENTES (CON CORRECCIÓN EN listarTurnos)
+// ----------------------------------------------------------------------------------
 
-// Quitar un alumno puntual de un turno (usa tu endpoint nuevo)
-export const quitarAlumnoDeTurno = (turnoId, alumnoId) =>
-  http.delete(`/turnos/${turnoId}/alumnos/${alumnoId}`);
-// ...lo que ya tenías arriba
+/**
+ * Lista los turnos filtrados por entrenador, fecha y tipo.
+ * ✅ CORRECCIÓN: Usa el endpoint /turnos/entrenador/{id} para aplicar el filtro en el backend.
+ */
+export function listarTurnos(entrenadorId, { desde, hasta, tipo } = {}) {
+    if (entrenadorId == null) {
+        return Promise.resolve({ data: [] });
+    }
 
-// Actualiza solo la fecha/hora de un turno (body: { fecha: ISOString })
-export const actualizarFechaTurno = (turnoId, isoFecha) =>
-  http.put(`/turnos/${turnoId}/fecha`, { fecha: isoFecha });
+    const params = {};
+    if (desde) params.desde = desde;
+    if (hasta) params.hasta = hasta;
+    if (tipo)  params.tipo  = tipo;
 
-// ...resto igual
+    // Llama a /api/turnos/entrenador/{id}
+    return axios.get(`${API}/turnos/entrenador/${entrenadorId}`, { params });
+}
+
+export function crearTurno(payload) {
+    return axios.post(`${API}/turnos`, payload);
+}
+
+export function asignarAlumnos(turnoId, ids) {
+    return axios.post(`${API}/turnos/${turnoId}/alumnos`, ids);
+}
+
+export function listarTiposTurno() {
+    return axios.get(`${API}/tipos-turno`);
+}
+
+/**
+ * Lista alumnos, enviando el ID del entrenador como parámetro de consulta.
+ */
+export function listarAlumnos(entrenadorId) {
+    const params = {};
+    if (entrenadorId != null) {
+        params.entrenadorId = entrenadorId;
+        params.entrenador   = entrenadorId;
+    }
+    return axios.get(`${API}/alumnos`, { params });
+}

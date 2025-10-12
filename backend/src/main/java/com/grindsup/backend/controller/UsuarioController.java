@@ -15,6 +15,7 @@ import com.grindsup.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -36,6 +37,9 @@ public class UsuarioController {
     @Autowired
     private SesionRepository sesionRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     // ===== CRUD básico =====
     @GetMapping
     public List<Usuario> getAll() {
@@ -49,6 +53,11 @@ public class UsuarioController {
 
     @PostMapping
     public Usuario create(@RequestBody Usuario usuario) {
+        // hash si viene contraseña en texto plano
+        if (usuario.getContrasena() != null && !usuario.getContrasena().isBlank()) {
+            usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+        }
+
         if (usuario.getRol() != null) {
             Rol rol = rolRepository.findById(usuario.getRol().getId_rol()).orElse(null);
             usuario.setRol(rol);
@@ -57,6 +66,10 @@ public class UsuarioController {
             Estado estado = estadoRepository.findById(usuario.getEstado().getId_estado()).orElse(null);
             usuario.setEstado(estado);
         }
+
+        if (usuario.getCreated_at() == null) usuario.setCreated_at(OffsetDateTime.now());
+        usuario.setUpdated_at(OffsetDateTime.now());
+
         return usuarioRepository.save(usuario);
     }
 
@@ -66,7 +79,16 @@ public class UsuarioController {
             existing.setNombre(usuario.getNombre());
             existing.setApellido(usuario.getApellido());
             existing.setCorreo(usuario.getCorreo());
-            existing.setContrasena(usuario.getContrasena());
+
+            // si viene contraseña nueva en texto plano => hashear
+            if (usuario.getContrasena() != null && !usuario.getContrasena().isBlank()) {
+                String nueva = usuario.getContrasena();
+                // si ya viene en formato bcrypt ($2...) no volvemos a hashear
+                if (!nueva.startsWith("$2a$") && !nueva.startsWith("$2b$") && !nueva.startsWith("$2y$")) {
+                    nueva = passwordEncoder.encode(nueva);
+                }
+                existing.setContrasena(nueva);
+            }
 
             if (usuario.getRol() != null) {
                 Rol rol = rolRepository.findById(usuario.getRol().getId_rol()).orElse(null);
@@ -78,6 +100,8 @@ public class UsuarioController {
             }
 
             existing.setFoto_perfil(usuario.getFoto_perfil());
+            existing.setUpdated_at(OffsetDateTime.now());
+
             return usuarioRepository.save(existing);
         }).orElse(null);
     }
@@ -88,17 +112,21 @@ public class UsuarioController {
         return "Usuario eliminado con id " + id;
     }
 
-    // ===== LOGIN =====
+    // ===== LOGIN con BCrypt =====
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo());
-
-        if (usuario == null) {
+        // Usamos ignore-case porque lo usa también el flujo de recuperación
+        var opt = usuarioRepository.findByCorreoIgnoreCase(request.getCorreo());
+        if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("Usuario no encontrado", false, null, null));
         }
 
-        if (!usuario.getContrasena().equals(request.getContrasena())) {
+        Usuario usuario = opt.get();
+
+        // <<<<<< CLAVE: comparar con BCrypt >>>>>>
+        boolean ok = passwordEncoder.matches(request.getContrasena(), usuario.getContrasena());
+        if (!ok) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("Contraseña incorrecta", false, null, null));
         }
@@ -115,13 +143,15 @@ public class UsuarioController {
                 usuario.getId_usuario(),
                 usuario.getNombre(),
                 usuario.getApellido(),
-                usuario.getCorreo());
+                usuario.getCorreo()
+        );
 
         LoginResponse respuesta = new LoginResponse(
                 "Sesión iniciada correctamente",
                 true,
                 sesion.getId_sesion(),
-                usuarioDTO);
+                usuarioDTO
+        );
 
         return ResponseEntity.ok(respuesta);
     }

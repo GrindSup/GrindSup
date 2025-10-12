@@ -1,55 +1,51 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import api from "../config/axios.config";
 import "./Login.css";
 
-export default function Login({ setUsuario, onVolverClick }) {
+export default function Login({ setUsuario }) {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState(false);
   const [errorMensaje, setErrorMensaje] = useState("");
-
   const navigate = useNavigate();
 
   const validar = async (e) => {
     e.preventDefault();
+    setError(false);
+    setErrorMensaje("");
 
-    if (!correo.trim() || !contrasena.trim()) {
+    const correoLimpio = (correo || "").trim();
+    if (!correoLimpio || !contrasena) {
       setError(true);
       setErrorMensaje("Faltan datos por completar");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/usuarios/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo, contrasena }),
+      const { data } = await api.post("/api/usuarios/login", {
+        correo: correoLimpio,
+        contrasena,
       });
 
-      const data = await response.json();
-
-      if (data.exito) {
-        setError(false);
+      if (data?.exito) {
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
-        setUsuario(data.usuario);
         localStorage.setItem("sesionId", data.idSesion);
+        setUsuario?.(data.usuario);
         navigate("/");
       } else {
         setError(true);
-        setErrorMensaje(data.mensaje);
+        setErrorMensaje(data?.mensaje ?? "Credenciales inválidas");
       }
     } catch (err) {
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.mensaje;
+      if (status === 401) setErrorMensaje(msg ?? "Contraseña incorrecta");
+      else if (status === 404) setErrorMensaje(msg ?? "Usuario no encontrado");
+      else setErrorMensaje("Error al conectar con el servidor. Intente nuevamente.");
       setError(true);
-      setErrorMensaje("Error al conectar con el servidor. Intente nuevamente.");
-      console.error("Error en la petición:", err);
     }
-
-    setCorreo("");
-    setContrasena("");
-  };
-  
-  const handleVolver = () => {
-    onVolverClick();
   };
 
   return (
@@ -64,22 +60,38 @@ export default function Login({ setUsuario, onVolverClick }) {
             onChange={(e) => setCorreo(e.target.value)}
             name="correo"
             className="login-input"
+            autoComplete="username"
           />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={contrasena}
-            onChange={(e) => setContrasena(e.target.value)}
-            name="contrasena"
-            className="login-input"
-          />
-          <div className="button-group">
-            <button type="submit" className="login-button">Iniciar Sesión</button>
-            <button type="button" className="back-button" onClick={handleVolver}>
-              Volver
+
+          <div className="password-wrapper">
+            <input
+              type={showPwd ? "text" : "password"}
+              placeholder="Contraseña"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              name="contrasena"
+              className="login-input login-input-password"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              className="toggle-visibility"
+              aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
+              onClick={() => setShowPwd((v) => !v)}
+              title={showPwd ? "Ocultar" : "Mostrar"}
+            >
+              {showPwd ? "🙈" : "👁️"}
             </button>
           </div>
+
+          <div className="button-group">
+            <button type="submit" className="login-button">Iniciar Sesión</button>
+            <Link to="/" className="back-button as-link">Volver</Link>
+          </div>
         </form>
+
+        <Link to="/forgot" className="forgot-link">¿Olvidaste tu contraseña?</Link>
+
         {error && <p className="login-error">{errorMensaje}</p>}
       </div>
     </div>

@@ -10,18 +10,18 @@ const theme = extendTheme({
   styles: {
     global: {
       "html, body, #root": { height: "100%" },
-      // 👇 Fondo verde brillante (NO gradientes)
-      body: { bg: "#15803D", color: "gray.800" },
+      // 👇 cuerpo en BLANCO; el panel verde lo damos en el componente Inicio
+      body: { bg: "white", color: "gray.800" },
     },
   },
   colors: {
     brand: {
-      50: "#EAF7F0",
+      50:  "#EAF7F0",
       100: "#D6F0E1",
       200: "#AEE0C4",
       300: "#86D1A7",
       400: "#5EC189",
-      500: "#2F855A", // botón principal
+      500: "#2F855A",
       600: "#2B6B4B",
       700: "#22543D",
       800: "#1C4532",
@@ -53,8 +53,9 @@ const theme = extendTheme({
     Button: {
       baseStyle: { borderRadius: "lg", fontWeight: 600 },
       variants: {
-        solid: { bg: "brand.500", _hover: { bg: "brand.600" } },
-        ghost: { _hover: { bg: "gray.50" } },
+        solid:  { bg: "brand.500", _hover: { bg: "brand.600" } },
+        ghost:  { _hover: { bg: "gray.50" } },
+        outline:{ _hover: { bg: "blackAlpha.50" } },
       },
     },
   },

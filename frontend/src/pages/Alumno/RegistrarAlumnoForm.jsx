@@ -1,9 +1,10 @@
+// src/pages/Alumno/RegistrarAlumnoForm.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem,
   Heading, Input, Stack, Text, useToast, FormControl, FormLabel,
   FormErrorMessage, Spinner, Menu, MenuButton, MenuList, MenuItem,
-  Checkbox, HStack, IconButton, Divider, Badge
+  Checkbox, HStack, IconButton, Divider, Badge, Alert, AlertIcon
 } from "@chakra-ui/react";
 import { ChevronDownIcon, AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { getUsuario, getEntrenadorId } from "../../context/auth.js";
@@ -23,14 +24,13 @@ export default function RegistrarAlumnoForm({
   apiBaseUrl = API,
   usarMock = false,
 }) {
-
   const navigate = useNavigate();
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const usuario = getUsuario();
-  const entrenadorId = getEntrenadorId(usuario);
+  const entrenadorId = getEntrenadorId(usuario); // si es null, mostramos aviso y bloqueamos submit
 
   const [form, setForm] = useState({
     nombre: "", apellido: "", documento: "", fechaNac: "",
@@ -92,7 +92,6 @@ export default function RegistrarAlumnoForm({
 
   const buildPayload = () => {
     const entrenadorRef = entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null;
-
     return {
       nombre: form.nombre.trim(),
       apellido: form.apellido.trim(),
@@ -120,12 +119,26 @@ export default function RegistrarAlumnoForm({
       return;
     }
     if (!entrenadorId) {
-      toast({ status: "error", title: "Sesión inválida", description: "No se encontró el entrenador logueado.", position: "top" });
+      toast({
+        status: "warning",
+        title: "No hay entrenador asociado a la sesión",
+        description: "Configurá tu entrenador antes de registrar alumnos.",
+        position: "top",
+      });
       return;
     }
 
     setSubmitting(true);
     try {
+      // ✅ pre-check para evitar 409 por documento duplicado
+      const dupRes = await fetch(
+        `${apiBaseUrl}/alumnos?documento=${encodeURIComponent(form.documento.trim())}`
+      );
+      const posibles = await dupRes.json();
+      if (Array.isArray(posibles) && posibles.length > 0) {
+        throw new Error("El documento ya está registrado.");
+      }
+
       const payload = buildPayload();
 
       if (usarMock) {
@@ -138,7 +151,10 @@ export default function RegistrarAlumnoForm({
         });
         if (!res.ok) {
           let msg = "Error al registrar";
-          try { const j = await res.json(); if (j?.message) msg = j.message; } catch {}
+          try {
+            const j = await res.json();
+            if (j?.message) msg = j.message;
+          } catch {}
           throw new Error(msg);
         }
         await res.json();
@@ -147,30 +163,43 @@ export default function RegistrarAlumnoForm({
       toast({ status: "success", title: "Alumno registrado", position: "top" });
       navigate("/alumnos");
     } catch (err) {
-      toast({ status: "error", title: "No se pudo registrar", description: err.message, position: "top" });
+      toast({
+        status: "error",
+        title: "No se pudo registrar",
+        description: err.message,
+        position: "top",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const addItem = (which) => {
-    (which === "les") ? setLesiones((p) => [...p, { text: "", important: false }])
-                      : setEnfermedades((p) => [...p, { text: "", important: false }]);
+    which === "les"
+      ? setLesiones((p) => [...p, { text: "", important: false }])
+      : setEnfermedades((p) => [...p, { text: "", important: false }]);
   };
   const setItem = (which, idx, patch) => {
-    (which === "les")
-      ? setLesiones(p => p.map((it,i)=> i===idx? {...it, ...patch}: it))
-      : setEnfermedades(p => p.map((it,i)=> i===idx? {...it, ...patch}: it));
+    which === "les"
+      ? setLesiones((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
+      : setEnfermedades((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
   const removeItem = (which, idx) => {
-    (which === "les")
-      ? setLesiones(p => p.filter((_,i)=> i!==idx))
-      : setEnfermedades(p => p.filter((_,i)=> i!==idx));
+    which === "les"
+      ? setLesiones((p) => p.filter((_, i) => i !== idx))
+      : setEnfermedades((p) => p.filter((_, i) => i !== idx));
   };
 
   return (
     <Box py={{ base: 8, md: 12 }}>
       <Container maxW="container.sm">
+        {!entrenadorId && (
+          <Alert status="warning" mb={4} borderRadius="lg">
+            <AlertIcon />
+            Tu usuario no está vinculado a un entrenador. Definilo y volvé a intentar.
+          </Alert>
+        )}
+
         <Card>
           <CardHeader textAlign="center" pb={0}>
             <Heading size="lg">Registrar Alumno</Heading>
@@ -178,6 +207,7 @@ export default function RegistrarAlumnoForm({
               Por favor, complete las casillas obligatorias para continuar.
             </Text>
           </CardHeader>
+
           <CardBody pt={6} px={{ base: 6, md: 10 }} pb={8}>
             <Box as="form" onSubmit={onSubmit}>
               <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
@@ -248,7 +278,12 @@ export default function RegistrarAlumnoForm({
                           </MenuList>
                         </Menu>
                       )}
-                      <Input name="contactoNumero" placeholder="123456789" value={form.contactoNumero} onChange={handleChange} />
+                      <Input
+                        name="contactoNumero"
+                        placeholder="123456789"
+                        value={form.contactoNumero}
+                        onChange={handleChange}
+                      />
                     </Stack>
                   </FormControl>
                 </GridItem>
@@ -261,18 +296,19 @@ export default function RegistrarAlumnoForm({
                       <Input
                         placeholder="Detalle de la lesión…"
                         value={it.text}
-                        onChange={(e)=>setItem("les", idx, { text: e.target.value })}
+                        onChange={(e) => setItem("les", idx, { text: e.target.value })}
                       />
                       <Checkbox
                         isChecked={it.important}
-                        onChange={(e)=>setItem("les", idx, { important: e.target.checked })}
+                        onChange={(e) => setItem("les", idx, { important: e.target.checked })}
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("les", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
+
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <Divider />
                 </GridItem>
@@ -285,15 +321,15 @@ export default function RegistrarAlumnoForm({
                       <Input
                         placeholder="Detalle de la enfermedad…"
                         value={it.text}
-                        onChange={(e)=>setItem("dis", idx, { text: e.target.value })}
+                        onChange={(e) => setItem("dis", idx, { text: e.target.value })}
                       />
                       <Checkbox
                         isChecked={it.important}
-                        onChange={(e)=>setItem("dis", idx, { important: e.target.checked })}
+                        onChange={(e) => setItem("dis", idx, { important: e.target.checked })}
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("dis", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
@@ -313,11 +349,7 @@ export default function RegistrarAlumnoForm({
                 <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10}>
                   Registrar
                 </Button>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => navigate(-1)}
-                >
+                <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancelar
                 </Button>
               </Stack>
@@ -333,7 +365,9 @@ function SectionHeader({ title, onAdd }) {
   return (
     <HStack justify="space-between">
       <FormLabel m={0}>{title}</FormLabel>
-      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd}>Agregar</Button>
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd}>
+        Agregar
+      </Button>
     </HStack>
   );
 }
