@@ -7,8 +7,8 @@ import {
 import { AddIcon } from '@chakra-ui/icons'; 
 import axiosInstance from '../../config/axios.config';
 import { useNavigate } from 'react-router-dom';
+import BotonVolver from '../../components/BotonVolver.jsx';
 import { HStack } from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
 
 export default function ListaEjercicios() {
     const [testData, setTestData] = useState(null);
@@ -37,27 +37,19 @@ export default function ListaEjercicios() {
         }
     };
     
-    return (
-        <Container maxW="container.lg" py={10}>
+return (
+        <Container maxW="7xl" py={10}>
             <Box>
+                {/* --- CABECERA --- */}
                 <Flex justifyContent="space-between" alignItems="center" mb={6}>
-                    <Heading as="h1" size="xl">
-                        Lista de Ejercicios
-                    </Heading>
+                    <HStack spacing={4} alignItems="center">
+                        <BotonVolver />
+                        <Heading as="h1" size="xl">
+                            Lista de Ejercicios
+                        </Heading>
+                    </HStack>
                     
-                    {/* --- GRUPO DE BOTONES --- */}
                     <HStack spacing={4}>
-                        {/* --- BOTÓN VOLVER (NUEVO) --- */}
-                        <Button
-                            onClick={() => navigate(-1)} 
-                            leftIcon={<ArrowBackIcon />}
-                            variant="ghost" 
-                            
-                        >
-                            Volver
-                        </Button>
-
-                        {/* --- BOTÓN NUEVO EJERCICIO --- */}
                         <Link to="/ejercicio/registrar">
                             <Button
                                 leftIcon={<AddIcon />}

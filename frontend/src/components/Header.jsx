@@ -3,10 +3,11 @@ import {
   MenuButton, MenuList, MenuItem, useDisclosure, Image,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLoggedIn = !!usuario;
 
@@ -85,9 +86,11 @@ export default function Header({ usuario, setUsuario }) {
           {/* Botón derecho */}
           <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
             {!isLoggedIn ? (
-              <Button size="sm" colorScheme="green" onClick={() => go("/login")}>
-                Iniciar sesión
-              </Button>
+              location.pathname !== '/login' && (
+                <Button size="sm" colorScheme="green" onClick={() => go("/login")}>
+                  Iniciar sesión
+                </Button>
+              )
             ) : (
               <Button size="sm" colorScheme="red" onClick={handleLogout}>
                 Cerrar sesión

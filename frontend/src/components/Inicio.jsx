@@ -1,16 +1,17 @@
 import {
   Box, Container, Heading, Text, Button, Stack, Grid, Card, CardHeader,
-  CardBody, Icon, Image
+  CardBody, Icon, Image, Flex // 1. Se agrega Flex para el layout
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { MdPeople, MdEvent, MdFitnessCenter, MdDashboard } from "react-icons/md";
+import BotonVolver from "./BotonVolver";
 
 export default function Inicio({ usuario }) {
   const isLoggedIn = !!usuario || !!localStorage.getItem("usuario");
   return isLoggedIn ? <InicioPrivado /> : <InicioPublico />;
 }
 
-/* === Público: hero verde sobre fondo blanco === */
+/* === Público: hero verde sobre fondo blanco === */ 
 function InicioPublico() {
   const features = [
     { t: "Gestioná alumnos", d: "Altas, edición y seguimiento." },
@@ -94,9 +95,12 @@ function InicioPrivado() {
     <Box bg="brand.700" py={{ base: 8, md: 10 }}>
       <Container maxW="7xl">
         <Box bg="white" borderRadius="2xl" boxShadow="xl" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
-          <Heading size="lg" textAlign="center" mb={8} color="gray.900" fontWeight={800}>
-            ¡Hola! <Text as="span" fontWeight="semibold">¿Qué querés hacer hoy?</Text>
-          </Heading>
+          <Flex justifyContent="space-between" alignItems="center" mb={8}>
+            <Heading size="lg" color="gray.900" fontWeight={800}>
+              ¡Hola! <Text as="span" fontWeight="semibold">¿Qué querés hacer hoy?</Text>
+            </Heading>
+            <BotonVolver />
+          </Flex>
 
           <Grid templateColumns={{ base: "1fr", md: "repeat(4, 1fr)" }} gap={6}>
             {items.map((it) => (

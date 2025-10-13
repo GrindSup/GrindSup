@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
-  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon, ArrowBackIcon,
+  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon,
 } from "@chakra-ui/icons";
 import {
   Box, Button, Card, CardBody, CardHeader, CardFooter, Collapse, Container,
@@ -14,6 +14,7 @@ import {
   Center, Link, Alert, AlertIcon
 } from "@chakra-ui/react";
 import { getUsuario, getEntrenadorId } from "../context/auth.js";
+import BotonVolver from "../components/BotonVolver";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
@@ -195,9 +196,7 @@ export default function AlumnoList() {
       )}
 
       <Flex gap={4} align="center" mb={6} wrap="wrap">
-        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#38A169" color="white">
-          Volver
-        </Button>
+        <BotonVolver />
         <Heading size="lg" color="gray.900">Lista de Alumnos</Heading>
         <Spacer />
         <InputGroup w={{ base: "100%", sm: "360px" }}>

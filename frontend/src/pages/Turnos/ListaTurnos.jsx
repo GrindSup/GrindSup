@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { SearchIcon, CalendarIcon, AddIcon } from "@chakra-ui/icons";
 import { listarTurnos } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
+import BotonVolver from "../../components/BotonVolver.jsx";
 
 function getTurnoEntrenadorId(t) {
   return (
@@ -126,6 +127,7 @@ export default function ListaTurnos() {
       )}
 
       <HStack mb={6} gap={3} wrap="wrap">
+        <BotonVolver />
         <Heading size="lg" color="gray.900">
           Turnos
         </Heading>
