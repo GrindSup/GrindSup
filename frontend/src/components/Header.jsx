@@ -33,9 +33,10 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Inicio", path: "/" },
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
-    { label: "Contacto", path: "/contacto" },
     { label: "Turnos", path: "/turnos" },
     { label: "Ejercicios", path: "/ejercicios" },
+    { label: "Contacto", path: "/contacto" },
+    { label: "Visualizar Ejercicio", path: "/ejercicio/visualizar" } // Ejemplo de ruta para visualizar un ejercicio
   ];
 
   return (

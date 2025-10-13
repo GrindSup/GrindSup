@@ -21,6 +21,7 @@ import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -96,6 +97,10 @@ export default function App() {
               <Route
                 path="/ejercicio/registrar"
                 element={usuario ? <RegistrarEjercicio /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/ejercicio/visualizar"
+                element={usuario ? <DetalleEjercicio /> : <Navigate to="/login" replace />}
               />
 
               <Route path="*" element={<Navigate to="/" replace />} />

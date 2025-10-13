@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Importante para la navegación
+import { Link } from 'react-router-dom'; 
 import {
   Box, Button, Container, Heading, Flex,
   Alert, AlertIcon, Spinner, Text,
-} from '@chakra-ui/react'; // Componentes para la interfaz
-import { AddIcon } from '@chakra-ui/icons'; // Ícono para el botón
+} from '@chakra-ui/react'; 
+import { AddIcon } from '@chakra-ui/icons'; 
 import axiosInstance from '../../config/axios.config';
+import { useNavigate } from 'react-router-dom';
+import { HStack } from '@chakra-ui/react';
+import { ArrowBackIcon } from '@chakra-ui/icons';
 
 export default function ListaEjercicios() {
     const [testData, setTestData] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    const navigate = useNavigate();
 
     useEffect(() => {
         probarConexion();
@@ -31,28 +36,38 @@ export default function ListaEjercicios() {
             setLoading(false);
         }
     };
-
-    // La lógica de carga y error se mantiene, pero la mostramos más abajo
     
     return (
         <Container maxW="container.lg" py={10}>
             <Box>
-                {/* --- CABECERA CON TÍTULO Y BOTÓN --- */}
                 <Flex justifyContent="space-between" alignItems="center" mb={6}>
                     <Heading as="h1" size="xl">
                         Lista de Ejercicios
                     </Heading>
                     
-                    {/* --- BOTÓN QUE NAVEGA A LA RUTA DE REGISTRO --- */}
-                    <Link to="/ejercicio/registrar">
+                    {/* --- GRUPO DE BOTONES --- */}
+                    <HStack spacing={4}>
+                        {/* --- BOTÓN VOLVER (NUEVO) --- */}
                         <Button
-                            leftIcon={<AddIcon />}
-                            colorScheme="brand"
-                            variant="solid"
+                            onClick={() => navigate(-1)} 
+                            leftIcon={<ArrowBackIcon />}
+                            variant="ghost" 
+                            
                         >
-                            Nuevo Ejercicio
+                            Volver
                         </Button>
-                    </Link>
+
+                        {/* --- BOTÓN NUEVO EJERCICIO --- */}
+                        <Link to="/ejercicio/registrar">
+                            <Button
+                                leftIcon={<AddIcon />}
+                                colorScheme="brand"
+                                variant="solid"
+                            >
+                                Nuevo Ejercicio
+                            </Button>
+                        </Link>
+                    </HStack>
                 </Flex>
 
                 {/* --- CONTENIDO PRINCIPAL --- */}
