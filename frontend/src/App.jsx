@@ -16,9 +16,11 @@ import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
 import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio";
 
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
+import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -86,6 +88,14 @@ export default function App() {
               <Route
                 path="/dashboard"
                 element={usuario ? <InicioDashboard /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/ejercicios"
+                element={usuario ? <ListaEjercicios /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/ejercicio/registrar"
+                element={usuario ? <RegistrarEjercicio /> : <Navigate to="/login" replace />}
               />
 
               <Route path="*" element={<Navigate to="/" replace />} />
