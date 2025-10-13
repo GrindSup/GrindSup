@@ -16,45 +16,57 @@ const crearEjercicio = async (payload) => {
 export default function RegistrarEjercicio() {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [grupoMuscular, setGrupoMuscular] = useState("");
+  const [grupoMuscularPrincipal, setGrupoMuscularPrincipal] = useState([""]);
+  const [grupoMuscularSecundario, setGrupoMuscularSecundario] = useState([""]);
   const [dificultad, setDificultad] = useState("");
-  
-
   const [equipamiento, setEquipamiento] = useState([""]); 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
-  const todasLasOpciones = [
-    "Peso corporal", "Bandas elásticas", "Mancuernas", 
-    "Escalón", "Pesa rusa", "Máquinas", 
-    "Rodillo de abdominales", "Pelota"
+  const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+  const todosLosEquipamientos = ["Banda elástica", "Banco inclinado", "Barra", 
+    "Camilla de Isquios", "Mancuernas", "Máquina hack", "Máquina Smith", 
+    "Polea", "Prensa", "Silla de Cuádriceps", "Silla de Isquios", "Step"
   ];
 
-  const handleEquipamientoChange = (index, value) => {
-    const nuevosEquipamientos = [...equipamiento];
-    nuevosEquipamientos[index] = value;
-    setEquipamiento(nuevosEquipamientos);
+  const handleListChange = (setter) => (index, value) => {
+    setter(prev => {
+      const newList = [...prev];
+      newList[index] = value;
+      return newList;
+    });
   };
 
-  const handleAddEquipamiento = () => {
-    setEquipamiento([...equipamiento, ""]);
+  const handleAddListItem = (setter) => () => {
+    setter(prev => [...prev, ""]);
   };
 
-  const handleRemoveEquipamiento = (index) => {
-    if (equipamiento.length === 1) {
-      setEquipamiento([""]);
-    } else {
-      setEquipamiento(equipamiento.filter((_, i) => i !== index));
-    }
+  const handleRemoveListItem = (setter) => (index) => {
+    setter(prev => {
+      if (prev.length === 1) return [""];
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
+  const handleGrupoPrincipalChange = handleListChange(setGrupoMuscularPrincipal);
+  const handleAddGrupoPrincipal = handleAddListItem(setGrupoMuscularPrincipal);
+  const handleRemoveGrupoPrincipal = handleRemoveListItem(setGrupoMuscularPrincipal);
+
+  const handleGrupoSecundarioChange = handleListChange(setGrupoMuscularSecundario);
+  const handleAddGrupoSecundario = handleAddListItem(setGrupoMuscularSecundario);
+  const handleRemoveGrupoSecundario = handleRemoveListItem(setGrupoMuscularSecundario);
+
+  const handleEquipamientoChange = handleListChange(setEquipamiento);
+  const handleAddEquipamiento = handleAddListItem(setEquipamiento);
+  const handleRemoveEquipamiento = handleRemoveListItem(setEquipamiento);
 
   const resetForm = () => {
     setNombre("");
     setDescripcion("");
-    setGrupoMuscular("");
+    setGrupoMuscularPrincipal([""]);
+    setGrupoMuscularSecundario([""]);
     setDificultad("");
     setEquipamiento([""]);
   };
@@ -63,17 +75,20 @@ export default function RegistrarEjercicio() {
     e.preventDefault();
     setError("");
     setMsg("");
-
-    if (!nombre || !grupoMuscular || !dificultad) {
-      return setError("Nombre, grupo muscular y dificultad son obligatorios.");
+    
+    const musculosPrincipalesFinal = grupoMuscularPrincipal.filter(Boolean);
+    if (!nombre || musculosPrincipalesFinal.length === 0 || !dificultad) {
+      return setError("Nombre, al menos un grupo muscular principal y dificultad son obligatorios.");
     }
     
-    const equipamientoFinal = equipamiento.filter(item => item !== "");
+    const equipamientoFinal = equipamiento.filter(Boolean);
+    const musculosSecundariosFinal = grupoMuscularSecundario.filter(Boolean);
 
     const payload = {
       nombre,
       descripcion,
-      grupoMuscular,
+      grupoMuscularPrincipal: musculosPrincipalesFinal,
+      grupoMuscularSecundario: musculosSecundariosFinal,
       dificultad,
       equipamiento: equipamientoFinal,
     };
@@ -90,6 +105,8 @@ export default function RegistrarEjercicio() {
     }
   };
 
+  const musculosPrincipalesSeleccionados = grupoMuscularPrincipal.filter(Boolean);
+
   return (
     <Container maxW="lg" py={10}>
       <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white">
@@ -97,50 +114,100 @@ export default function RegistrarEjercicio() {
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={5} align="stretch">
-            <FormControl isRequired><FormLabel>Nombre del Ejercicio</FormLabel><Input type="text" placeholder="Ej: Sentadillas con barra" value={nombre} onChange={(e) => setNombre(e.target.value)} /></FormControl>
-            <FormControl><FormLabel>Descripción</FormLabel><Textarea placeholder="Describe la técnica..." value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></FormControl>
-            <FormControl isRequired><FormLabel>Grupo Muscular Principal</FormLabel><Select placeholder="Seleccione un grupo" value={grupoMuscular} onChange={(e) => setGrupoMuscular(e.target.value)}><option value="Brazos">Brazos</option><option value="Espalda">Espalda</option><option value="Piernas">Piernas</option><option value="Abdominales">Abdominales</option><option value="Todo el cuerpo">Todo el cuerpo</option></Select></FormControl>
-            <FormControl isRequired><FormLabel>Dificultad</FormLabel><Select placeholder="Seleccione la dificultad" value={dificultad} onChange={(e) => setDificultad(e.target.value)}><option value="principiante">Principiante</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option></Select></FormControl>
+            <FormControl isRequired>
+                <FormLabel>Nombre del Ejercicio</FormLabel>
+                <Input 
+                    type="text" 
+                    placeholder="Ej: Sentadillas con barra" 
+                    value={nombre} 
+                    onChange={(e) => setNombre(e.target.value)} 
+                />
+            </FormControl>
 
             <FormControl>
-              <FormLabel>Equipamiento Necesario</FormLabel>
+                <FormLabel>Descripción</FormLabel>
+                <Textarea 
+                    placeholder="Describe la técnica..." 
+                    value={descripcion} 
+                    onChange={(e) => setDescripcion(e.target.value)} 
+                />
+            </FormControl>
+
+            {/* --- Grupo Muscular Principal (Modificado) --- */}
+            <FormControl isRequired>
+              <FormLabel>Grupo Muscular Principal</FormLabel>
+              <VStack align="stretch" spacing={3}>
+                {grupoMuscularPrincipal.map((itemSeleccionado, index) => {
+                  const opcionesDisponibles = todosLosMusculos.filter(
+                    op => !grupoMuscularPrincipal.includes(op) || op === itemSeleccionado
+                  );
+
+                  return (
+                    <HStack key={index}>
+                      <Select placeholder="Seleccione un grupo" value={itemSeleccionado} onChange={(e) => handleGrupoPrincipalChange(index, e.target.value)}>
+                        {opcionesDisponibles.map(op => <option key={op} value={op}>{op}</option>)}
+                      </Select>
+                      <IconButton icon={<DeleteIcon />} colorScheme="red" variant="ghost" onClick={() => handleRemoveGrupoPrincipal(index)} aria-label="Eliminar grupo muscular"/>
+                    </HStack>
+                  );
+                })}
+              </VStack>
+              <Button leftIcon={<AddIcon />} mt={3} size="sm" variant="outline" colorScheme="green" onClick={handleAddGrupoPrincipal} isDisabled={grupoMuscularPrincipal.filter(Boolean).length >= todosLosMusculos.length}>
+                Agregar Grupo Muscular
+              </Button>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Grupo Muscular Secundario </FormLabel>
+              <VStack align="stretch" spacing={3}>
+                {grupoMuscularSecundario.map((itemSeleccionado, index) => {
+                  const opcionesDisponibles = todosLosMusculos.filter(
+                    op => !musculosPrincipalesSeleccionados.includes(op) && (!grupoMuscularSecundario.includes(op) || op === itemSeleccionado)
+                  );
+
+                  return (
+                    <HStack key={index}>
+                      <Select placeholder="Seleccione un grupo" value={itemSeleccionado} onChange={(e) => handleGrupoSecundarioChange(index, e.target.value)}>
+                        {opcionesDisponibles.map(op => <option key={op} value={op}>{op}</option>)}
+                      </Select>
+                      <IconButton icon={<DeleteIcon />} colorScheme="red" variant="ghost" onClick={() => handleRemoveGrupoSecundario(index)} aria-label="Eliminar grupo muscular"/>
+                    </HStack>
+                  );
+                })}
+              </VStack>
+              <Button leftIcon={<AddIcon />} mt={3} size="sm" variant="outline" colorScheme="green" onClick={handleAddGrupoSecundario} isDisabled={grupoMuscularSecundario.filter(Boolean).length >= todosLosMusculos.length - musculosPrincipalesSeleccionados.length}>
+                Agregar Grupo Muscular
+              </Button>
+            </FormControl>
+            
+            <FormControl isRequired>
+                <FormLabel>Dificultad</FormLabel>
+                <Select placeholder="Seleccione la dificultad" value={dificultad} onChange={(e) => setDificultad(e.target.value)}>
+                    <option value="principiante">Principiante</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="avanzado">Avanzado</option>
+                </Select>
+            </FormControl>
+            
+            <FormControl>
+              <FormLabel>Equipamiento Necesario </FormLabel>
               <VStack align="stretch" spacing={3}>
                 {equipamiento.map((itemSeleccionado, index) => {
-                  const opcionesDisponibles = todasLasOpciones.filter(
+                  const opcionesDisponibles = todosLosEquipamientos.filter(
                     op => !equipamiento.includes(op) || op === itemSeleccionado
                   );
 
                   return (
                     <HStack key={index}>
-                      <Select
-                        placeholder="Seleccione equipamiento"
-                        value={itemSeleccionado}
-                        onChange={(e) => handleEquipamientoChange(index, e.target.value)}
-                      >
-                        {opcionesDisponibles.map(opcion => (
-                          <option key={opcion} value={opcion}>{opcion}</option>
-                        ))}
+                      <Select placeholder="Seleccione equipamiento" value={itemSeleccionado} onChange={(e) => handleEquipamientoChange(index, e.target.value)}>
+                        {opcionesDisponibles.map(opcion => <option key={opcion} value={opcion}>{opcion}</option>)}
                       </Select>
-                      <IconButton
-                        aria-label="Eliminar equipamiento"
-                        icon={<DeleteIcon />}
-                        colorScheme="red"
-                        variant="ghost"
-                        onClick={() => handleRemoveEquipamiento(index)}
-                      />
+                      <IconButton icon={<DeleteIcon />} colorScheme="red" variant="ghost" onClick={() => handleRemoveEquipamiento(index)} aria-label="Eliminar equipamiento"/>
                     </HStack>
                   );
                 })}
               </VStack>
-              <Button
-                leftIcon={<AddIcon />}
-                mt={3}
-                size="sm"
-                variant="outline"
-                colorScheme="green"
-                onClick={handleAddEquipamiento}
-                isDisabled={equipamiento.filter(Boolean).length >= todasLasOpciones.length}
-              >
+              <Button leftIcon={<AddIcon />} mt={3} size="sm" variant="outline" colorScheme="green" onClick={handleAddEquipamiento} isDisabled={equipamiento.filter(Boolean).length >= todosLosEquipamientos.length}>
                 Agregar Equipamiento
               </Button>
             </FormControl>
