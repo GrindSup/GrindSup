@@ -23,12 +23,18 @@ public class EjercicioController {
 
     @GetMapping
     public List<Ejercicio> getAll() {
-        return ejercicioRepository.findAll();
+        return ejercicioRepository.findAll()
+                .stream()
+                .filter(e -> e.getDeleted_at() == null) // solo activos
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Ejercicio getById(@PathVariable Long id) {
-        return ejercicioRepository.findById(id).orElse(null);
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return ejercicioRepository.findById(id)
+                .filter(e -> e.getDeleted_at() == null) // solo si no está eliminado
+                .map(e -> ResponseEntity.ok(e))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -53,6 +59,10 @@ public class EjercicioController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Ejercicio ejercicio) {
+        // Validación: el nombre es obligatorio
+        if (ejercicio.getNombre() == null || ejercicio.getNombre().isBlank()) {
+            return ResponseEntity.badRequest().body("El nombre del ejercicio es obligatorio.");
+        }
         return ejercicioRepository.findById(id)
                 .map(existing -> {
                     existing.setNombre(ejercicio.getNombre());
@@ -68,8 +78,15 @@ public class EjercicioController {
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        ejercicioRepository.deleteById(id);
-        return "Ejercicio eliminado con id " + id;
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return ejercicioRepository.findById(id)
+                .map(ejercicio -> {
+                    // Eliminación lógica
+                    ejercicio.setDeleted_at(OffsetDateTime.now());
+                    ejercicioRepository.save(ejercicio);
+                    return ResponseEntity.ok("Ejercicio eliminado correctamente (eliminación lógica).");
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
+
 }
