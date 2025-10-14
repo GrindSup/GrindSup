@@ -1,5 +1,3 @@
-esta es la rama para
-
 # 📌 Hoja de Ruta de Sprints – GrindSup
 
 Este documento detalla los sprints de desarrollo del proyecto **GrindSup**, desde la fase de organización (Sprint 0) hasta el despliegue del mismo.
