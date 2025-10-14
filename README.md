@@ -110,6 +110,7 @@ Ampliar las funcionalidades del sistema incorporando la gestión completa de eje
 * Programación backend: Martín Gamboa, Agustina Silva, Azul Oyola.
 * Programación frontend: Betina Yost, Dana Montesinos.
 
+
 ## Dependencias
 ### Backend
 * **Compilar y empaquetar:** `mvn clean package`
