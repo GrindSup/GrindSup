@@ -312,6 +312,7 @@ export default function AlumnoList() {
                       colorScheme="blue"
                       leftIcon={<EditIcon />}
                       onClick={() => navigate(`/alumno/editar/${a.id_alumno}`)}
+                      bg="#0f4d11ff"
                     >
                       Editar
                     </Button>
@@ -345,7 +346,7 @@ export default function AlumnoList() {
               <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej: alumno no continúa…" />
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsOpen(false)}>Cancelar</Button>
+              <Button ref={cancelRef} onClick={() => setIsOpen(false)} bg="#0f4d11ff" color="white">Cancelar</Button>
               <Button bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={confirmDelete} ml={3}>
                 Eliminar
               </Button>
