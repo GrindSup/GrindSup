@@ -16,8 +16,9 @@ import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
 import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
-import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx"
-import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx"
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx";
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
+import EditarEjercicio from "./pages/Ejercicios/EditarEjercicio";
 
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
@@ -106,6 +107,10 @@ export default function App() {
               <Route 
                 path="/ejercicio/detalle/:id" 
                 element={usuario ? <DetalleEjercicio /> : <Navigate to="/login" replace />} 
+              />
+              <Route 
+                path="/ejercicio/editar/:id" 
+                element={usuario ? <EditarEjercicio /> : <Navigate to="/login" replace />} 
               />
               
               <Route path="*" element={<Navigate to="/" replace />} />
