@@ -119,7 +119,7 @@ export default function CalendarioTurnos() {
           Calendario de Turnos
         </Heading>
         <HStack>
-          <Button onClick={prev} bg="#38A169" color="white" isDisabled={!entrenadorId}>
+          <Button onClick={prev} bg="#0f4d11ff" color="white" isDisabled={!entrenadorId}>
             ◀
           </Button>
           <Text
@@ -130,13 +130,13 @@ export default function CalendarioTurnos() {
           >
             {monthName}
           </Text>
-          <Button onClick={next} bg="#38A169" color="white" isDisabled={!entrenadorId}>
+          <Button onClick={next} bg="#0f4d11ff" color="white" isDisabled={!entrenadorId}>
             ▶
           </Button>
           <Button
             variant="solid"
             onClick={() => navigate("/turnos")}
-            bg="#38A169"
+            bg="#0f4d11ff"
             color="white"
             isDisabled={!entrenadorId}
           >
@@ -145,7 +145,7 @@ export default function CalendarioTurnos() {
           <Button
             colorScheme="brand"
             onClick={() => navigate("/turnos/registrar")}
-            bg="#38A169"
+            bg="#0f4d11ff"
             color="white"
             isDisabled={!entrenadorId}
           >

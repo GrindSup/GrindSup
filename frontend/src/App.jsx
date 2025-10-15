@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Box minH="100vh" display="flex" flexDirection="column" bg="white">
+      <Box minH="100vh" display="flex" flexDirection="column" bg="#228B22">
         <Header usuario={usuario} setUsuario={setUsuario} />
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
           <Container maxW="container.xl">

@@ -106,7 +106,7 @@ export default function RegistrarTurno() {
       )}
 
       <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white" opacity={entrenadorId ? 1 : 0.6} pointerEvents={entrenadorId ? "auto" : "none"}>
-        <Heading size="lg" textAlign="center" mb={6} color="brand.600">Registrar Turno</Heading>
+        <Heading size="lg" textAlign="center" mb={6} color="gray.900">Registrar Turno</Heading>
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={6} align="stretch">
@@ -134,7 +134,7 @@ export default function RegistrarTurno() {
                   <Select placeholder={esIndividual ? "Seleccione un alumno" : "Buscar/seleccionar alumno"} value={alumnoAAgregar} onChange={(e)=>setAlumnoAAgregar(e.target.value)}>
                     {alumnos.map(a => <option key={a.id_alumno} value={a.id_alumno}>{nombreCompleto(a)}</option>)}
                   </Select>
-                  <Button onClick={handleAgregarAlumno} variant="solid">+ Agregar</Button>
+                  <Button onClick={handleAgregarAlumno} variant="solid" bg="#0f4d11ff" color="white">+ Agregar</Button>
                 </HStack>
 
                 {seleccionados.length
@@ -155,7 +155,7 @@ export default function RegistrarTurno() {
             {error && <Alert status="error"><AlertIcon/>{error}</Alert>}
             {msg && <Alert status="success"><AlertIcon/>{msg}</Alert>}
 
-            <Button type="submit" colorScheme="brand" width="full" isLoading={loading} loadingText="Guardando...">Guardar turno</Button>
+            <Button type="submit" colorScheme="brand" width="full" isLoading={loading} bg="#0f4d11ff" loadingText="Guardando...">Guardar turno</Button>
           </VStack>
         </form>
       </Box>

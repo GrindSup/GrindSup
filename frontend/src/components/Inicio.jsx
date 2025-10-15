@@ -19,9 +19,9 @@ function InicioPublico() {
   ];
 
   return (
-    <Box bg="white">
+    <Box bg="#228B22">
       <Box
-        bg="brand.700"
+        bg="#0f4d11ff"
         color="white"
         borderRadius={{ base: "xl", md: "2xl" }}
         mx={{ base: 3, md: 6 }}
@@ -47,18 +47,17 @@ function InicioPublico() {
             fontWeight={800}
           >
             La plataforma para{" "}
-            <Box as="span" color="brand.200">entrenadores</Box> y{" "}
-            <Box as="span" color="brand.200">personal trainers</Box>
+            <Box as="span" color="brand.300">entrenadores</Box> y{" "}
+            <Box as="span" color="brand.300">personal trainers</Box>
           </Heading>
           <Text textAlign="center" opacity={0.95} mb={6} fontSize={{ base: "md", md: "lg" }}>
             Gestioná <b>alumnos</b>, <b>turnos</b> y <b>progreso</b> de forma simple y desde cualquier dispositivo.
           </Text>
           <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
-            <Button as={RouterLink} to="/registro" variant="outline" color="white"
-                    _hover={{ bg: "whiteAlpha.200" }}>
+            <Button as={RouterLink} to="/registro" variant="solid" bg="brand.300">
               Registrar
             </Button>
-            <Button as={RouterLink} to="/login" variant="solid">Iniciar sesión</Button>
+            <Button as={RouterLink} to="/login" variant="solid" bg="brand.300">Iniciar sesión</Button>
           </Stack>
         </Container>
       </Box>
@@ -91,10 +90,10 @@ function InicioPrivado() {
   ];
 
   return (
-    <Box bg="brand.700" py={{ base: 8, md: 10 }}>
+    <Box bg="#228B22" py={{ base: 8, md: 10 }}>
       <Container maxW="7xl">
-        <Box bg="white" borderRadius="2xl" boxShadow="xl" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
-          <Heading size="lg" textAlign="center" mb={8} color="gray.900" fontWeight={800}>
+        <Box bg="#228B22" borderRadius="2xl" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
+          <Heading size="lg" textAlign="center" mb={8} color="white" fontWeight={800}>
             ¡Hola! <Text as="span" fontWeight="semibold">¿Qué querés hacer hoy?</Text>
           </Heading>
 
@@ -105,7 +104,7 @@ function InicioPrivado() {
                     transition="all .2s">
                 <CardHeader pb={2}>
                   <Stack direction="row" align="center" spacing={3}>
-                    <Icon as={it.i} boxSize={7} color="brand.600" />
+                    <Icon as={it.i} boxSize={7} color="brand.700" />
                     <Heading size="md" color="gray.800">{it.t}</Heading>
                   </Stack>
                 </CardHeader>
