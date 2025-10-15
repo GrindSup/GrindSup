@@ -195,7 +195,7 @@ export default function AlumnoList() {
       )}
 
       <Flex gap={4} align="center" mb={6} wrap="wrap">
-        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#38A169" color="white">
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#0f4d11ff" color="white">
           Volver
         </Button>
         <Heading size="lg" color="gray.900">Lista de Alumnos</Heading>
@@ -217,7 +217,7 @@ export default function AlumnoList() {
           colorScheme="teal"
           leftIcon={<AddIcon />}
           onClick={() => navigate("/alumno/registrar")}
-          bg="#38A169"
+          bg="#0f4d11ff"
           color="white"
           isDisabled={!entrenadorId}
         >
@@ -227,7 +227,7 @@ export default function AlumnoList() {
 
       {filteredAlumnos.length === 0 ? (
         <Center py={10}>
-          <Text fontSize="lg" color="gray.500">
+           <Text fontSize="lg" color="gray.300" fontWeight="bold">
             {entrenadorId ? "No se encontraron alumnos." : "No hay alumnos para mostrar."}
           </Text>
         </Center>

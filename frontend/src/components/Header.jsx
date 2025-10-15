@@ -1,19 +1,18 @@
 import {
-  Box, Container, Flex, HStack, Text, Button, IconButton, Menu,
-  MenuButton, MenuList, MenuItem, useDisclosure, Image,
+  Box, Container, Flex, Text, Button, IconButton, Menu,
+  MenuButton, MenuList, MenuItem, Image, Spacer
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const location = useLocation(); // para saber la ruta actual
   const isLoggedIn = !!usuario;
 
   const go = (path) => navigate(path);
 
   const handleLogout = async () => {
-    onClose();
     const sesionId = localStorage.getItem("sesionId");
     try {
       if (sesionId) {
@@ -33,65 +32,62 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Inicio", path: "/" },
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
-    { label: "Contacto", path: "/contacto" },
     { label: "Turnos", path: "/turnos" },
+    { label: "Contacto", path: "/contacto" },
   ];
+
+  // No mostrar menú en login o registro
+  const hideMenu = location.pathname === "/login" || location.pathname === "/registro";
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
-        <Flex align="center" minH="64px">
-          {/* Logo / Home */}
-          <Flex w={{ base: "auto", md: "220px" }} align="center" gap={2} onClick={() => go("/")} cursor="pointer">
+        <Flex align="center">
+          
+          {/* Logo */}
+          <Flex align="center" gap={2} cursor="pointer" onClick={() => go("/")}>
             <Image src="/vite.png" alt="GrindSup" boxSize="30px" />
-            <Text fontWeight="bold" fontSize="xl" color="green.700">GrindSup</Text>
+            <Text fontWeight="bold" fontSize="xl" color="green.800">GrindSup</Text>
           </Flex>
 
-          {/* Nav central (solo logueado) */}
-          <Flex flex="1" justify="center">
-            {isLoggedIn && (
-              <>
-                <HStack spacing={8} display={{ base: "none", md: "flex" }} fontWeight={500} color="gray.700">
+          <Spacer />
+
+          {/* Menú hamburguesa centrado, solo si no estamos en login/registro y usuario logueado */}
+          {!hideMenu && isLoggedIn && (
+            <Flex flex="1" justify="center">
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<HamburgerIcon />}
+                  aria-label="Abrir menú"
+                  variant="ghost"
+                />
+                <MenuList>
                   {items.map(i => (
-                    <Text key={i.path} _hover={{ color: "green.600", cursor: "pointer" }} onClick={() => go(i.path)}>
+                    <MenuItem key={i.path} onClick={() => go(i.path)}>
                       {i.label}
-                    </Text>
+                    </MenuItem>
                   ))}
-                </HStack>
+                </MenuList>
+              </Menu>
+            </Flex>
+          )}
 
-                {/* Menú mobile */}
-                <Menu isOpen={isOpen} onClose={onClose}>
-                  <MenuButton
-                    as={IconButton}
-                    icon={<HamburgerIcon />}
-                    aria-label="Abrir menú"
-                    display={{ base: "inline-flex", md: "none" }}
-                    variant="ghost"
-                    onClick={onOpen}
-                  />
-                  <MenuList>
-                    {items.map(i => (
-                      <MenuItem key={i.path} onClick={() => go(i.path)}>{i.label}</MenuItem>
-                    ))}
-                    <MenuItem onClick={handleLogout} color="red.600">Cerrar sesión</MenuItem>
-                  </MenuList>
-                </Menu>
-              </>
-            )}
-          </Flex>
+          <Spacer />
 
-          {/* Botón derecho */}
-          <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
-            {!isLoggedIn ? (
-              <Button size="sm" colorScheme="green" onClick={() => go("/login")}>
-                Iniciar sesión
-              </Button>
-            ) : (
-              <Button size="sm" colorScheme="red" onClick={handleLogout}>
+          {/* Botón de cierre de sesión o iniciar sesión */}
+          {!hideMenu && (
+            isLoggedIn ? (
+              <Button size="sm" colorScheme="red" onClick={handleLogout} bg="#0f4d11ff">
                 Cerrar sesión
               </Button>
-            )}
-          </Flex>
+            ) : (
+              <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#0f4d11ff">
+                Iniciar sesión
+              </Button>
+            )
+          )}
+          
         </Flex>
       </Container>
     </Box>

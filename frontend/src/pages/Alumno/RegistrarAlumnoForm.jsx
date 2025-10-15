@@ -304,7 +304,7 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} bg="#0f4d11ff" color="white"/>
                     </HStack>
                   ))}
                 </GridItem>
@@ -329,7 +329,7 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} bg="#0f4d11ff" color="white"/>
                     </HStack>
                   ))}
                 </GridItem>
@@ -346,7 +346,7 @@ export default function RegistrarAlumnoForm({
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10}>
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#0f4d11ff" color="white">
                   Registrar
                 </Button>
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
@@ -365,7 +365,7 @@ function SectionHeader({ title, onAdd }) {
   return (
     <HStack justify="space-between">
       <FormLabel m={0}>{title}</FormLabel>
-      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd}>
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#0f4d11ff" color="white">
         Agregar
       </Button>
     </HStack>

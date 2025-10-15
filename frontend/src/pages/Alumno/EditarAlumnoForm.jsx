@@ -32,9 +32,7 @@ function stringifyNotes(items) {
   return JSON.stringify({ items: list });
 }
 
-export default function EditarAlumnoForm({
-  apiBaseUrl = API,
-}) {
+export default function EditarAlumnoForm({ apiBaseUrl = API }) {
   const { id } = useParams();
   const toast = useToast();
   const navigate = useNavigate();
@@ -51,8 +49,8 @@ export default function EditarAlumnoForm({
     telefono: "", informeMedico: false, estado: undefined,
   });
 
-  const [lesiones, setLesiones] = useState([]);        // [{text, important}]
-  const [enfermedades, setEnfermedades] = useState([]);// [{text, important}]
+  const [lesiones, setLesiones] = useState([]);
+  const [enfermedades, setEnfermedades] = useState([]);
 
   function normalizeAlumno(data = {}) {
     const snake =
@@ -88,7 +86,6 @@ export default function EditarAlumnoForm({
       documento: alumno.documento,
       peso, altura,
       telefono: alumno.telefono?.trim(),
-      // guardamos JSON en TEXT:
       lesiones: stringifyNotes(lesiones),
       enfermedades: stringifyNotes(enfermedades),
     };
@@ -223,7 +220,7 @@ export default function EditarAlumnoForm({
                   </FormControl>
                 </GridItem>
 
-                {/* Lesiones (repeater) */}
+                {/* Lesiones */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
                   {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -240,15 +237,16 @@ export default function EditarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("les", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#0f4d11ff" color="white" onClick={()=>removeItem("les", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
+
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <Divider />
                 </GridItem>
 
-                {/* Enfermedades (repeater) */}
+                {/* Enfermedades */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
                   {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -265,7 +263,7 @@ export default function EditarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={()=>removeItem("dis", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#0f4d11ff" color="white" onClick={()=>removeItem("dis", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
@@ -282,7 +280,7 @@ export default function EditarAlumnoForm({
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10}>
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#0f4d11ff" color="white">
                   Guardar cambios
                 </Button>
                 <Button variant="ghost" onClick={() => navigate("/alumnos")}>
@@ -301,7 +299,9 @@ function SectionHeader({ title, onAdd }) {
   return (
     <HStack justify="space-between">
       <FormLabel m={0}>{title}</FormLabel>
-      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd}>Agregar</Button>
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#0f4d11ff" color="white">
+        Agregar
+      </Button>
     </HStack>
   );
 }
