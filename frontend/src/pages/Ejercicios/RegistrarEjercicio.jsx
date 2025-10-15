@@ -1,19 +1,17 @@
 import { useState } from "react";
-import {
-  Box, Button, Container, FormControl, FormLabel, Input, Select, Heading,
-  VStack, Alert, AlertIcon, Textarea, FormHelperText,
-  HStack, IconButton, Text // Se importa Text para el mensaje de error
-} from "@chakra-ui/react";
+import { Box, Button, Container, FormControl, FormLabel, Input, Select, Heading,
+  VStack, Alert, AlertIcon, Textarea, HStack, IconButton, Text } from "@chakra-ui/react";
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
+import BotonVolver from '../../components/BotonVolver.jsx';
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-// REVISAR UNA VEZ DESARROLLADO EL BACKEND
-const crearEjercicio = async (payload) => {
-  console.log("Enviando al backend:", payload);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { data: { id_ejercicio: Math.floor(Math.random() * 1000), ...payload } };
-};
+const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 export default function RegistrarEjercicio() {
+
+  const navigate = useNavigate();
+
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [grupoMuscularPrincipal, setGrupoMuscularPrincipal] = useState([""]);
@@ -22,9 +20,8 @@ export default function RegistrarEjercicio() {
   const [equipamiento, setEquipamiento] = useState([""]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // Para errores generales del formulario
+  const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
-  // Nuevo estado para errores junto a los botones
   const [inlineErrors, setInlineErrors] = useState({
     principal: "",
     secundario: "",
@@ -34,61 +31,10 @@ export default function RegistrarEjercicio() {
   const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
   const todosLosEquipamientos = ["Banda elástica", "Banco inclinado", "Barra", "Camilla de Isquios", "Mancuernas", "Máquina hack", "Máquina Smith", "Polea", "Prensa", "Silla de Cuádriceps", "Silla de Isquios", "Step"];
 
-  const handleListChange = (setter, errorKey) => (index, value) => {
-    // Limpia el error en línea cuando el usuario interactúa
-    setInlineErrors(prev => ({ ...prev, [errorKey]: "" }));
-    setter(prev => {
-      const newList = [...prev];
-      newList[index] = value;
-      return newList;
-    });
-  };
-
-  const handleRemoveListItem = (setter) => (index) => {
-    setter(prev => {
-      if (prev.length === 1) return [""];
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-
-  // Handlers con validación en línea
-  const handleAddGrupoPrincipal = () => {
-    if (!grupoMuscularPrincipal[grupoMuscularPrincipal.length - 1]) {
-      return setInlineErrors(prev => ({ ...prev, principal: "Debe seleccionar una opción para agregar otra." }));
-    }
-    setGrupoMuscularPrincipal(prev => [...prev, ""]);
-  };
-
-  const handleAddGrupoSecundario = () => {
-    if (!grupoMuscularSecundario[grupoMuscularSecundario.length - 1]) {
-      return setInlineErrors(prev => ({ ...prev, secundario: "Debe seleccionar una opción para agregar otra." }));
-    }
-    setGrupoMuscularSecundario(prev => [...prev, ""]);
-  };
-
-  const handleAddEquipamiento = () => {
-    if (!equipamiento[equipamiento.length - 1]) {
-      return setInlineErrors(prev => ({ ...prev, equipamiento: "Debe seleccionar una opción para agregar otra." }));
-    }
-    setEquipamiento(prev => [...prev, ""]);
-  };
-
-  const handleGrupoPrincipalChange = handleListChange(setGrupoMuscularPrincipal, 'principal');
-  const handleRemoveGrupoPrincipal = handleRemoveListItem(setGrupoMuscularPrincipal);
-
-  const handleGrupoSecundarioChange = handleListChange(setGrupoMuscularSecundario, 'secundario');
-  const handleRemoveGrupoSecundario = handleRemoveListItem(setGrupoMuscularSecundario);
-
-  const handleEquipamientoChange = handleListChange(setEquipamiento, 'equipamiento');
-  const handleRemoveEquipamiento = handleRemoveListItem(setEquipamiento);
-
-  const resetForm = () => {
-    setNombre("");
-    setDescripcion("");
-    setGrupoMuscularPrincipal([""]);
-    setGrupoMuscularSecundario([""]);
-    setDificultad("");
-    setEquipamiento([""]);
+  const crearEjercicio = async (payload) => {
+    const payloadConEstado = { ...payload, estado: { id_estado: 1 } };
+    const response = await axios.post(`${API}/ejercicios`, payloadConEstado);
+    return response.data;
   };
 
   const handleSubmit = async (e) => {
@@ -116,16 +62,67 @@ export default function RegistrarEjercicio() {
 
     try {
       setLoading(true);
-      await crearEjercicio(payload);
-      setMsg(`Ejercicio "${nombre}" registrado con éxito ✅`);
+      const nuevoEjercicio = await crearEjercicio(payload);
+      setMsg(`Ejercicio "${nuevoEjercicio.nombre}" registrado con éxito ✅`);
       resetForm();
+      setTimeout(() => navigate('/ejercicios'), 1500);
     } catch (err) {
-      setError(err?.response?.data?.mensaje || err?.message || "Error al registrar el ejercicio");
+      const errorMessage = err.response?.data?.message || 
+                         err.response?.data?.mensaje || 
+                         (typeof err.response?.data === 'string' ? err.response.data : err.message) || 
+                         "Error al registrar el ejercicio";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleListChange = (setter, errorKey) => (index, value) => {
+    setInlineErrors(prev => ({ ...prev, [errorKey]: "" }));
+    setter(prev => {
+      const newList = [...prev];
+      newList[index] = value;
+      return newList;
+    });
+  };
+  const handleRemoveListItem = (setter) => (index) => {
+    setter(prev => {
+      if (prev.length === 1) return [""];
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+  const handleAddGrupoPrincipal = () => {
+    if (!grupoMuscularPrincipal[grupoMuscularPrincipal.length - 1]) {
+      return setInlineErrors(prev => ({ ...prev, principal: "Debe seleccionar una opción para agregar otra." }));
+    }
+    setGrupoMuscularPrincipal(prev => [...prev, ""]);
+  };
+  const handleAddGrupoSecundario = () => {
+    if (!grupoMuscularSecundario[grupoMuscularSecundario.length - 1]) {
+      return setInlineErrors(prev => ({ ...prev, secundario: "Debe seleccionar una opción para agregar otra." }));
+    }
+    setGrupoMuscularSecundario(prev => [...prev, ""]);
+  };
+  const handleAddEquipamiento = () => {
+    if (!equipamiento[equipamiento.length - 1]) {
+      return setInlineErrors(prev => ({ ...prev, equipamiento: "Debe seleccionar una opción para agregar otra." }));
+    }
+    setEquipamiento(prev => [...prev, ""]);
+  };
+  const handleGrupoPrincipalChange = handleListChange(setGrupoMuscularPrincipal, 'principal');
+  const handleRemoveGrupoPrincipal = handleRemoveListItem(setGrupoMuscularPrincipal);
+  const handleGrupoSecundarioChange = handleListChange(setGrupoMuscularSecundario, 'secundario');
+  const handleRemoveGrupoSecundario = handleRemoveListItem(setGrupoMuscularSecundario);
+  const handleEquipamientoChange = handleListChange(setEquipamiento, 'equipamiento');
+  const handleRemoveEquipamiento = handleRemoveListItem(setEquipamiento);
+  const resetForm = () => {
+    setNombre("");
+    setDescripcion("");
+    setGrupoMuscularPrincipal([""]);
+    setGrupoMuscularSecundario([""]);
+    setDificultad("");
+    setEquipamiento([""]);
+  };
   const musculosPrincipalesSeleccionados = grupoMuscularPrincipal.filter(Boolean);
 
   return (
@@ -135,7 +132,6 @@ export default function RegistrarEjercicio() {
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={5} align="stretch">
-            {/* ... (FormControl para Nombre y Descripción sin cambios) ... */}
             <FormControl isRequired>
                 <FormLabel>Nombre del Ejercicio</FormLabel>
                 <Input type="text" placeholder="Ej: Sentadillas con barra" value={nombre} onChange={(e) => setNombre(e.target.value)} />
@@ -144,8 +140,6 @@ export default function RegistrarEjercicio() {
                 <FormLabel>Descripción</FormLabel>
                 <Textarea placeholder="Describe la técnica..." value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
             </FormControl>
-
-            {/* --- Grupo Muscular Principal --- */}
             <FormControl isRequired isInvalid={!!inlineErrors.principal}>
               <FormLabel>Grupo Muscular Principal</FormLabel>
               <VStack align="stretch" spacing={3}>
@@ -168,8 +162,6 @@ export default function RegistrarEjercicio() {
                 {inlineErrors.principal && <Text color="red.500" fontSize="sm" mt={2}>{inlineErrors.principal}</Text>}
               </Box>
             </FormControl>
-
-            {/* --- Grupo Muscular Secundario --- */}
             <FormControl isInvalid={!!inlineErrors.secundario}>
               <FormLabel>Grupo Muscular Secundario</FormLabel>
               <VStack align="stretch" spacing={3}>
@@ -192,8 +184,6 @@ export default function RegistrarEjercicio() {
                 {inlineErrors.secundario && <Text color="red.500" fontSize="sm" mt={2}>{inlineErrors.secundario}</Text>}
               </Box>
             </FormControl>
-
-            {/* --- Dificultad --- */}
             <FormControl isRequired>
               <FormLabel>Dificultad</FormLabel>
               <Select placeholder="Seleccione la dificultad" value={dificultad} onChange={(e) => setDificultad(e.target.value)}>
@@ -202,8 +192,6 @@ export default function RegistrarEjercicio() {
                 <option value="avanzado">Avanzado</option>
               </Select>
             </FormControl>
-
-            {/* --- Equipamiento Necesario --- */}
             <FormControl isInvalid={!!inlineErrors.equipamiento}>
               <FormLabel>Equipamiento Necesario</FormLabel>
               <VStack align="stretch" spacing={3}>
@@ -227,13 +215,18 @@ export default function RegistrarEjercicio() {
               </Box>
             </FormControl>
 
-            {/* Alertas para el submit general */}
             {error && <Alert status="error"><AlertIcon />{error}</Alert>}
             {msg && <Alert status="success"><AlertIcon />{msg}</Alert>}
 
-            <Button type="submit" colorScheme="brand" width="full" isLoading={loading} loadingText="Guardando...">
-              Guardar Ejercicio
-            </Button>
+            <HStack pt={4}>
+              <Button type="submit" colorScheme="brand" width="full" isLoading={loading} loadingText="Guardando...">
+                Guardar Ejercicio
+              </Button>
+              <BotonVolver leftIcon="">
+                Cancelar
+              </BotonVolver>
+            </HStack>
+            
           </VStack>
         </form>
       </Box>

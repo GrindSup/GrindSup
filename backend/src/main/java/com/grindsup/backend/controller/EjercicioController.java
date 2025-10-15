@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/ejercicios")
+@CrossOrigin(origins = "*") 
 public class EjercicioController {
 
     @Autowired
@@ -58,21 +59,27 @@ public class EjercicioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Ejercicio ejercicio) {
-        // Validación: el nombre es obligatorio
-        if (ejercicio.getNombre() == null || ejercicio.getNombre().isBlank()) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Ejercicio ejercicioDetails) {
+        if (ejercicioDetails.getNombre() == null || ejercicioDetails.getNombre().isBlank()) {
             return ResponseEntity.badRequest().body("El nombre del ejercicio es obligatorio.");
         }
         return ejercicioRepository.findById(id)
                 .map(existing -> {
-                    existing.setNombre(ejercicio.getNombre());
-                    existing.setDescripcion(ejercicio.getDescripcion());
-                    if (ejercicio.getEstado() != null) {
-                        Estado estado = estadoRepository.findById(ejercicio.getEstado().getId_estado()).orElse(null);
+                    existing.setNombre(ejercicioDetails.getNombre());
+                    existing.setDescripcion(ejercicioDetails.getDescripcion());
+                    existing.setDificultad(ejercicioDetails.getDificultad());
+                    existing.setGrupoMuscularPrincipal(ejercicioDetails.getGrupoMuscularPrincipal());
+                    existing.setGrupoMuscularSecundario(ejercicioDetails.getGrupoMuscularSecundario());
+                    existing.setEquipamiento(ejercicioDetails.getEquipamiento());
+
+                    if (ejercicioDetails.getEstado() != null) {
+                        Estado estado = estadoRepository.findById(ejercicioDetails.getEstado().getId_estado()).orElse(null);
                         existing.setEstado(estado);
                     }
                     existing.setUpdated_at(OffsetDateTime.now());
-                    return ResponseEntity.ok(ejercicioRepository.save(existing));
+                    
+                    Ejercicio actualizado = ejercicioRepository.save(existing);
+                    return ResponseEntity.ok(actualizado);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -81,12 +88,10 @@ public class EjercicioController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
         return ejercicioRepository.findById(id)
                 .map(ejercicio -> {
-                    // Eliminación lógica
                     ejercicio.setDeleted_at(OffsetDateTime.now());
                     ejercicioRepository.save(ejercicio);
                     return ResponseEntity.ok("Ejercicio eliminado correctamente (eliminación lógica).");
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
-
 }

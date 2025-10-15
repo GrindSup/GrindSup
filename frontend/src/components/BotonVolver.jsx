@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 
-
-export default function BotonVolver({ children, ...props }) {
+/**
+ * Botón para volver a la página anterior.
+ * @param {React.ReactNode} children - Texto principal del botón. Default: "Volver".
+ * @param {React.ReactElement | string} leftIcon - Ícono o texto a la izquierda. Default: <ArrowBackIcon />.
+ */
+export default function BotonVolver({ children, leftIcon = <ArrowBackIcon />, ...props }) {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
@@ -14,10 +18,11 @@ export default function BotonVolver({ children, ...props }) {
   return (
     <Button
       onClick={handleGoBack}
-      leftIcon={<ArrowBackIcon />}
+      leftIcon={leftIcon} 
       variant="ghost" 
       {...props} 
-    />
-
+    >
+      {children || 'Volver'} 
+    </Button>
   );
 }

@@ -1,97 +1,126 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; 
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  Box, Button, Container, Heading, Flex,
-  Alert, AlertIcon, Spinner, Text,
-} from '@chakra-ui/react'; 
-import { AddIcon } from '@chakra-ui/icons'; 
-import axiosInstance from '../../config/axios.config';
-import { useNavigate } from 'react-router-dom';
+  Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
+  SimpleGrid, Card, CardHeader, CardBody, CardFooter, HStack, Tag, Spacer,
+  InputGroup, InputLeftElement, Input, Center
+} from '@chakra-ui/react';
+import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
+import axiosInstance from '../../config/axios.config'; 
 import BotonVolver from '../../components/BotonVolver.jsx';
-import { HStack } from '@chakra-ui/react';
 
 export default function ListaEjercicios() {
-    const [testData, setTestData] = useState(null);
+    const [ejercicios, setEjercicios] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
     
     const navigate = useNavigate();
 
     useEffect(() => {
-        probarConexion();
+        fetchEjercicios();
     }, []);
 
-    const probarConexion = async () => {
+    const fetchEjercicios = async () => {
         try {
             setLoading(true);
-            console.log('Intentando conectar con el backend...');
-            const response = await axiosInstance.get('/');
-            setTestData(response.data);
+            const response = await axiosInstance.get('/api/ejercicios'); 
+            setEjercicios(response.data);
             setError(null);
-            console.log('Respuesta del servidor:', response.data);
         } catch (err) {
-            console.error('Error al conectar:', err);
-            setError('Error al conectar con el backend: ' + (err.response?.data?.message || err.message));
+            setError('Error al cargar los ejercicios: ' + (err.response?.data?.message || err.message));
         } finally {
             setLoading(false);
         }
     };
+
+    const filteredEjercicios = useMemo(() => 
+        ejercicios.filter(ej => 
+            ej.nombre.toLowerCase().includes(search.toLowerCase())
+        ), [ejercicios, search]);
     
-return (
+    return (
         <Container maxW="7xl" py={10}>
-            <Box>
-                {/* --- CABECERA --- */}
-                <Flex justifyContent="space-between" alignItems="center" mb={6}>
-                    <HStack spacing={4} alignItems="center">
-                        <BotonVolver />
-                        <Heading as="h1" size="xl">
-                            Lista de Ejercicios
-                        </Heading>
-                    </HStack>
-                    
-                    <HStack spacing={4}>
-                        <Link to="/ejercicio/registrar">
-                            <Button
-                                leftIcon={<AddIcon />}
-                                colorScheme="brand"
-                                variant="solid"
-                            >
-                                Nuevo Ejercicio
-                            </Button>
-                        </Link>
-                    </HStack>
-                </Flex>
+            <Flex justifyContent="space-between" alignItems="center" mb={6} wrap="wrap" gap={4}>
+                <HStack spacing={4} alignItems="center">
+                    <BotonVolver />
+                    <Heading as="h1" size="xl">
+                        Lista de Ejercicios
+                    </Heading>
+                </HStack>
+                <Spacer />
+                <HStack spacing={4}>
+                    <InputGroup w={{ base: "100%", md: "300px" }}>
+                        <InputLeftElement pointerEvents="none">
+                            <SearchIcon color="gray.400" />
+                        </InputLeftElement>
+                        <Input
+                            placeholder="Buscar por nombre..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            borderRadius="full"
+                        />
+                    </InputGroup>
+                    <Button
+                        leftIcon={<AddIcon />}
+                        colorScheme="brand"
+                        variant="solid"
+                        onClick={() => navigate('/ejercicio/registrar')}
+                    >
+                        Nuevo Ejercicio
+                    </Button>
+                </HStack>
+            </Flex>
 
-                {/* --- CONTENIDO PRINCIPAL --- */}
-                {loading && (
-                    <Flex justifyContent="center" py={10}>
-                        <Spinner size="xl" />
-                        <Text ml={4}>Probando conexión con el backend...</Text>
-                    </Flex>
-                )}
+            {loading && (
+                <Center py={10}><Spinner size="xl" /></Center>
+            )}
 
-                {error && (
-                    <Alert status="error">
-                        <AlertIcon />
-                        {error}
-                    </Alert>
-                )}
+            {error && (
+                <Alert status="error"><AlertIcon />{error}</Alert>
+            )}
 
-                {!loading && !error && (
-                    <Box>
-                        <Heading as="h2" size="lg" mb={4}>Prueba de Conexión</Heading>
-                        {testData ? (
-                            <Box p={4} borderWidth="1px" borderRadius="md">
-                                <Text><strong>Mensaje:</strong> {testData.mensaje}</Text>
-                                <Text><strong>Estado:</strong> {testData.estado}</Text>
-                                <Text><strong>Timestamp:</strong> {new Date(testData.timestamp).toLocaleString()}</Text>
-                            </Box>
-                        ) : (
-                            <Text>No hay datos disponibles</Text>
-                        )}
-                    </Box>
-                )}
-            </Box>
+            {!loading && !error && (
+                <>
+                    {filteredEjercicios.length === 0 ? (
+                        <Center py={10}>
+                            <Text fontSize="lg" color="gray.500">
+                                {search ? 'No se encontraron ejercicios con ese nombre.' : 'Aún no hay ejercicios registrados.'}
+                            </Text>
+                        </Center>
+                    ) : (
+                        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+                            {filteredEjercicios.map((ej) => (
+                                <Card key={ej.id_ejercicio} direction="column" h="100%">
+                                    <CardHeader>
+                                        <Heading size='md'>{ej.nombre}</Heading>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <HStack spacing={2} wrap="wrap">
+                                            <Tag colorScheme='teal'>{ej.dificultad}</Tag>
+                                            {ej.grupoMuscularPrincipal?.map(musculo => (
+                                                <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
+                                            ))}
+                                        </HStack>
+                                        <Text mt={4} noOfLines={3}>{ej.descripcion || "Sin descripción."}</Text>
+                                    </CardBody>
+                                    <Spacer />
+                                    <CardFooter justify="flex-end">
+                                        <HStack>
+                                            <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)}>
+                                                Editar
+                                            </Button>
+                                            <Button variant='ghost' colorScheme='red' size="sm">
+                                                Eliminar
+                                            </Button>
+                                        </HStack>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </SimpleGrid>
+                    )}
+                </>
+            )}
         </Container>
     );
 }
