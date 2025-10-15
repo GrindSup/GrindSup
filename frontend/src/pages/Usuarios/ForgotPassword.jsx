@@ -36,7 +36,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <Box minH="100vh" bg="green.700" display="flex" alignItems="center" justifyContent="center" p={4}>
+    <Box minH="100vh" bg="#228B22" display="flex" alignItems="center" justifyContent="center" p={4}>
       <Card w="full" maxW="420px" bg="white">
         <CardHeader><Heading size="lg" textAlign="center">Recuperar contraseña</Heading></CardHeader>
         <CardBody as="form" onSubmit={onSubmit}>
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
               autoComplete="email"
             />
           </FormControl>
-          <Button type="submit" colorScheme="green" isLoading={loading} w="full">Enviar enlace</Button>
+          <Button type="submit" colorScheme="green" isLoading={loading} w="full" bg="#0f4d11ff">Enviar enlace</Button>
           <Text mt={4} fontSize="sm" color="gray.600">
             Te enviaremos un enlace válido por unos minutos.
           </Text>
