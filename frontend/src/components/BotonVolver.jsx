@@ -19,7 +19,9 @@ export default function BotonVolver({ children, leftIcon = <ArrowBackIcon />, ..
     <Button
       onClick={handleGoBack}
       leftIcon={leftIcon} 
-      variant="ghost" 
+      bg="#0f4d11ff"
+      color="white"
+      borderRadius="md"
       {...props} 
     >
       {children || 'Volver'} 

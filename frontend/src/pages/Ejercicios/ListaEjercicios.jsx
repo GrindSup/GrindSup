@@ -7,6 +7,8 @@ import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 
+const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
 export default function ListaEjercicios() {
     const [ejercicios, setEjercicios] = useState([]);
     const [error, setError] = useState(null);
@@ -50,13 +52,14 @@ export default function ListaEjercicios() {
                 <HStack spacing={4}>
                     <InputGroup w={{ base: "100%", md: "300px" }}>
                         <InputLeftElement pointerEvents="none">
-                            <SearchIcon color="gray.400" />
+                            <SearchIcon color="gray.500" />
                         </InputLeftElement>
                         <Input
                             placeholder="Buscar por nombre..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             borderRadius="full"
+                            bg="white"
                         />
                     </InputGroup>
                     <Button
@@ -64,6 +67,7 @@ export default function ListaEjercicios() {
                         colorScheme="brand"
                         variant="solid"
                         onClick={() => navigate('/ejercicio/registrar')}
+                        bg="#0f4d11ff"
                     >
                         Nuevo Ejercicio
                     </Button>
@@ -96,7 +100,7 @@ export default function ListaEjercicios() {
                                         </CardHeader>
                                         <CardBody>
                                             <HStack spacing={2} wrap="wrap">
-                                                <Tag colorScheme='teal'>{ej.dificultad}</Tag>
+                                                <Tag colorScheme='teal'>{capitalize(ej.dificultad)}</Tag>
                                                 {ej.grupoMuscularPrincipal?.map(musculo => (
                                                     <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
                                                 ))}
@@ -107,7 +111,7 @@ export default function ListaEjercicios() {
                                     <Spacer />
                                     <CardFooter justify="flex-end">
                                         <HStack>
-                                            <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)}>
+                                            <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#0f4d11ff">
                                                 Editar
                                             </Button>
                                             <Button variant='ghost' colorScheme='red' size="sm">
