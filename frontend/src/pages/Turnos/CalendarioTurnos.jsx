@@ -126,7 +126,11 @@ export default function CalendarioTurnos() {
             w="220px"
             textAlign="center"
             fontWeight="semibold"
-            textTransform="capitalize"
+            textTransform="capitalize" 
+            borderColor="gray.300" 
+            borderRadius="md" 
+            p={2} 
+            bg="brand.200"
           >
             {monthName}
           </Text>
@@ -162,7 +166,7 @@ export default function CalendarioTurnos() {
         mb={2}
       >
         {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
-          <Box key={d} textAlign="center">
+          <Box key={d} textAlign="center" borderColor="gray.300" borderRadius="md" p={2} bg="brand.200">
             {d}
           </Box>
         ))}
