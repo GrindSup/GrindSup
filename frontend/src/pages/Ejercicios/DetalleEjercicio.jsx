@@ -1,45 +1,55 @@
-import React from "react"; 
+import React, { useEffect, useState } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container,
   Heading, Text, Stack, Badge, Divider, HStack, Tag,
-  OrderedList, ListItem, AspectRatio
+  Spinner, Center, Alert, AlertIcon
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom"; 
-
-
-//Datos de ejemplo para mostrar la ficha (mientras no haya backend)
-const mockEjercicioData = {
-  id: "1",
-  nombre: "Nombre del ejercicio",
-  dificultad: "dificultad 1",
-  descripcion: "Esto es una descripción del ejercicio.",
-  grupoMuscularPrincipal: "Musculo principal",
-  musculosSecundarios: [
-    "Musculo secundario 1",
-    "Musculo secundario 2",
-  ],
-  equipamiento: "equipamiento1, equipamiento2",
-  instrucciones: [
-    "Instruccion 1.",
-    "Instruccion 2.",
-    "Instruccion 3.",
-    "Instruccion 4.",
-    "Instruccion 5."
-  ],
-};
+import { useNavigate, useParams } from "react-router-dom";
+import axiosInstance from "../../config/axios.config";
 
 export default function FichaEjercicio() {
   const navigate = useNavigate();
-  const ejercicio = mockEjercicioData;
+  const { id } = useParams();
+
+  const [ejercicio, setEjercicio] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchEjercicio = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`/api/ejercicios/${id}`);
+        setEjercicio(response.data);
+      } catch (err) {
+        setError("Error al cargar el ejercicio. " + (err.response?.data?.message || err.message));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEjercicio();
+  }, [id]);
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty?.toLowerCase()) {
-      case 'dificultad 1': return 'green';
-      case 'dificultad 2': return 'orange';
-      case 'dificultad 3': return 'red';
+      case 'principiante': return 'green';
+      case 'intermedio': return 'orange';
+      case 'avanzado': return 'red';
       default: return 'gray';
     }
   };
+
+  if (loading) {
+    return <Center py={10}><Spinner size="xl" /></Center>;
+  }
+
+  if (error) {
+    return <Alert status="error"><AlertIcon />{error}</Alert>;
+  }
+  
+  if (!ejercicio) {
+    return <Center py={10}><Text>No se encontró el ejercicio.</Text></Center>;
+  }
 
   return (
     <Container maxW="container.md" py={8}>
@@ -50,9 +60,11 @@ export default function FichaEjercicio() {
             <Badge px={3} py={1} borderRadius="full" colorScheme={getDifficultyColor(ejercicio.dificultad)}>
               {ejercicio.dificultad}
             </Badge>
-            <Tag size="md" variant="subtle" colorScheme="cyan">
-              {ejercicio.equipamiento}
-            </Tag>
+            {ejercicio.equipamiento?.map(item => (
+              <Tag key={item} size="md" variant="subtle" colorScheme="cyan">
+                {item}
+              </Tag>
+            ))}
           </HStack>
         </CardHeader>
 
@@ -69,8 +81,12 @@ export default function FichaEjercicio() {
                 Músculos Trabajados
               </Heading>
               <HStack spacing={2} wrap="wrap">
-                <Tag size="lg" colorScheme="blue" variant="solid">{ejercicio.grupoMuscularPrincipal}</Tag>
-                {ejercicio.musculosSecundarios?.map((musculo, index) => (
+                {ejercicio.grupoMuscularPrincipal?.map((musculo, index) => (
+                  <Tag key={index} size="lg" colorScheme="blue" variant="solid">
+                    {musculo}
+                  </Tag>
+                ))}
+                {ejercicio.grupoMuscularSecundario?.map((musculo, index) => (
                   <Tag key={index} size="lg" colorScheme="blue" variant="outline">
                     {musculo}
                   </Tag>
@@ -78,27 +94,13 @@ export default function FichaEjercicio() {
               </HStack>
             </Box>
             
-            {ejercicio.instrucciones && ejercicio.instrucciones.length > 0 && (
-              <Box>
-                <Heading size="sm" mb={3} textTransform="uppercase" color="gray.500">
-                  Instrucciones
-                </Heading>
-                <OrderedList spacing={2} pl={2}>
-                  {ejercicio.instrucciones.map((paso, index) => (
-                    <ListItem key={index}>{paso}</ListItem>
-                  ))}
-                </OrderedList>
-              </Box>
-            )}
-
-
             <Divider />
 
             <Stack direction="row" spacing={4} justify="flex-end" mt={4}>
-              <Button onClick={() => navigate(`/admin/ejercicio/editar/${ejercicio.id}`)} colorScheme="teal">
+              <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal">
                 Editar
               </Button>
-              <Button variant="ghost" onClick={() => navigate("/catalogo")}>
+              <Button variant="ghost" onClick={() => navigate("/ejercicios")}>
                 Volver
               </Button>
             </Stack>

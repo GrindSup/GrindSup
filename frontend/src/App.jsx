@@ -17,11 +17,11 @@ import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx"
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx"
 
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
-import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -102,6 +102,10 @@ export default function App() {
               <Route
                 path="/ejercicio/visualizar"
                 element={usuario ? <DetalleEjercicio /> : <Navigate to="/login" replace />}
+              />
+              <Route 
+                path="/ejercicio/detalle/:id" 
+                element={usuario ? <DetalleEjercicio /> : <Navigate to="/login" replace />} 
               />
               
               <Route path="*" element={<Navigate to="/" replace />} />

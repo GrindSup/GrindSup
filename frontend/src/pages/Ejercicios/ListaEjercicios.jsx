@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
   SimpleGrid, Card, CardHeader, CardBody, CardFooter, HStack, Tag, Spacer,
-  InputGroup, InputLeftElement, Input, Center
-} from '@chakra-ui/react';
+  InputGroup, InputLeftElement, Input, Center, Link } from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
-import axiosInstance from '../../config/axios.config'; 
+import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 
 export default function ListaEjercicios() {
@@ -91,19 +89,21 @@ export default function ListaEjercicios() {
                     ) : (
                         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                             {filteredEjercicios.map((ej) => (
-                                <Card key={ej.id_ejercicio} direction="column" h="100%">
-                                    <CardHeader>
-                                        <Heading size='md'>{ej.nombre}</Heading>
-                                    </CardHeader>
-                                    <CardBody>
-                                        <HStack spacing={2} wrap="wrap">
-                                            <Tag colorScheme='teal'>{ej.dificultad}</Tag>
-                                            {ej.grupoMuscularPrincipal?.map(musculo => (
-                                                <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
-                                            ))}
-                                        </HStack>
-                                        <Text mt={4} noOfLines={3}>{ej.descripcion || "Sin descripción."}</Text>
-                                    </CardBody>
+                                <Card key={ej.id_ejercicio} direction="column" h="100%" display="flex">
+                                    <Link as={RouterLink} to={`/ejercicio/detalle/${ej.id_ejercicio}`} flex="1" _hover={{ textDecoration: 'none' }}>
+                                        <CardHeader>
+                                            <Heading size='md'>{ej.nombre}</Heading>
+                                        </CardHeader>
+                                        <CardBody>
+                                            <HStack spacing={2} wrap="wrap">
+                                                <Tag colorScheme='teal'>{ej.dificultad}</Tag>
+                                                {ej.grupoMuscularPrincipal?.map(musculo => (
+                                                    <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
+                                                ))}
+                                            </HStack>
+                                            <Text mt={4} noOfLines={3}>{ej.descripcion || "Sin descripción."}</Text>
+                                        </CardBody>
+                                    </Link>
                                     <Spacer />
                                     <CardFooter justify="flex-end">
                                         <HStack>
