@@ -105,7 +105,7 @@ function InicioPrivado() {
                 <CardHeader pb={2}>
                   <Stack direction="row" align="center" spacing={3}>
                     <Icon as={it.i} boxSize={7} color="brand.700" />
-                    <Heading size="md" color="gray.800">{it.t}</Heading>
+                    <Heading size="md" color="gray.800" noOfLines={1} overflow="hidden" textOverflow="ellipsis" flex="1" minW={0}>{it.t}</Heading>
                   </Stack>
                 </CardHeader>
                 <CardBody pt={0}>

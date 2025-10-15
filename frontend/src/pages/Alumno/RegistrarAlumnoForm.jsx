@@ -304,7 +304,7 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} bg="#0f4d11ff" color="white"/>
                     </HStack>
                   ))}
                 </GridItem>
@@ -329,7 +329,7 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} bg="#0f4d11ff" color="white"/>
                     </HStack>
                   ))}
                 </GridItem>
