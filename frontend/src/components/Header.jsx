@@ -7,7 +7,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isLoggedIn = !!usuario;
 
@@ -35,9 +34,9 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
     { label: "Turnos", path: "/turnos" },
-    { label: "Ejercicios", path: "/ejercicios" },
+    { label: "Ejercicios", path: "/ejericicios"},
+    { label: "Visualizar Ejercicios", path: "/ejercicio/visualizar"},
     { label: "Contacto", path: "/contacto" },
-    { label: "Visualizar Ejercicio", path: "/ejercicio/visualizar" } // Ejemplo de ruta para visualizar un ejercicio
   ];
 
   return (
@@ -47,14 +46,14 @@ export default function Header({ usuario, setUsuario }) {
           {/* Logo / Home */}
           <Flex w={{ base: "auto", md: "220px" }} align="center" gap={2} onClick={() => go("/")} cursor="pointer">
             <Image src="/vite.png" alt="GrindSup" boxSize="30px" />
-            <Text fontWeight="bold" fontSize="xl" color="green.700">GrindSup</Text>
+            <Text fontWeight="bold" fontSize="xl" color="green.800">GrindSup</Text>
           </Flex>
 
           {/* Nav central (solo logueado) */}
           <Flex flex="1" justify="center">
             {isLoggedIn && (
               <>
-                <HStack spacing={8} display={{ base: "none", md: "flex" }} fontWeight={500} color="gray.700">
+                <HStack spacing={8} display={{ base: "none", md: "flex" }} fontWeight={500} color="gray.900">
                   {items.map(i => (
                     <Text key={i.path} _hover={{ color: "green.600", cursor: "pointer" }} onClick={() => go(i.path)}>
                       {i.label}
@@ -86,13 +85,13 @@ export default function Header({ usuario, setUsuario }) {
           {/* Botón derecho */}
           <Flex w={{ base: "auto", md: "220px" }} justify="flex-end">
             {!isLoggedIn ? (
-              location.pathname !== '/login' && (
-                <Button size="sm" colorScheme="green" onClick={() => go("/login")}>
-                  Iniciar sesión
-                </Button>
+              location.pathname !== "/login" && (
+              <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#0f4d11ff">
+                Iniciar sesión
+              </Button>
               )
             ) : (
-              <Button size="sm" colorScheme="red" onClick={handleLogout}>
+              <Button size="sm" colorScheme="red" onClick={handleLogout} bg="#0f4d11ff">
                 Cerrar sesión
               </Button>
             )}

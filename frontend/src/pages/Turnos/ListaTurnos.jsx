@@ -25,7 +25,6 @@ import { useNavigate } from "react-router-dom";
 import { SearchIcon, CalendarIcon, AddIcon } from "@chakra-ui/icons";
 import { listarTurnos } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
-import BotonVolver from "../../components/BotonVolver.jsx";
 
 function getTurnoEntrenadorId(t) {
   return (
@@ -127,7 +126,6 @@ export default function ListaTurnos() {
       )}
 
       <HStack mb={6} gap={3} wrap="wrap">
-        <BotonVolver />
         <Heading size="lg" color="gray.900">
           Turnos
         </Heading>
@@ -135,7 +133,7 @@ export default function ListaTurnos() {
         <Button
           leftIcon={<CalendarIcon />}
           onClick={() => navigate("/turnos/calendario")}
-          bg="#38A169"
+          bg="#0f4d11ff"
           color="white"
           isDisabled={!entrenadorId}
         >
@@ -144,34 +142,34 @@ export default function ListaTurnos() {
         <Button
           leftIcon={<AddIcon />}
           onClick={() => navigate("/turnos/registrar")}
-          bg="#38A169"
+          bg="#0f4d11ff"
           color="white"
           isDisabled={!entrenadorId}
         >
-          + Nuevo turno
+          Nuevo turno
         </Button>
       </HStack>
 
       <HStack gap={3} mb={4} wrap="wrap">
         <Box>
-          <Text fontSize="sm" mb={1}>
+          <Text fontSize="xm" mb={1} fontWeight="bold" color="white">
             Desde
           </Text>
-          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} bg="white"/>
         </Box>
 
         <Box>
-          <Text fontSize="sm" mb={1}>
+          <Text fontSize="xm" mb={1} fontWeight="bold" color="white">
             Hasta
           </Text>
-          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+          <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} bg="white" />
         </Box>
 
         <Box>
-          <Text fontSize="sm" mb={1}>
+          <Text fontSize="xm" mb={1} fontWeight="bold" color="white">
             Tipo
           </Text>
-          <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <Select value={tipo} onChange={(e) => setTipo(e.target.value)} bg="white">
             <option value="">Todos</option>
             <option value="individual">Individual</option>
             <option value="grupal">Grupal</option>
@@ -181,17 +179,18 @@ export default function ListaTurnos() {
         <Spacer />
 
         <Box minW="280px" flex="1">
-          <Text fontSize="sm" mb={1}>
+          <Text fontSize="xm" mb={1} fontWeight="bold" color="white">
             Buscar
           </Text>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <SearchIcon color="gray.400" />
+              <SearchIcon color="gray.500" />
             </InputLeftElement>
             <Input
               placeholder="Alumno, entrenador, tipo…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              bg="white"
             />
           </InputGroup>
         </Box>

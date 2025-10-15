@@ -11,7 +11,7 @@ const theme = extendTheme({
     global: {
       "html, body, #root": { height: "100%" },
       // 👇 cuerpo en BLANCO; el panel verde lo damos en el componente Inicio
-      body: { bg: "white", color: "gray.800" },
+      body: { bg: "#228B22", color: "gray.800" },
     },
   },
   colors: {

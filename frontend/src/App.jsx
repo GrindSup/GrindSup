@@ -16,7 +16,7 @@ import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
 import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
-import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio";
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx"
 
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
@@ -41,7 +41,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Box minH="100vh" display="flex" flexDirection="column" bg="white">
+      <Box minH="100vh" display="flex" flexDirection="column" bg="#228B22">
         <Header usuario={usuario} setUsuario={setUsuario} />
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
           <Container maxW="container.xl">
@@ -90,6 +90,7 @@ export default function App() {
                 path="/dashboard"
                 element={usuario ? <InicioDashboard /> : <Navigate to="/login" replace />}
               />
+
               <Route
                 path="/ejercicios"
                 element={usuario ? <ListaEjercicios /> : <Navigate to="/login" replace />}
@@ -102,7 +103,7 @@ export default function App() {
                 path="/ejercicio/visualizar"
                 element={usuario ? <DetalleEjercicio /> : <Navigate to="/login" replace />}
               />
-
+              
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Container>

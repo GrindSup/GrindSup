@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
-  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon,
+  AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon, ArrowBackIcon,
 } from "@chakra-ui/icons";
 import {
   Box, Button, Card, CardBody, CardHeader, CardFooter, Collapse, Container,
@@ -14,7 +14,6 @@ import {
   Center, Link, Alert, AlertIcon
 } from "@chakra-ui/react";
 import { getUsuario, getEntrenadorId } from "../context/auth.js";
-import BotonVolver from "../components/BotonVolver";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
@@ -196,7 +195,9 @@ export default function AlumnoList() {
       )}
 
       <Flex gap={4} align="center" mb={6} wrap="wrap">
-        <BotonVolver />
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#0f4d11ff" color="white">
+          Volver
+        </Button>
         <Heading size="lg" color="gray.900">Lista de Alumnos</Heading>
         <Spacer />
         <InputGroup w={{ base: "100%", sm: "360px" }}>
@@ -216,7 +217,7 @@ export default function AlumnoList() {
           colorScheme="teal"
           leftIcon={<AddIcon />}
           onClick={() => navigate("/alumno/registrar")}
-          bg="#38A169"
+          bg="#0f4d11ff"
           color="white"
           isDisabled={!entrenadorId}
         >
@@ -226,7 +227,7 @@ export default function AlumnoList() {
 
       {filteredAlumnos.length === 0 ? (
         <Center py={10}>
-          <Text fontSize="lg" color="gray.500">
+           <Text fontSize="lg" color="gray.300" fontWeight="bold">
             {entrenadorId ? "No se encontraron alumnos." : "No hay alumnos para mostrar."}
           </Text>
         </Center>
