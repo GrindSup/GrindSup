@@ -97,7 +97,7 @@ export default function FichaEjercicio() {
             <Divider />
 
             <Stack direction="row" spacing={4} justify="flex-end" mt={4}>
-              <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal">
+              <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal" bg="#0f4d11ff">
                 Editar
               </Button>
               <Button variant="ghost" onClick={() => navigate("/ejercicios")}>
