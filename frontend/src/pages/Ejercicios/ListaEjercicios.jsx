@@ -6,9 +6,9 @@ import {
   InputGroup, InputLeftElement, Input, Center, Link, useDisclosure, useToast,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
-  RadioGroup, Radio, Stack, IconButton
+  RadioGroup, Radio, Stack, IconButton, Menu, MenuButton, MenuList, MenuOptionGroup, MenuItemOption
 } from '@chakra-ui/react';
-import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
+import { AddIcon, EditIcon, DeleteIcon, SearchIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 
@@ -21,11 +21,14 @@ const mockRutinas = [
   { id: 3, nombre: "Rutina 3" },
 ];
 
+const allMuscleGroups = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+
 export default function ListaEjercicios() {
     const [ejercicios, setEjercicios] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [selectedMuscles, setSelectedMuscles] = useState([]);
     
     const navigate = useNavigate();
     const toast = useToast();
@@ -106,10 +109,25 @@ export default function ListaEjercicios() {
       onAddClose();
     };
 
-    const filteredEjercicios = useMemo(() => 
-        ejercicios.filter(ej => 
-            ej.nombre.toLowerCase().includes(search.toLowerCase())
-        ), [ejercicios, search]);
+    const filteredEjercicios = useMemo(() => {
+            let ejerciciosFiltrados = ejercicios;
+            if (search) {
+                ejerciciosFiltrados = ejerciciosFiltrados.filter(ej => 
+                    ej.nombre.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+            if (selectedMuscles.length > 0) {
+                ejerciciosFiltrados = ejerciciosFiltrados.filter(ej => {
+                    const musculosDelEjercicio = [
+                        ...(ej.grupoMuscularPrincipal || []),
+                        ...(ej.grupoMuscularSecundario || [])
+                    ];
+                    return selectedMuscles.some(selected => musculosDelEjercicio.includes(selected));
+                });
+            }
+
+            return ejerciciosFiltrados;
+        }, [ejercicios, search, selectedMuscles]);
     
     return (
         <Container maxW="7xl" py={10}>
@@ -122,6 +140,33 @@ export default function ListaEjercicios() {
                 </HStack>
                 <Spacer />
                 <HStack spacing={4}>
+                    <Menu closeOnSelect={false}>
+                    <MenuButton 
+                    as={Button} 
+                    rightIcon={<ChevronDownIcon />} 
+                    minW="200px"
+                    bg="#0f4d11ff"      
+                    color="white"      
+                    _hover={{ bg: "#0b3a0c" }} 
+                    _active={{ bg: "#082b09" }}
+                    >
+                        {selectedMuscles.length > 0 ? `Músculos (${selectedMuscles.length})` : "Filtrar por Músculo"}
+                    </MenuButton>
+                        <MenuList minWidth="240px">
+                            <MenuOptionGroup
+                                title="Grupos Musculares"
+                                type="checkbox"
+                                value={selectedMuscles}
+                                onChange={setSelectedMuscles}
+                            >
+                                {allMuscleGroups.map(muscle => (
+                                    <MenuItemOption key={muscle} value={muscle}>
+                                        {muscle}
+                                    </MenuItemOption>
+                                ))}
+                            </MenuOptionGroup>
+                        </MenuList>
+                    </Menu>
                     <InputGroup w={{ base: "100%", md: "300px" }}>
                         <InputLeftElement pointerEvents="none">
                             <SearchIcon color="gray.500" />
