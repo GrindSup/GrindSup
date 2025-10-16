@@ -129,7 +129,12 @@ export default function FichaEjercicio() {
               <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal" bg="#0f4d11ff">
                 Editar
               </Button>
-              <Button colorScheme="red" onClick={onOpen}>
+              <Button
+                bg="red.500"
+                color="white"
+                _hover={{ bg: "red.600" }}
+                onClick={onOpen}
+              >
                 Eliminar
               </Button>
               <Button variant="ghost" onClick={() => navigate("/ejercicios")}>
@@ -147,8 +152,18 @@ export default function FichaEjercicio() {
                     ¿Estás seguro de que querés eliminar <strong>"{ejercicio?.nombre}"</strong>?
                 </AlertDialogBody>
                 <AlertDialogFooter>
-                    <Button ref={cancelRef} onClick={onClose}>Cancelar</Button>
-                    <Button colorScheme="red" onClick={handleEliminar} ml={3}>Eliminar</Button>
+                <Button ref={cancelRef} onClick={onClose} color="white">
+                  Cancelar
+                </Button>
+                    <Button
+                      bg="red.500"
+                      color="white"
+                      _hover={{ bg: "red.600" }}
+                      onClick={handleEliminar}
+                      ml={3}
+                    >
+                      Eliminar
+                    </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialogOverlay>
