@@ -98,7 +98,6 @@ function InicioPrivado() {
             <Heading size="lg" textAlign="center" mb={8} color="white" fontWeight={800}>
               ¡Hola! <Text as="span" fontWeight="semibold">¿Qué querés hacer hoy?</Text>
             </Heading>
-            <BotonVolver />
           </Flex>
 
           <Grid templateColumns={{ base: "1fr", md: "repeat(4, 1fr)" }} gap={6}>

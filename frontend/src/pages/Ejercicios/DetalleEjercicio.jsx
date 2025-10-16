@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container,
   Heading, Text, Stack, Badge, Divider, HStack, Tag,
-  Spinner, Center, Alert, AlertIcon
+  Spinner, Center, Alert, AlertIcon, useDisclosure, useToast, 
+  AlertDialog, AlertDialogBody, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogContent, AlertDialogOverlay
 } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../config/axios.config";
@@ -10,10 +12,14 @@ import axiosInstance from "../../config/axios.config";
 export default function FichaEjercicio() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const toast = useToast();
 
   const [ejercicio, setEjercicio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = useRef();
 
   useEffect(() => {
     const fetchEjercicio = async () => {
@@ -29,6 +35,29 @@ export default function FichaEjercicio() {
     };
     fetchEjercicio();
   }, [id]);
+
+  const handleEliminar = async () => {
+    try {
+        await axiosInstance.delete(`/api/ejercicios/${id}`);
+        toast({
+            title: "Ejercicio eliminado",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+        });
+        navigate("/ejercicios"); // Redirigir a la lista
+    } catch (err) {
+        toast({
+            title: "Error al eliminar",
+            description: err.response?.data?.message || err.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+        });
+    } finally {
+        onClose();
+    }
+  };
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty?.toLowerCase()) {
@@ -100,6 +129,9 @@ export default function FichaEjercicio() {
               <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal" bg="#0f4d11ff">
                 Editar
               </Button>
+              <Button colorScheme="red" onClick={onOpen}>
+                Eliminar
+              </Button>
               <Button variant="ghost" onClick={() => navigate("/ejercicios")}>
                 Volver
               </Button>
@@ -107,6 +139,21 @@ export default function FichaEjercicio() {
           </Stack>
         </CardBody>
       </Card>
+      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+        <AlertDialogOverlay>
+            <AlertDialogContent>
+                <AlertDialogHeader fontSize="lg" fontWeight="bold">Eliminar Ejercicio</AlertDialogHeader>
+                <AlertDialogBody>
+                    ¿Estás seguro de que querés eliminar <strong>"{ejercicio?.nombre}"</strong>?
+                </AlertDialogBody>
+                <AlertDialogFooter>
+                    <Button ref={cancelRef} onClick={onClose}>Cancelar</Button>
+                    <Button colorScheme="red" onClick={handleEliminar} ml={3}>Eliminar</Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Container>
+
   );
 }
