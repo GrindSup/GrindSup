@@ -1,14 +1,25 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
+import {
+  Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
   SimpleGrid, Card, CardHeader, CardBody, CardFooter, HStack, Tag, Spacer,
-  InputGroup, InputLeftElement, Input, Center, Link, useDisclosure, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogContent, AlertDialogOverlay } from '@chakra-ui/react';
+  InputGroup, InputLeftElement, Input, Center, Link, useDisclosure, useToast,
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
+  RadioGroup, Radio, Stack, IconButton
+} from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 
 const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
+//REVISAR CUANDO ESTÉN LAS HU DE RUTINAS
+const mockRutinas = [
+  { id: 1, nombre: "Rutina 1" },
+  { id: 2, nombre: "Rutina 2" },
+  { id: 3, nombre: "Rutina 3" },
+];
 
 export default function ListaEjercicios() {
     const [ejercicios, setEjercicios] = useState([]);
@@ -22,6 +33,9 @@ export default function ListaEjercicios() {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [ejercicioAEliminar, setEjercicioAEliminar] = useState(null);
     const cancelRef = useRef();
+    const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
+    const [ejercicioParaAgregar, setEjercicioParaAgregar] = useState(null);
+    const [rutinaSeleccionada, setRutinaSeleccionada] = useState(null);
 
     useEffect(() => {
         fetchEjercicios();
@@ -68,6 +82,28 @@ export default function ListaEjercicios() {
                 isClosable: true,
             });
         }
+    };
+
+    const abrirModalAgregar = (ejercicio) => {
+      setEjercicioParaAgregar(ejercicio);
+      setRutinaSeleccionada(null); 
+      onAddOpen();
+    };
+
+    const handleAgregarARutina = () => {
+      if (!rutinaSeleccionada || !ejercicioParaAgregar) return;
+
+      const rutina = mockRutinas.find(r => r.id.toString() === rutinaSeleccionada);
+
+      toast({
+        title: "Ejercicio Agregado",
+        description: `"${ejercicioParaAgregar.nombre}" se agregó a la rutina "${rutina.nombre}".`,
+        status: "success",
+        duration: 4000,
+        isClosable: true,
+      });
+
+      onAddClose();
     };
 
     const filteredEjercicios = useMemo(() => 
@@ -140,7 +176,15 @@ export default function ListaEjercicios() {
                                         </CardBody>
                                     </Link>
                                     <Spacer />
-                                    <CardFooter justify="flex-end">
+                                    <CardFooter>
+                                      <Flex justify="space-between" align="center" w="100%">
+                                        <IconButton
+                                          aria-label="Agregar a rutina"
+                                          icon={<AddIcon />}
+                                          colorScheme="green"
+                                          isRound
+                                          onClick={() => abrirModalAgregar(ej)}
+                                        />
                                         <HStack>
                                             <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#0f4d11ff">
                                                 Editar
@@ -149,6 +193,7 @@ export default function ListaEjercicios() {
                                                 Eliminar
                                             </Button>
                                         </HStack>
+                                      </Flex>
                                     </CardFooter>
                                 </Card>
                             ))}
@@ -170,16 +215,55 @@ export default function ListaEjercicios() {
                             ¿Estás seguro de que querés eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
                         </AlertDialogBody>
                         <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                Cancelar
+                            <Button ref={cancelRef} onClick={onClose} color="white">
+                            Cancelar
                             </Button>
-                            <Button colorScheme="red" onClick={handleEliminar} ml={3}>
-                                Eliminar
+                            <Button
+                            bg="red.500"
+                            color="white"
+                            _hover={{ bg: "red.600" }}
+                            onClick={handleEliminar}
+                            ml={3}
+                            >
+                            Eliminar
                             </Button>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialogOverlay>
             </AlertDialog>
+            <Modal isOpen={isAddOpen} onClose={onAddClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>Agregar "{ejercicioParaAgregar?.nombre}" a Rutina</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  <Text mb={4}>Seleccioná la rutina a la que querés agregar este ejercicio:</Text>
+                  <RadioGroup onChange={setRutinaSeleccionada} value={rutinaSeleccionada}>
+                    <Stack>
+                      {mockRutinas.map(r => (
+                        <Radio key={r.id} value={r.id.toString()}>
+                          {r.nombre}
+                        </Radio>
+                      ))}
+                    </Stack>
+                  </RadioGroup>
+                </ModalBody>
+
+                <ModalFooter>
+                  <Button variant="ghost" mr={3} onClick={onAddClose}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    colorScheme="green"
+                    bg="#0f4d11ff"
+                    onClick={handleAgregarARutina}
+                    isDisabled={!rutinaSeleccionada}
+                  >
+                    Agregar
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
         </Container>
     );
 }
