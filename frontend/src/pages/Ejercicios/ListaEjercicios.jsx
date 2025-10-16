@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Box, Button, Container, Heading, Flex, Alert, AlertIcon, Spinner, Text,
   SimpleGrid, Card, CardHeader, CardBody, CardFooter, HStack, Tag, Spacer,
-  InputGroup, InputLeftElement, Input, Center, Link } from '@chakra-ui/react';
+  InputGroup, InputLeftElement, Input, Center, Link, useDisclosure, useToast, AlertDialog, AlertDialogBody, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogContent, AlertDialogOverlay } from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
@@ -16,6 +17,11 @@ export default function ListaEjercicios() {
     const [search, setSearch] = useState("");
     
     const navigate = useNavigate();
+    const toast = useToast();
+
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [ejercicioAEliminar, setEjercicioAEliminar] = useState(null);
+    const cancelRef = useRef();
 
     useEffect(() => {
         fetchEjercicios();
@@ -31,6 +37,36 @@ export default function ListaEjercicios() {
             setError('Error al cargar los ejercicios: ' + (err.response?.data?.message || err.message));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const abrirDialogoEliminar = (ejercicio) => {
+        setEjercicioAEliminar(ejercicio);
+        onOpen();
+    };
+
+    const handleEliminar = async () => {
+        if (!ejercicioAEliminar) return;
+
+        try {
+            await axiosInstance.delete(`/api/ejercicios/${ejercicioAEliminar.id_ejercicio}`);
+            toast({
+                title: "Ejercicio eliminado",
+                description: `El ejercicio "${ejercicioAEliminar.nombre}" ha sido eliminado.`,
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+            onClose(); 
+            fetchEjercicios();
+        } catch (err) {
+            toast({
+                title: "Error al eliminar",
+                description: err.response?.data?.message || err.message,
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
         }
     };
 
@@ -74,13 +110,8 @@ export default function ListaEjercicios() {
                 </HStack>
             </Flex>
 
-            {loading && (
-                <Center py={10}><Spinner size="xl" /></Center>
-            )}
-
-            {error && (
-                <Alert status="error"><AlertIcon />{error}</Alert>
-            )}
+            {loading && ( <Center py={10}><Spinner size="xl" /></Center> )}
+            {error && ( <Alert status="error"><AlertIcon />{error}</Alert> )}
 
             {!loading && !error && (
                 <>
@@ -114,7 +145,7 @@ export default function ListaEjercicios() {
                                             <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#0f4d11ff">
                                                 Editar
                                             </Button>
-                                            <Button variant='ghost' colorScheme='red' size="sm">
+                                            <Button size="sm" bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={() => abrirDialogoEliminar(ej)}>
                                                 Eliminar
                                             </Button>
                                         </HStack>
@@ -125,6 +156,30 @@ export default function ListaEjercicios() {
                     )}
                 </>
             )}
+            <AlertDialog
+                isOpen={isOpen}
+                leastDestructiveRef={cancelRef}
+                onClose={onClose}
+            >
+                <AlertDialogOverlay>
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                            Eliminar Ejercicio
+                        </AlertDialogHeader>
+                        <AlertDialogBody>
+                            ¿Estás seguro de que querés eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
+                        </AlertDialogBody>
+                        <AlertDialogFooter>
+                            <Button ref={cancelRef} onClick={onClose}>
+                                Cancelar
+                            </Button>
+                            <Button colorScheme="red" onClick={handleEliminar} ml={3}>
+                                Eliminar
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
         </Container>
     );
 }

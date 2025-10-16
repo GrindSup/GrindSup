@@ -13,6 +13,13 @@ export default function Header({ usuario, setUsuario }) {
   const go = (path) => navigate(path);
 
   const handleLogout = async () => {
+
+    const confirmar = window.confirm("¿Estás seguro de que querés cerrar la sesión?");
+
+    if (!confirmar) {
+      return; 
+    }
+
     const sesionId = localStorage.getItem("sesionId");
     try {
       if (sesionId) {
