@@ -184,7 +184,7 @@ export default function DetalleTurno() {
         <Button
           variant="solid"
           onClick={() => navigate("/turnos")}
-          bg="#38A169"
+          bg="#0f4d11ff"
           color="white"
         >
           Volver
@@ -224,7 +224,7 @@ export default function DetalleTurno() {
             />
           </FormControl>
           <FormControl alignSelf="end">
-            <Button onClick={handleGuardarFecha} isLoading={savingFecha}>
+            <Button onClick={handleGuardarFecha} isLoading={savingFecha} bg="#0f4d11ff" color="white">
               Guardar fecha
             </Button>
           </FormControl>
@@ -259,7 +259,7 @@ export default function DetalleTurno() {
               </option>
             ))}
           </Select>
-          <Button onClick={handleAgregar}>Agregar</Button>
+          <Button onClick={handleAgregar} bg="#0f4d11ff" color="white">Agregar</Button>
         </HStack>
 
         {error && (
