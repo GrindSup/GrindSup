@@ -17,9 +17,13 @@ import java.time.LocalDateTime;
 )
 public class Alumno {
 
+    // @Id
+    // @GeneratedValue(strategy = GenerationType.IDENTITY)
+    // private Long id_alumno;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id_alumno;
+    @Column(name = "id_alumno")
+    private Long idAlumno;
 
     @ManyToOne
     @JoinColumn(name = "id_entrenador", nullable = true)
@@ -79,8 +83,10 @@ public class Alumno {
     // getters & setters ...
 
     // ====== Getters y Setters ======
-    public Long getId_alumno() { return id_alumno; }
-    public void setId_alumno(Long id_alumno) { this.id_alumno = id_alumno; }
+    // public Long getId_alumno() { return id_alumno; }
+    // public void setId_alumno(Long id_alumno) { this.id_alumno = id_alumno; }
+    public Long getId_alumno() { return idAlumno; }
+    public void setId_alumno(Long id_alumno) { this.idAlumno = id_alumno; }
 
     public Entrenador getEntrenador() { return entrenador; }
     public void setEntrenador(Entrenador entrenador) { this.entrenador = entrenador; }
