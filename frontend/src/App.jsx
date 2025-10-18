@@ -20,6 +20,11 @@ import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 
+// ✅ NUEVO: páginas de Rutinas
+import ListaRutinas from "./pages/Rutinas/ListaRutinas.jsx";
+import NuevaRutina from "./pages/Rutinas/NuevaRutina.jsx";
+import DetalleRutina from "./pages/Rutinas/DetalleRutina.jsx";
+
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
     const saved = localStorage.getItem("usuario");
@@ -34,7 +39,6 @@ export default function App() {
       localStorage.removeItem("sesionId");
     }
   }, [usuario]);
-// ... (imports y estados)
 
   return (
     <BrowserRouter>
@@ -49,7 +53,7 @@ export default function App() {
               <Route path="/forgot" element={<ForgotPassword />} />
               <Route path="/reset" element={<ResetPassword />} />
 
-              {/* PRIVADAS (si no hay usuario, redirige a /login) */}
+              {/* PRIVADAS */}
               <Route
                 path="/alumnos"
                 element={usuario ? <AlumnoList /> : <Navigate to="/login" replace />}
@@ -62,6 +66,12 @@ export default function App() {
                 path="/alumno/editar/:id"
                 element={usuario ? <EditarAlumnoForm /> : <Navigate to="/login" replace />}
               />
+              <Route
+                path="/alumno/perfil/:id"
+                element={usuario ? <PerfilAlumno /> : <Navigate to="/login" replace />}
+              />
+
+              {/* TURNOS */}
               <Route
                 path="/turnos"
                 element={usuario ? <ListaTurnos /> : <Navigate to="/login" replace />}
@@ -79,15 +89,28 @@ export default function App() {
                 path="/turnos/calendario"
                 element={usuario ? <CalendarioTurnos /> : <Navigate to="/login" replace />}
               />
+
+              {/* ✅ RUTINAS */}
               <Route
-                path="/alumno/perfil/:id"
-                element={usuario ? <PerfilAlumno /> : <Navigate to="/login" replace />}
+                path="/planes/:idPlan/rutinas"
+                element={usuario ? <ListaRutinas /> : <Navigate to="/login" replace />}
               />
+              <Route
+                path="/planes/:idPlan/rutinas/nueva"
+                element={usuario ? <NuevaRutina /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/planes/:idPlan/rutinas/:idRutina"
+                element={usuario ? <DetalleRutina /> : <Navigate to="/login" replace />}
+              />
+
+              {/* DASHBOARD */}
               <Route
                 path="/dashboard"
                 element={usuario ? <InicioDashboard /> : <Navigate to="/login" replace />}
               />
 
+              {/* DEFAULT */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Container>
