@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import {
-  Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td,
-  HStack, Spinner, Button, useToast
+  Box, Heading, Text, Stack, Tag, Table, Thead, Tbody, Tr, Th, Td,
+  HStack, Spinner, useToast
 } from "@chakra-ui/react";
-import { useNavigate, useParams } from "react-router-dom";
-import { obtenerDetalleRutina } from "../../services/rutinas.servicio";
+import { useParams } from "react-router-dom";
+import { rutinasService } from "../../services/rutinas.servicio";
+import BotonVolver from "../../components/BotonVolver.jsx";
 
 export default function DetalleRutina() {
   const { idPlan, idRutina } = useParams();
   const toast = useToast();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [rutina, setRutina] = useState(null);
   const [ejercicios, setEjercicios] = useState([]);
@@ -17,11 +17,11 @@ export default function DetalleRutina() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await obtenerDetalleRutina(idPlan, idRutina);
+        const { data } = await rutinasService.detalle(idPlan, idRutina);
         setRutina(data?.rutina || null);
         setEjercicios(Array.isArray(data?.ejercicios) ? data.ejercicios : []);
       } catch {
-        toast({ title: "Error al cargar detalle de rutina", status: "error" });
+        toast({ title: "No se pudo obtener el detalle", status: "error" });
       } finally {
         setLoading(false);
       }
@@ -32,13 +32,13 @@ export default function DetalleRutina() {
 
   return (
     <Box>
-      <HStack justify="space-between" mb={4}>
-        <Heading size="lg">{rutina?.nombre || `Rutina #${idRutina}`}</Heading>
-        <Button onClick={() => navigate(`/planes/${idPlan}/rutinas`)}>Volver</Button>
-      </HStack>
+      <HStack mb={4}><BotonVolver /><Heading size="lg">Rutina: {rutina?.nombre}</Heading></HStack>
+      <Stack spacing={2} mb={4}>
+        <Text color="gray.700">{rutina?.descripcion || "Sin descripción."}</Text>
+        {rutina?.estado?.nombre && <Tag colorScheme="green" w="fit-content">{rutina.estado.nombre}</Tag>}
+      </Stack>
 
-      <Text mb={4}>{rutina?.descripcion || "-"}</Text>
-
+      <Heading size="md" mb={2}>Ejercicios</Heading>
       <Table variant="simple" bg="white" borderRadius="md">
         <Thead>
           <Tr>
@@ -49,16 +49,16 @@ export default function DetalleRutina() {
           </Tr>
         </Thead>
         <Tbody>
-          {ejercicios.map((re) => (
-            <Tr key={re.id_rutina_ejercicio}>
-              <Td>{re?.ejercicio?.nombre || `#${re?.ejercicio?.id_ejercicio}`}</Td>
-              <Td isNumeric>{re.series ?? "-"}</Td>
-              <Td isNumeric>{re.repeticiones ?? "-"}</Td>
-              <Td isNumeric>{re.descanso_segundos ?? "-"}</Td>
+          {ejercicios.map((e) => (
+            <Tr key={e.id_rutina_ejercicio ?? `${e?.ejercicio?.id_ejercicio}-${e?.id}`}>
+              <Td>{e?.ejercicio?.nombre || "-"}</Td>
+              <Td isNumeric>{e?.series ?? "-"}</Td>
+              <Td isNumeric>{e?.repeticiones ?? "-"}</Td>
+              <Td isNumeric>{e?.descanso_segundos ?? e?.descansoSegundos ?? "-"}</Td>
             </Tr>
           ))}
           {ejercicios.length === 0 && (
-            <Tr><Td colSpan={4}><Text>No hay ejercicios cargados.</Text></Td></Tr>
+            <Tr><Td colSpan={4}><Text>No hay ejercicios en esta rutina.</Text></Td></Tr>
           )}
         </Tbody>
       </Table>

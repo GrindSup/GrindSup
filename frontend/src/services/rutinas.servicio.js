@@ -1,11 +1,12 @@
-import axios from "axios";
-const API = import.meta.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
+import axiosInstance from "../config/axios.config";
 
-export const listarRutinasPorPlan = (idPlan) =>
-  axios.get(`${API}/planes/${idPlan}/rutinas`);
+export const rutinasService = {
+  listarPorPlan: (idPlan) =>
+    axiosInstance.get(`/api/planes/${idPlan}/rutinas`),
 
-export const crearRutina = (idPlan, payload) =>
-  axios.post(`${API}/planes/${idPlan}/rutinas`, payload);
+  detalle: (idPlan, idRutina) =>
+    axiosInstance.get(`/api/planes/${idPlan}/rutinas/${idRutina}/detalle`),
 
-export const obtenerDetalleRutina = (idPlan, idRutina) =>
-  axios.get(`${API}/planes/${idPlan}/rutinas/${idRutina}/detalle`);
+  crear: (idPlan, payload) =>
+    axiosInstance.post(`/api/planes/${idPlan}/rutinas`, payload), // si el endpoint está comentado, capturamos el error en la UI
+};
