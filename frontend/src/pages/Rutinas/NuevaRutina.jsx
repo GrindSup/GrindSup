@@ -314,12 +314,14 @@ export default function NuevaRutina() {
               icon={<DeleteIcon />}
               onClick={() => removeItem(i)}
               mt={1}
+              bg="#0f4d11ff"
+              color="white"
             />
           </HStack>
         ))}
 
         <HStack>
-          <Button leftIcon={<AddIcon />} onClick={addItem}>
+          <Button leftIcon={<AddIcon />} onClick={addItem} bg="#0f4d11ff" color="white">
             Agregar ejercicio
           </Button>
           <Text color="gray.500" fontSize="sm">Podés agregar varios bloques.</Text>

@@ -136,7 +136,7 @@ export default function DetallePlan() {
           <Heading size="lg" color="gray.900">Plan #{idPlan}</Heading>
         </HStack>
         <HStack gap={2}>
-          <Button variant="outline" onClick={() => navigate(`/planes/${idPlan}/editar`)}>Editar plan</Button>
+          <Button variant="solid" onClick={() => navigate(`/planes/${idPlan}/editar`)} bg="#0f4d11ff" color="white">Editar plan</Button>
           <Button bg="#0f4d11ff" color="white" onClick={goNuevaRutina}>Agregar rutina</Button>
         </HStack>
       </HStack>
@@ -199,8 +199,8 @@ export default function DetallePlan() {
                       <HStack px={5} pt={2} pb={1} justify="flex-end" gap={2}>
                         <Button size="sm" variant="outline" onClick={() => goDetalleRutina(idRutina)}>Ver detalle</Button>
                         <Button size="sm" variant="outline" onClick={() => navigate(`/planes/${idPlan}/rutinas/${idRutina}/editar`)}>Editar</Button>
-                        <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} colorScheme="green">Exportar PDF</Button>
-                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)}>Eliminar</Button>
+                        <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} bg="#0f4d11ff" color="white">Exportar PDF</Button>
+                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)} bg="#0f4d11ff" color="white">Eliminar</Button>
                       </HStack>
 
                       <AccordionPanel pb={4} px={5}>

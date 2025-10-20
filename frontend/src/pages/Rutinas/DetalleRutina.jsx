@@ -95,12 +95,12 @@ export default function DetalleRutina() {
 
         <HStack>
           <Tag colorScheme="teal">Duración estimada: {humanizeSecs(totalSecs)}</Tag>
-          <Button onClick={() => navigate(`/planes/${idPlan}/rutinas`)}>Volver</Button>
+          <Button onClick={() => navigate(`/planes/${idPlan}/rutinas`)} bg="#0f4d11ff" color="white">Volver</Button>
         </HStack>
       </HStack>
 
       {!!rutina?.descripcion && (
-        <Text mb={4} color="gray.800">{rutina.descripcion}</Text>
+        <Text mb={4} color="White" fontWeight="bold">{rutina.descripcion}</Text>
       )}
 
       <Box bg="white" p={4} borderRadius="lg" boxShadow="md">
@@ -128,7 +128,7 @@ export default function DetalleRutina() {
                   <Center py={4}>
                     <VStack spacing={1}>
                       <Text>No hay ejercicios cargados.</Text>
-                      <Text fontSize="sm" color="gray.500">
+                      <Text fontSize="sm" color="gray.900">
                         Volvé atrás y agregá ejercicios a esta rutina.
                       </Text>
                     </VStack>
