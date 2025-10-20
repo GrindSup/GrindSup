@@ -5,7 +5,8 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { planesService } from "../../services/planes.servicio";
-import { alumnosService } from "../../services/alumnos.servicio";
+import { alumnosService } from "../../services/alumno.js";
+import { ensureEntrenadorId } from "../../context/auth";
 import BotonVolver from "../../components/BotonVolver.jsx";
 
 export default function RegistrarPlan() {
@@ -21,15 +22,23 @@ export default function RegistrarPlan() {
   const [loadingAlumnos, setLoadingAlumnos] = useState(true);
   const [errorAlumnos, setErrorAlumnos] = useState("");
 
+  // ✅ Cargar alumnos del entrenador de la sesión
   useEffect(() => {
     (async () => {
       try {
         setLoadingAlumnos(true);
-        const data = await alumnosService.listAll(); // GET /api/alumnos
+        const entId = await ensureEntrenadorId();
+        if (!entId) {
+          setAlumnos([]);
+          setErrorAlumnos("No pude identificar al entrenador en la sesión.");
+          return;
+        }
+        // Intenta endpoints comunes y hace fallback en el servicio
+        const data = await alumnosService.listarPorEntrenador(entId);
         setAlumnos(Array.isArray(data) ? data : []);
         setErrorAlumnos("");
       } catch {
-        setErrorAlumnos("No pude cargar alumnos. Verificá el backend /api/alumnos.");
+        setErrorAlumnos("No pude cargar alumnos del entrenador. Verificá el backend.");
       } finally {
         setLoadingAlumnos(false);
       }
@@ -56,7 +65,7 @@ export default function RegistrarPlan() {
       const payload = {
         idAlumno: Number(idAlumno),
         objetivo: objetivo?.trim() || "",
-        fechaInicio,      // yyyy-mm-dd
+        fechaInicio,          // yyyy-mm-dd
         fechaFin: fechaFin || null,
       };
       const nuevo = await planesService.create(payload); // POST /api/planes

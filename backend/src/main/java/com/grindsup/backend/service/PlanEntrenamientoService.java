@@ -48,3 +48,6 @@ public class PlanEntrenamientoService {
         return planRepository.findById(idPlan);
     }
 }
+
+
+

@@ -1,231 +1,232 @@
 // frontend/src/pages/Planes/DetallePlan.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Box, Button, Card, CardBody, CardHeader, Container, Grid, Heading, HStack, Text,
-  Tag, SimpleGrid, Select, useToast, Modal, ModalOverlay, ModalContent, ModalHeader,
-  ModalBody, ModalFooter, ModalCloseButton, useDisclosure, Input, InputGroup, InputLeftElement
+  Box, Button, Container, Heading, HStack, Text, Tag, Alert, AlertIcon,
+  Skeleton, VStack, Accordion, AccordionItem, AccordionButton, AccordionPanel,
+  AccordionIcon, Badge, Icon, Center, useToast, Spacer
 } from "@chakra-ui/react";
-import { SearchIcon } from "@chakra-ui/icons";
+import { MdTimer } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { planesService } from "../../services/planes.servicio";
+import { rutinasService } from "../../services/rutinas.servicio";
+import { ensureEntrenadorId } from "../../context/auth";
+import axiosInstance from "../../config/axios.config";
 import BotonVolver from "../../components/BotonVolver";
+
+function fmtFecha(d) {
+  if (!d) return "—";
+  return String(d).slice(0, 10);
+}
+function calcRutinaDurationSecs(detalle) {
+  if (!detalle?.ejercicios || !Array.isArray(detalle.ejercicios)) return 0;
+  let total = 0;
+  for (const it of detalle.ejercicios) {
+    const series = Number(it.series ?? 0);
+    const reps = Number(it.repeticiones ?? 0);
+    const rest = Number(it.descanso_segundos ?? 0);
+    total += series * (reps * 2 + rest);
+  }
+  return total;
+}
+function humanizeSecs(s) {
+  if (!s || s <= 0) return "—";
+  const m = Math.floor(s / 60), r = s % 60;
+  if (m >= 60) return `≈ ${Math.floor(m / 60)}h ${m % 60}m`;
+  return `≈ ${m}m ${r}s`;
+}
 
 export default function DetallePlan() {
   const { idPlan } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+
   const [plan, setPlan] = useState(null);
   const [rutinas, setRutinas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [detalles, setDetalles] = useState({}); // { [idRutina]: detalle }
 
-  // modal copiar rutina
-  const copyDlg = useDisclosure();
-  const [rutinasDeOtrosPlanes, setRutinasDeOtrosPlanes] = useState([]);
-  const [planOrigen, setPlanOrigen] = useState("");
-  const [rutinaOrigen, setRutinaOrigen] = useState("");
-  const [q, setQ] = useState("");
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const p = await planesService.getById(idPlan);
-      const rs = await planesService.listRutinasByPlan(idPlan);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setErr("");
+    try {
+      const entId = await ensureEntrenadorId();
+      const [p, rs] = await Promise.all([
+        planesService.getById(idPlan, entId),
+        rutinasService.listByPlan(idPlan),
+      ]);
+      if (!p) setErr("No se pudo cargar el plan.");
       setPlan(p);
       setRutinas(Array.isArray(rs) ? rs : []);
+    } catch {
+      setErr("No se pudo cargar el plan.");
+      setPlan(null);
+      setRutinas([]);
+    } finally {
       setLoading(false);
-    })();
+    }
   }, [idPlan]);
 
-  const filtradas = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return rutinas;
-    return rutinas.filter(r =>
-      (r.nombre ?? "").toLowerCase().includes(term) ||
-      (r.descripcion ?? "").toLowerCase().includes(term)
-    );
-  }, [rutinas, q]);
+  useEffect(() => { load(); }, [load]);
 
-  const cargarRutinasOrigen = async (id) => {
-    setPlanOrigen(id);
-    setRutinaOrigen("");
-    if (!id) {
-      setRutinasDeOtrosPlanes([]);
-      return;
-    }
-    const list = await planesService.listRutinasByPlan(id);
-    setRutinasDeOtrosPlanes(list);
-  };
+  const alumnoNombre = useMemo(() => {
+    if (!plan?.alumno) return "—";
+    return [plan.alumno.nombre, plan.alumno.apellido].filter(Boolean).join(" ") || "—";
+  }, [plan]);
 
-  const copiar = async () => {
+  const onExpand = async (idRutina) => {
+    if (detalles[idRutina]) return;
     try {
-      if (!planOrigen || !rutinaOrigen) {
-        toast({ title: "Elegí un plan y una rutina", status: "warning" });
-        return;
-      }
-      await planesService.copyRutinaToPlan(rutinaOrigen, idPlan);
-      toast({ title: "Rutina copiada", status: "success" });
-      // refresco
-      const rs = await planesService.listRutinasByPlan(idPlan);
-      setRutinas(rs);
-      copyDlg.onClose();
-    } catch (e) {
-      toast({ title: "No se pudo copiar", description: e?.message, status: "error" });
+      const det = await rutinasService.obtenerDetalleRutina(idPlan, idRutina);
+      if (det) setDetalles((prev) => ({ ...prev, [idRutina]: det }));
+    } catch {}
+  };
+
+  const goNuevaRutina = () => navigate(`/planes/${idPlan}/rutinas/nueva`);
+  const goDetalleRutina = (idRutina) => navigate(`/planes/${idPlan}/rutinas/${idRutina}`);
+
+  const handleDeleteRutina = async (idRutina) => {
+    if (!confirm("¿Eliminar esta rutina? Esta acción no se puede deshacer.")) return;
+
+    const prev = rutinas;
+    setRutinas((r) => r.filter((x) => (x.id_rutina ?? x.id) !== idRutina));
+
+    const ok = await rutinasService.remove(idPlan, idRutina);
+    if (ok) {
+      toast({ title: "Rutina eliminada", status: "success" });
+      setDetalles((d) => {
+        const cp = { ...d };
+        delete cp[idRutina];
+        return cp;
+      });
+    } else {
+      setRutinas(prev);
+      toast({ title: "No se pudo eliminar", status: "error" });
     }
   };
 
-  if (loading) {
-    return (
-      <Container maxW="container.md" py={8}>
-        <Box bg="white" p={6} borderRadius="xl" textAlign="center">Cargando…</Box>
-      </Container>
-    );
-  }
-
-  if (!plan) {
-    return (
-      <Container maxW="container.md" py={8}>
-        <Box bg="white" p={6} borderRadius="xl" textAlign="center">No se encontró el plan.</Box>
-      </Container>
-    );
-  }
-
-  const alumnoNombre = `${plan.alumno?.nombre ?? ""} ${plan.alumno?.apellido ?? ""}`.trim();
+  // ---- Exportar PDF (usa endpoint backend GET /api/rutinas/{id}/exportar) ----
+  const exportPdf = async (idRutina, nombre) => {
+    try {
+      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([resp.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safe = String(nombre || `rutina_${idRutina}`).replace(/\s+/g, "_");
+      a.href = url;
+      a.download = `${safe}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF exportado", status: "success" });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "No se pudo exportar el PDF", status: "error" });
+    }
+  };
 
   return (
     <Container maxW="7xl" py={8}>
-      <HStack mb={6} spacing={3} align="center">
-        <BotonVolver />
-        <Heading size="lg" color="gray.900">Plan #{plan.id_plan ?? plan.id}</Heading>
+      <HStack mb={4} gap={3} wrap="wrap" justify="space-between">
+        <HStack gap={3}>
+          <BotonVolver />
+          <Heading size="lg" color="gray.900">Plan #{idPlan}</Heading>
+        </HStack>
+        <HStack gap={2}>
+          <Button variant="outline" onClick={() => navigate(`/planes/${idPlan}/editar`)}>Editar plan</Button>
+          <Button bg="#0f4d11ff" color="white" onClick={goNuevaRutina}>Agregar rutina</Button>
+        </HStack>
       </HStack>
 
-      <Card mb={6}>
-        <CardHeader pb={2}>
-          <Heading size="md">Información del plan</Heading>
-        </CardHeader>
-        <CardBody pt={0}>
-          {alumnoNombre && <Text color="gray.700" mb={1}><b>Alumno:</b> {alumnoNombre}</Text>}
-          <Text color="gray.700" mb={1}><b>Objetivo:</b> {plan.objetivo ?? "—"}</Text>
-          <Text color="gray.700" mb={1}><b>Inicio:</b> {plan.fecha_inicio ?? "—"} — <b>Fin:</b> {plan.fecha_fin ?? "—"}</Text>
-          {!!(plan.id_estado ?? plan.estado?.id_estado) && (
-            <Tag mt={2} colorScheme="teal">Estado {plan.id_estado ?? plan.estado?.id_estado}</Tag>
-          )}
-
-          <HStack mt={4} spacing={3}>
-            <Button
-              bg="#0f4d11ff"
-              color="white"
-              onClick={() => navigate(`/planes/${plan.id_plan ?? plan.id}/rutinas/nueva`)}
-            >
-              Nueva rutina
-            </Button>
-            <Button variant="outline" onClick={copyDlg.onOpen}>
-              Copiar rutina existente…
-            </Button>
-            <Button variant="ghost" onClick={() => navigate(`/planes/${plan.id_plan ?? plan.id}/rutinas`)}>
-              Ver en listado de rutinas
-            </Button>
-          </HStack>
-        </CardBody>
-      </Card>
-
-      <HStack justify="space-between" mb={3}>
-        <Heading size="md">Rutinas del plan</Heading>
-        <InputGroup maxW="320px">
-          <InputLeftElement pointerEvents="none">
-            <SearchIcon color="gray.500" />
-          </InputLeftElement>
-          <Input
-            bg="white"
-            placeholder="Buscar por nombre/descr…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            borderRadius="full"
-          />
-        </InputGroup>
-      </HStack>
-
-      {filtradas.length === 0 ? (
-        <Box bg="white" p={8} borderRadius="xl" textAlign="center">
-          <Heading size="sm" mb={2}>Sin rutinas</Heading>
-          <Text color="gray.600">Agregá una desde los botones de arriba.</Text>
-        </Box>
-      ) : (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-          {filtradas.map((r) => (
-            <Card key={r.id_rutina ?? r.id}>
-              <CardHeader pb={2}>
-                <Heading size="md" noOfLines={1}>{r.nombre ?? "Sin título"}</Heading>
-              </CardHeader>
-              <CardBody pt={0}>
-                <Text color="gray.700" noOfLines={3}>{r.descripcion ?? "Sin descripción"}</Text>
-                <Button
-                  mt={4}
-                  size="sm"
-                  bg="#0f4d11ff"
-                  color="white"
-                  onClick={() => navigate(`/planes/${plan.id_plan ?? plan.id}/rutinas/${r.id_rutina ?? r.id}`)}
-                >
-                  Ver detalle
-                </Button>
-              </CardBody>
-            </Card>
-          ))}
-        </SimpleGrid>
+      {loading && (
+        <VStack align="stretch" gap={4}>
+          <Skeleton h="120px" borderRadius="xl" />
+          <Skeleton h="320px" borderRadius="xl" />
+        </VStack>
       )}
 
-      {/* Modal copiar rutina */}
-      <Modal isOpen={copyDlg.isOpen} onClose={copyDlg.onClose} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Copiar rutina existente</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text mb={2}>1) Elegí el plan origen</Text>
-            <Select
-              placeholder="Seleccioná un plan…"
-              value={planOrigen}
-              onChange={(e) => cargarRutinasOrigen(e.target.value)}
-              bg="white"
-              mb={4}
-            >
-              {/* OJO: para evitar listado infinito podrías paginar/listar los más recientes;
-                  acá usamos listAll simple. */}
-              {/* Cargamos todos los planes menos el actual */}
-              {/* (para no traerlos 2 veces, podrías mover esto a useEffect si preferís) */}
-              {/* Simplicidad: reusamos planesService.listAll cuando abra el modal */}
-              {/* Para no complicar, dejamos que el usuario escriba manual si no aparece */}
-            </Select>
+      {!loading && err && (
+        <Alert status="warning" mb={4} borderRadius="lg"><AlertIcon />{err}</Alert>
+      )}
 
-            {planOrigen && (
-              <>
-                <Text mb={2}>2) Elegí la rutina a copiar</Text>
-                <Select
-                  placeholder="Seleccioná una rutina…"
-                  value={rutinaOrigen}
-                  onChange={(e) => setRutinaOrigen(e.target.value)}
-                  bg="white"
-                >
-                  {rutinasDeOtrosPlanes
-                    .filter(r => String(r.planId ?? r.id_plan ?? "") !== String(idPlan))
-                    .map(r => (
-                      <option key={r.id_rutina ?? r.id} value={r.id_rutina ?? r.id}>
-                        {r.nombre ?? `Rutina #${r.id_rutina ?? r.id}`}
-                      </option>
-                    ))}
-                </Select>
-              </>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={copyDlg.onClose}>
-              Cancelar
-            </Button>
-            <Button bg="#0f4d11ff" color="white" onClick={copiar} isDisabled={!planOrigen || !rutinaOrigen}>
-              Copiar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {!loading && (
+        <>
+          <Box bg="white" p={5} borderRadius="2xl" boxShadow="md" mb={6}>
+            <VStack align="start" spacing={2}>
+              <Text><b>Alumno:</b> {alumnoNombre}</Text>
+              <Text><b>Objetivo:</b> {plan?.objetivo ?? "—"}</Text>
+              <HStack>
+                <Tag colorScheme="green">Inicio: {fmtFecha(plan?.fecha_inicio)}</Tag>
+                <Tag colorScheme="blue">Fin: {fmtFecha(plan?.fecha_fin)}</Tag>
+              </HStack>
+            </VStack>
+          </Box>
+
+          <Heading size="md" mb={3} color="gray.900">Rutinas del plan</Heading>
+
+          {rutinas.length === 0 ? (
+            <Center bg="white" p={10} borderRadius="2xl" boxShadow="md">
+              <VStack>
+                <Text color="gray.700">Este plan todavía no tiene rutinas.</Text>
+                <Button mt={2} onClick={goNuevaRutina} bg="#0f4d11ff" color="white">Crear primera rutina</Button>
+              </VStack>
+            </Center>
+          ) : (
+            <Accordion allowToggle>
+              {rutinas.map((r) => {
+                const idRutina = r.id_rutina ?? r.id;
+                const det = detalles[idRutina];
+                const secs = det ? calcRutinaDurationSecs(det) : 0;
+                return (
+                  <AccordionItem key={idRutina} bg="white" borderRadius="xl" mb={3} boxShadow="sm" overflow="hidden">
+                    <>
+                      <h2>
+                        <AccordionButton px={5} onClick={() => onExpand(idRutina)}>
+                          <Box as="span" flex="1" textAlign="left" py={2}>
+                            <Heading size="sm" color="gray.900">{r.nombre || `Rutina #${idRutina}`}</Heading>
+                            <HStack mt={1} gap={3}>
+                              {r.dificultad && <Badge colorScheme="purple">{r.dificultad}</Badge>}
+                              <HStack><Icon as={MdTimer} /><Text fontSize="sm">{det ? humanizeSecs(secs) : "…"}</Text></HStack>
+                            </HStack>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                      </h2>
+
+                      <HStack px={5} pt={2} pb={1} justify="flex-end" gap={2}>
+                        <Button size="sm" variant="outline" onClick={() => goDetalleRutina(idRutina)}>Ver detalle</Button>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/planes/${idPlan}/rutinas/${idRutina}/editar`)}>Editar</Button>
+                        <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} colorScheme="green">Exportar PDF</Button>
+                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)}>Eliminar</Button>
+                      </HStack>
+
+                      <AccordionPanel pb={4} px={5}>
+                        {!det ? (
+                          <Text color="gray.500">Cargando ejercicios…</Text>
+                        ) : det.ejercicios?.length ? (
+                          <VStack align="stretch" spacing={2}>
+                            {det.ejercicios.map((it, idx) => (
+                              <Box key={idx} p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
+                                <Text fontWeight="semibold">{it?.ejercicio?.nombre ?? it?.ejercicio?.id ?? "Ejercicio"}</Text>
+                                <Text fontSize="sm" color="gray.600">Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}s</Text>
+                              </Box>
+                            ))}
+                          </VStack>
+                        ) : (
+                          <Text color="gray.500">Esta rutina no tiene ejercicios.</Text>
+                        )}
+                      </AccordionPanel>
+                    </>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          )}
+        </>
+      )}
     </Container>
   );
 }
