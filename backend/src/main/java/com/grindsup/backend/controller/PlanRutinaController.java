@@ -9,15 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.grindsup.backend.DTO.CrearRutinarequestDTO;
-import com.grindsup.backend.DTO.EjercicioRutinaDTO;
-import com.grindsup.backend.model.Ejercicio;
-import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.PlanEntrenamiento;
 import com.grindsup.backend.model.Rutina;
 import com.grindsup.backend.model.RutinaEjercicio;
-import com.grindsup.backend.repository.EjercicioRepository;
-import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.PlanEntrenamientoRepository;
 import com.grindsup.backend.repository.RutinaEjercicioRepository;
 import com.grindsup.backend.repository.RutinaRepository;
@@ -35,12 +29,6 @@ public class PlanRutinaController {
 
     @Autowired
     private RutinaEjercicioRepository rutinaEjercicioRepository;
-
-    @Autowired
-    private EjercicioRepository ejercicioRepository;
-
-    @Autowired
-    private EstadoRepository estadoRepository;
 
     // ==========================
     // Listar rutinas de un plan

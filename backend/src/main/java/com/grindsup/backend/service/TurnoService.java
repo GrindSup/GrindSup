@@ -3,9 +3,6 @@ package com.grindsup.backend.service;
 import com.grindsup.backend.DTO.TurnoRequestDTO;
 import com.grindsup.backend.DTO.TurnoResponseDTO;
 import com.grindsup.backend.model.Alumno;
-import com.grindsup.backend.model.Entrenador;
-import com.grindsup.backend.model.Estado;
-import com.grindsup.backend.model.TipoTurno;
 import com.grindsup.backend.model.Turno;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EntrenadorRepository;
@@ -18,7 +15,6 @@ import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

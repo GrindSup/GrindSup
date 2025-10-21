@@ -5,11 +5,8 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.grindsup.backend.config.GoogleCalendarConfig;
-import com.grindsup.backend.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneId;
 import java.util.TimeZone;
 
 @Service
@@ -18,7 +15,6 @@ public class GoogleCalendarNotificationService {
     private final GoogleCalendarConfig calendarConfig;
     private final UserService userService;
 
-    @Autowired
     public GoogleCalendarNotificationService(GoogleCalendarConfig calendarConfig, UserService userService) {
         this.calendarConfig = calendarConfig;
         this.userService = userService;
