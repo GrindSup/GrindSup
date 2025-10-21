@@ -2,6 +2,7 @@ package com.grindsup.backend.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "ejercicios")
@@ -17,6 +18,24 @@ public class Ejercicio {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    @Column(length = 50)
+    private String dificultad;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "ejercicio_musculos_principales", joinColumns = @JoinColumn(name = "id_ejercicio"))
+    @Column(name = "musculo")
+    private List<String> grupoMuscularPrincipal;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "ejercicio_musculos_secundarios", joinColumns = @JoinColumn(name = "id_ejercicio"))
+    @Column(name = "musculo")
+    private List<String> grupoMuscularSecundario;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "ejercicio_equipamiento", joinColumns = @JoinColumn(name = "id_ejercicio"))
+    @Column(name = "equipamiento")
+    private List<String> equipamiento;
+
     @ManyToOne
     @JoinColumn(name = "id_estado")
     private Estado estado;
@@ -30,7 +49,7 @@ public class Ejercicio {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
-    // Getters y Setters
+    // Getters y Setters 
     public Long getId_ejercicio() {
         return id_ejercicio;
     }
@@ -85,5 +104,37 @@ public class Ejercicio {
 
     public void setDeleted_at(OffsetDateTime deleted_at) {
         this.deleted_at = deleted_at;
+    }
+
+    public String getDificultad() {
+        return dificultad;
+    }
+
+    public void setDificultad(String dificultad) {
+        this.dificultad = dificultad;
+    }
+
+    public List<String> getGrupoMuscularPrincipal() {
+        return grupoMuscularPrincipal;
+    }
+
+    public void setGrupoMuscularPrincipal(List<String> grupoMuscularPrincipal) {
+        this.grupoMuscularPrincipal = grupoMuscularPrincipal;
+    }
+
+    public List<String> getGrupoMuscularSecundario() {
+        return grupoMuscularSecundario;
+    }
+
+    public void setGrupoMuscularSecundario(List<String> grupoMuscularSecundario) {
+        this.grupoMuscularSecundario = grupoMuscularSecundario;
+    }
+
+    public List<String> getEquipamiento() {
+        return equipamiento;
+    }
+
+    public void setEquipamiento(List<String> equipamiento) {
+        this.equipamiento = equipamiento;
     }
 }

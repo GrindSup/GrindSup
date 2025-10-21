@@ -67,7 +67,8 @@ public class UsuarioController {
             usuario.setEstado(estado);
         }
 
-        if (usuario.getCreated_at() == null) usuario.setCreated_at(OffsetDateTime.now());
+        if (usuario.getCreated_at() == null)
+            usuario.setCreated_at(OffsetDateTime.now());
         usuario.setUpdated_at(OffsetDateTime.now());
 
         return usuarioRepository.save(usuario);
@@ -143,15 +144,13 @@ public class UsuarioController {
                 usuario.getId_usuario(),
                 usuario.getNombre(),
                 usuario.getApellido(),
-                usuario.getCorreo()
-        );
+                usuario.getCorreo());
 
         LoginResponse respuesta = new LoginResponse(
                 "Sesión iniciada correctamente",
                 true,
                 sesion.getId_sesion(),
-                usuarioDTO
-        );
+                usuarioDTO);
 
         return ResponseEntity.ok(respuesta);
     }

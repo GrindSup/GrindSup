@@ -41,6 +41,12 @@ public class RutinaEjercicio {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
+    @Column(columnDefinition = "TEXT")
+    private String observaciones;
+
+    @Column(length = 100)
+    private String grupo_muscular;
+
     // Getters y Setters
     public Ejercicio getEjercicio() {
         return ejercicio;
@@ -113,4 +119,27 @@ public class RutinaEjercicio {
     public void setDeleted_at(OffsetDateTime deleted_at) {
         this.deleted_at = deleted_at;
     }
+
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+
+    public String getGrupo_muscular() { return grupo_muscular; }
+    public void setGrupo_muscular(String grupo_muscular) { this.grupo_muscular = grupo_muscular; }
+
+    public Long getId_ejercicio() {
+    return id_ejercicio;
+    }
+
+    public void setId_ejercicio(Long id_ejercicio) {
+        this.id_ejercicio = id_ejercicio;
+    }
+
+    public Long getId_rutina() {
+        return id_rutina;
+    }
+
+    public void setId_rutina(Long id_rutina) {
+        this.id_rutina = id_rutina;
+    }
+
 }

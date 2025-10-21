@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import { Box, Container } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -20,6 +21,16 @@ import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 
+// ✅ Planes
+import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
+import RegistrarPlan from "./pages/Planes/RegistrarPlan.jsx";
+import DetallePlan from "./pages/Planes/DetallePlan.jsx";
+
+// ✅ Rutinas
+import ListaRutinas from "./pages/Rutinas/ListaRutinas.jsx";
+import NuevaRutina from "./pages/Rutinas/NuevaRutina.jsx";
+import DetalleRutina from "./pages/Rutinas/DetalleRutina.jsx";
+
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
     const saved = localStorage.getItem("usuario");
@@ -27,67 +38,57 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (usuario) {
-      localStorage.setItem("usuario", JSON.stringify(usuario));
-    } else {
+    if (usuario) localStorage.setItem("usuario", JSON.stringify(usuario));
+    else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
     }
   }, [usuario]);
-// ... (imports y estados)
+
+  const guard = (el) => (usuario ? el : <Navigate to="/login" replace />);
 
   return (
     <BrowserRouter>
-      <Box minH="100vh" display="flex" flexDirection="column" bg="white">
+      <Box minH="100vh" display="flex" flexDirection="column" bg="#228B22">
         <Header usuario={usuario} setUsuario={setUsuario} />
         <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
           <Container maxW="container.xl">
             <Routes>
-              {/* PÚBLICAS */}
-              <Route path="/" element={<PantallaInicio usuario={usuario} />} />
+              {/* Home → Dashboard si hay sesión; Landing si no */}
+              <Route path="/" element={usuario ? <InicioDashboard /> : <PantallaInicio />} />
+
+              {/* Públicas */}
               <Route path="/login" element={<Login setUsuario={setUsuario} />} />
               <Route path="/forgot" element={<ForgotPassword />} />
               <Route path="/reset" element={<ResetPassword />} />
 
-              {/* PRIVADAS (si no hay usuario, redirige a /login) */}
-              <Route
-                path="/alumnos"
-                element={usuario ? <AlumnoList /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/alumno/registrar"
-                element={usuario ? <RegistrarAlumnoForm /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/alumno/editar/:id"
-                element={usuario ? <EditarAlumnoForm /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/turnos"
-                element={usuario ? <ListaTurnos /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/turnos/registrar"
-                element={usuario ? <RegistrarTurno /> : <Navigate to="/login" replace />}
-              />
-              {/* ✅ RUTA CORREGIDA: Coincide con el `Maps` del botón "Editar" */}
-              <Route
-                path="/turnos/editar/:id"
-                element={usuario ? <DetalleTurno /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/turnos/calendario"
-                element={usuario ? <CalendarioTurnos /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/alumno/perfil/:id"
-                element={usuario ? <PerfilAlumno /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/dashboard"
-                element={usuario ? <InicioDashboard /> : <Navigate to="/login" replace />}
-              />
+              {/* Alumnos */}
+              <Route path="/alumnos" element={guard(<AlumnoList />)} />
+              <Route path="/alumno/registrar" element={guard(<RegistrarAlumnoForm />)} />
+              <Route path="/alumno/editar/:id" element={guard(<EditarAlumnoForm />)} />
+              <Route path="/alumno/perfil/:id" element={guard(<PerfilAlumno />)} />
 
+              {/* Turnos */}
+              <Route path="/turnos" element={guard(<ListaTurnos />)} />
+              <Route path="/turnos/registrar" element={guard(<RegistrarTurno />)} />
+              <Route path="/turnos/editar/:id" element={guard(<DetalleTurno />)} />
+              <Route path="/turnos/calendario" element={guard(<CalendarioTurnos />)} />
+
+              {/* ✅ Planes */}
+              <Route path="/planes" element={guard(<ListaPlanes />)} />
+              <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
+              <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
+
+              {/* ✅ Rutinas (global + por plan) */}
+              <Route path="/rutinas" element={guard(<ListaRutinas />)} />
+              <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
+              <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
+              <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+
+              {/* Alias dashboard */}
+              <Route path="/dashboard" element={guard(<InicioDashboard />)} />
+
+              {/* Default */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Container>
