@@ -2,7 +2,6 @@ package com.grindsup.backend.controller;
 
 import com.google.api.services.calendar.model.Event;
 import com.grindsup.backend.service.GoogleCalendarNotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +13,6 @@ public class GoogleCalendarNotificationController {
 
     private final GoogleCalendarNotificationService notificationService;
 
-    @Autowired
     public GoogleCalendarNotificationController(GoogleCalendarNotificationService notificationService) {
         this.notificationService = notificationService;
     }

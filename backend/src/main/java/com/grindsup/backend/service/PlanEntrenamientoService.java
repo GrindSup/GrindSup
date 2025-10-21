@@ -1,4 +1,5 @@
 package com.grindsup.backend.service;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +11,6 @@ import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.PlanEntrenamiento;
 import com.grindsup.backend.repository.AlumnoRepository;
-import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.PlanEntrenamientoRepository;
 
 @Service
@@ -21,9 +21,6 @@ public class PlanEntrenamientoService {
 
     @Autowired
     private AlumnoRepository alumnoRepository;
-
-    @Autowired
-    private EstadoRepository estadoRepository; // Opcional, si manejás estados
 
     public PlanEntrenamiento crearPlan(CrearPlanrequestDTO request) {
         Alumno alumno = alumnoRepository.findById(request.getIdAlumno())
@@ -48,6 +45,3 @@ public class PlanEntrenamientoService {
         return planRepository.findById(idPlan);
     }
 }
-
-
-

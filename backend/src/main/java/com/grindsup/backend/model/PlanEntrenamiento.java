@@ -16,6 +16,10 @@ public class PlanEntrenamiento {
     @JoinColumn(name = "id_alumno", nullable = false)
     private Alumno alumno;
 
+    @ManyToOne
+    @JoinColumn(name = "id_entrenador")
+    private Entrenador entrenador;
+
     @Column(columnDefinition = "TEXT")
     private String objetivo;
 
@@ -53,6 +57,14 @@ public class PlanEntrenamiento {
 
     public void setAlumno(Alumno alumno) {
         this.alumno = alumno;
+    }
+
+    public Entrenador getEntrenador() {
+        return entrenador;
+    }
+
+    public void setEntrenador(Entrenador entrenador) {
+        this.entrenador = entrenador;
     }
 
     public String getObjetivo() {
