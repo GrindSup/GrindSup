@@ -4,10 +4,11 @@ import {
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
+import { clearSessionCache } from "../context/auth";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
-  const location = useLocation(); // para saber la ruta actual
+  const location = useLocation();
   const isLoggedIn = !!usuario;
 
   const go = (path) => navigate(path);
@@ -23,6 +24,8 @@ export default function Header({ usuario, setUsuario }) {
     } finally {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
+      localStorage.removeItem("token");
+      clearSessionCache();         // ✅ limpia entrenadorId cacheado
       setUsuario?.(null);
       go("/login");
     }
@@ -36,14 +39,12 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Contacto", path: "/contacto" },
   ];
 
-  // No mostrar menú en login o registro
   const hideMenu = location.pathname === "/login" || location.pathname === "/registro";
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
         <Flex align="center">
-          
           {/* Logo */}
           <Flex align="center" gap={2} cursor="pointer" onClick={() => go("/")}>
             <Image src="/vite.png" alt="GrindSup" boxSize="30px" />
@@ -52,7 +53,7 @@ export default function Header({ usuario, setUsuario }) {
 
           <Spacer />
 
-          {/* Menú hamburguesa centrado, solo si no estamos en login/registro y usuario logueado */}
+          {/* Menú hamburguesa centrado */}
           {!hideMenu && isLoggedIn && (
             <Flex flex="1" justify="center">
               <Menu>
@@ -75,7 +76,7 @@ export default function Header({ usuario, setUsuario }) {
 
           <Spacer />
 
-          {/* Botón de cierre de sesión o iniciar sesión */}
+          {/* Sesión */}
           {!hideMenu && (
             isLoggedIn ? (
               <Button size="sm" colorScheme="red" onClick={handleLogout} bg="#0f4d11ff">
@@ -87,7 +88,6 @@ export default function Header({ usuario, setUsuario }) {
               </Button>
             )
           )}
-          
         </Flex>
       </Container>
     </Box>

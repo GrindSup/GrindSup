@@ -8,6 +8,7 @@ import com.grindsup.backend.repository.RutinaRepository;
 import com.grindsup.backend.repository.RutinaEjercicioRepository;
 import com.grindsup.backend.repository.PlanEntrenamientoRepository;
 import com.grindsup.backend.repository.EstadoRepository;
+import com.grindsup.backend.service.RutinaService;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rutinas")
+@CrossOrigin(origins = "*")
 public class RutinaController {
 
     @Autowired
@@ -38,6 +40,9 @@ public class RutinaController {
 
     @Autowired
     private EstadoRepository estadoRepository;
+
+    @Autowired
+    private RutinaService rutinaService;
 
     // ==========================
     // CRUD
@@ -71,7 +76,6 @@ public class RutinaController {
         return rutinaRepository.findById(id).map(existing -> {
             existing.setNombre(rutina.getNombre());
             existing.setDescripcion(rutina.getDescripcion());
-
             if (rutina.getPlan() != null) {
                 PlanEntrenamiento plan = planRepository.findById(rutina.getPlan().getId_plan()).orElse(null);
                 existing.setPlan(plan);
@@ -84,10 +88,18 @@ public class RutinaController {
         }).orElse(null);
     }
 
+    /** REST estándar: DELETE /api/rutinas/{id} — usa borrado lógico del service */
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        rutinaRepository.deleteById(id);
-        return "Rutina eliminada con id " + id;
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        rutinaService.softDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Alias compatible: POST /api/rutinas/{id}/delete  */
+    @PostMapping("/{id}/delete")
+    public ResponseEntity<Void> deleteAlias(@PathVariable Long id) {
+        rutinaService.softDelete(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ==========================
@@ -127,7 +139,6 @@ public class RutinaController {
                 .filter(re -> re.getRutina().getId_rutina().equals(id) && re.getDeleted_at() == null)
                 .collect(Collectors.toList());
 
-        // Configurar el response
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=rutina_" + id + ".pdf");
 
@@ -141,8 +152,7 @@ public class RutinaController {
         document.add(title);
 
         document.add(new Paragraph("Descripción: " + rutina.getDescripcion()));
-        document.add(
-                new Paragraph("Plan asociado: " + (rutina.getPlan() != null ? rutina.getPlan().getId_plan() : "N/A")));
+        document.add(new Paragraph("Plan asociado: " + (rutina.getPlan() != null ? rutina.getPlan().getId_plan() : "N/A")));
         document.add(Chunk.NEWLINE);
 
         PdfPTable table = new PdfPTable(5);
