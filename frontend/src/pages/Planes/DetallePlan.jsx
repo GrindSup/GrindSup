@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box, Button, Container, Heading, HStack, Text, Tag, Alert, AlertIcon,
   Skeleton, VStack, Accordion, AccordionItem, AccordionButton, AccordionPanel,
-  AccordionIcon, Badge, Icon, Center, useToast, Spacer
+  AccordionIcon, Badge, Icon, Center, useToast
 } from "@chakra-ui/react";
 import { MdTimer } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,11 +13,8 @@ import { ensureEntrenadorId } from "../../context/auth";
 import axiosInstance from "../../config/axios.config";
 import BotonVolver from "../../components/BotonVolver";
 
-function fmtFecha(d) {
-  if (!d) return "—";
-  return String(d).slice(0, 10);
-}
-function calcRutinaDurationSecs(detalle) {
+const fmtFecha = (d) => (d ? String(d).slice(0, 10) : "—");
+const calcRutinaDurationSecs = (detalle) => {
   if (!detalle?.ejercicios || !Array.isArray(detalle.ejercicios)) return 0;
   let total = 0;
   for (const it of detalle.ejercicios) {
@@ -27,13 +24,13 @@ function calcRutinaDurationSecs(detalle) {
     total += series * (reps * 2 + rest);
   }
   return total;
-}
-function humanizeSecs(s) {
+};
+const humanizeSecs = (s) => {
   if (!s || s <= 0) return "—";
   const m = Math.floor(s / 60), r = s % 60;
   if (m >= 60) return `≈ ${Math.floor(m / 60)}h ${m % 60}m`;
   return `≈ ${m}m ${r}s`;
-}
+};
 
 export default function DetallePlan() {
   const { idPlan } = useParams();
@@ -45,6 +42,7 @@ export default function DetallePlan() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [detalles, setDetalles] = useState({}); // { [idRutina]: detalle }
+  const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,11 +67,39 @@ export default function DetallePlan() {
 
   useEffect(() => { load(); }, [load]);
 
+  // 👉 Prefetch de detalles para calcular duración SIN abrir acordeón
+  useEffect(() => {
+    if (!rutinas?.length) return;
+    (async () => {
+      try {
+        setCargandoDetalles(true);
+        const pares = await Promise.allSettled(
+          rutinas.map(async (r) => {
+            const idRutina = r.id_rutina ?? r.id;
+            const det = await rutinasService.obtenerDetalleRutina(idPlan, idRutina);
+            return [idRutina, det];
+          })
+        );
+        const map = {};
+        for (const r of pares) {
+          if (r.status === "fulfilled") {
+            const [id, det] = r.value;
+            map[id] = det;
+          }
+        }
+        setDetalles(map);
+      } finally {
+        setCargandoDetalles(false);
+      }
+    })();
+  }, [rutinas, idPlan]);
+
   const alumnoNombre = useMemo(() => {
     if (!plan?.alumno) return "—";
     return [plan.alumno.nombre, plan.alumno.apellido].filter(Boolean).join(" ") || "—";
   }, [plan]);
 
+  // mantiene lazy-load si querés abrir manualmente (ya tenemos prefetch igual)
   const onExpand = async (idRutina) => {
     if (detalles[idRutina]) return;
     try {
@@ -84,20 +110,18 @@ export default function DetallePlan() {
 
   const goNuevaRutina = () => navigate(`/planes/${idPlan}/rutinas/nueva`);
   const goDetalleRutina = (idRutina) => navigate(`/planes/${idPlan}/rutinas/${idRutina}`);
+  const goEditarPlan = () => navigate(`/planes/${idPlan}/editar`);
+  const goEditarRutina = (idRutina) => navigate(`/planes/${idPlan}/rutinas/${idRutina}/editar`);
 
   const handleDeleteRutina = async (idRutina) => {
     if (!confirm("¿Eliminar esta rutina? Esta acción no se puede deshacer.")) return;
-
     const prev = rutinas;
     setRutinas((r) => r.filter((x) => (x.id_rutina ?? x.id) !== idRutina));
-
     const ok = await rutinasService.remove(idPlan, idRutina);
     if (ok) {
       toast({ title: "Rutina eliminada", status: "success" });
       setDetalles((d) => {
-        const cp = { ...d };
-        delete cp[idRutina];
-        return cp;
+        const cp = { ...d }; delete cp[idRutina]; return cp;
       });
     } else {
       setRutinas(prev);
@@ -105,25 +129,17 @@ export default function DetallePlan() {
     }
   };
 
-  // ---- Exportar PDF (usa endpoint backend GET /api/rutinas/{id}/exportar) ----
   const exportPdf = async (idRutina, nombre) => {
     try {
-      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, {
-        responseType: "blob",
-      });
+      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, { responseType: "blob" });
       const blob = new Blob([resp.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const safe = String(nombre || `rutina_${idRutina}`).replace(/\s+/g, "_");
-      a.href = url;
-      a.download = `${safe}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      a.href = url; a.download = `${safe}.pdf`; document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
       toast({ title: "PDF exportado", status: "success" });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast({ title: "No se pudo exportar el PDF", status: "error" });
     }
   };
@@ -133,10 +149,11 @@ export default function DetallePlan() {
       <HStack mb={4} gap={3} wrap="wrap" justify="space-between">
         <HStack gap={3}>
           <BotonVolver />
-          <Heading size="lg" color="gray.900">Plan #{idPlan}</Heading>
+          <Heading size="lg" color="gray.900">Plan N°{idPlan}</Heading>
         </HStack>
         <HStack gap={2}>
-          <Button variant="solid" onClick={() => navigate(`/planes/${idPlan}/editar`)} bg="#0f4d11ff" color="white">Editar plan</Button>
+          {/* ✅ Editar plan ahora navega a /planes/:idPlan/editar */}
+          <Button variant="solid" onClick={goEditarPlan} bg="#0f4d11ff" color="white">Editar plan</Button>
           <Button bg="#0f4d11ff" color="white" onClick={goNuevaRutina}>Agregar rutina</Button>
         </HStack>
       </HStack>
@@ -189,7 +206,12 @@ export default function DetallePlan() {
                             <Heading size="sm" color="gray.900">{r.nombre || `Rutina #${idRutina}`}</Heading>
                             <HStack mt={1} gap={3}>
                               {r.dificultad && <Badge colorScheme="purple">{r.dificultad}</Badge>}
-                              <HStack><Icon as={MdTimer} /><Text fontSize="sm">{det ? humanizeSecs(secs) : "…"}</Text></HStack>
+                              {/* ✅ Duración SIEMPRE visible */}
+                              <HStack><Icon as={MdTimer} />
+                                <Text fontSize="sm">
+                                  {det ? humanizeSecs(secs) : (cargandoDetalles ? "calculando…" : "—")}
+                                </Text>
+                              </HStack>
                             </HStack>
                           </Box>
                           <AccordionIcon />
@@ -198,9 +220,10 @@ export default function DetallePlan() {
 
                       <HStack px={5} pt={2} pb={1} justify="flex-end" gap={2}>
                         <Button size="sm" variant="outline" onClick={() => goDetalleRutina(idRutina)}>Ver detalle</Button>
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/planes/${idPlan}/rutinas/${idRutina}/editar`)}>Editar</Button>
+                        {/* ✅ Editar rutina ahora navega a /planes/:idPlan/rutinas/:idRutina/editar */}
+                        <Button size="sm" variant="outline" onClick={() => goEditarRutina(idRutina)}>Editar</Button>
                         <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} bg="#0f4d11ff" color="white">Exportar PDF</Button>
-                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)} bg="#0f4d11ff" color="white">Eliminar</Button>
+                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)}>Eliminar</Button>
                       </HStack>
 
                       <AccordionPanel pb={4} px={5}>
@@ -211,7 +234,9 @@ export default function DetallePlan() {
                             {det.ejercicios.map((it, idx) => (
                               <Box key={idx} p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
                                 <Text fontWeight="semibold">{it?.ejercicio?.nombre ?? it?.ejercicio?.id ?? "Ejercicio"}</Text>
-                                <Text fontSize="sm" color="gray.600">Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}s</Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}s
+                                </Text>
                               </Box>
                             ))}
                           </VStack>

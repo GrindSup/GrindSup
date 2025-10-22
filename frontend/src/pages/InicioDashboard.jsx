@@ -1,87 +1,115 @@
+// frontend/src/pages/InicioDashboard.jsx
 import { useMemo } from "react";
 import {
-  Box, Container, Grid, Heading, Text, Card, CardBody, Icon,
-  chakra, useColorModeValue, Image
+  Box, Container, Grid, Heading, Text, Card, CardBody, Icon, Image, Badge,
+  chakra, useColorModeValue, Tooltip
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { AddIcon, ViewIcon, CalendarIcon, SettingsIcon, InfoOutlineIcon } from "@chakra-ui/icons";
+import { FiActivity } from "react-icons/fi";
 import { motion } from "framer-motion";
-
 const MotionBox = motion(chakra.div);
 
 export default function InicioDashboard() {
-  const bg = useColorModeValue("gray.60", "gray.800");
-  const cardBg = useColorModeValue("white", "gray.700");
-  const glow = useColorModeValue("rgba(0, 0, 0, 0.82)", "rgba(6, 253, 109, 0.63)");
+  // Fondo verde original + panel suave (no blanco)
+  const bg = "#228B22";
+  const panelBg = "rgba(0,0,0,0.10)";                 // leve oscurecido
+  const cardBg = "rgba(255,255,255,0.08)";            // “glass” muy sutil
+  const cardBgHover = "rgba(255,255,255,0.12)";
+  const borderCol = "rgba(255,255,255,0.16)";
+  const textPrimary = "whiteAlpha.900";
+  const textSecondary = "whiteAlpha.800";
+  const iconBg = "rgba(255,255,255,0.10)";
+  const iconBgHover = "rgba(255,255,255,0.16)";
+  const iconCol = "white";
 
-  const acciones = useMemo(() => ([
-    { label: "Registrar Alumno", to: "/alumno/registrar", icon: AddIcon, desc: "Cargá nuevos alumnos." },
-    { label: "Ver Alumnos",      to: "/alumnos",          icon: ViewIcon, desc: "Listado y edición." },
-    { label: "Registrar Turno",  to: "/turnos/registrar", icon: CalendarIcon, desc: "Agendá clases." },
-    { label: "Ver Turnos",       to: "/turnos",           icon: ViewIcon, desc: "Calendario y gestión." },
-    { label: "Ejercicios",       to: "/ejercicios",       icon: InfoOutlineIcon, desc: "Catálogo (próx.)." },
-    { label: "Rutinas",          to: "/rutinas",          icon: InfoOutlineIcon, desc: "Armar y asignar (próx.)." },
-    { label: "Progreso",         to: "/progreso",         icon: InfoOutlineIcon, desc: "Reportes (próx.)." },
-    { label: "Notificaciones",   to: "/notificaciones",   icon: InfoOutlineIcon, desc: "Alertas (próx.)." },
-    { label: "Configuración",    to: "/config",           icon: SettingsIcon, desc: "Preferencias." },
-  ]), []);
+  const acciones = useMemo(
+    () => [
+      { label: "Planes",           to: "/planes",            icon: InfoOutlineIcon, desc: "Planes por alumno.", available: true },
+      { label: "Registrar Alumno", to: "/alumno/registrar",  icon: AddIcon,        desc: "Cargá nuevos alumnos.", available: true },
+      { label: "Ver Alumnos",      to: "/alumnos",           icon: ViewIcon,       desc: "Listado y edición.", available: true },
+      { label: "Registrar Turno",  to: "/turnos/registrar",  icon: CalendarIcon,   desc: "Agendá clases.", available: true },
+      { label: "Ver Turnos",       to: "/turnos",            icon: ViewIcon,       desc: "Calendario y gestión.", available: true },
+      { label: "Ejercicios",       to: "/ejercicios",        icon: FiActivity,     desc: "Catálogo.", available: true }, // ✅ funciona
+      { label: "Rutinas",          to: "/rutinas",           icon: InfoOutlineIcon,desc: "Planes de entrenamiento.", available: true },
+      { label: "Configuración",    to: "/config",            icon: SettingsIcon,   desc: "Preferencias.", available: false, comingSoon: true }, // 🚧
+    ],
+    []
+  );
 
   return (
     <Box bg={bg} py={{ base: 8, md: 12 }}>
       <Container maxW="container.xl">
-        {/* Hero / bienvenida */}
-        <Box textAlign="center" mb={{ base: 8, md: 12 }}>
-          <Image
-            src="/vite.png"
-            alt="Logo de GrindSup"
-            boxSize="280px" 
-            mx="auto"       
-            mb={2}          
-          />
-          {/* <Heading size="2xl" letterSpacing="tight">GrindSup</Heading> */}
-          <Text mt={3} fontSize="lg" color="blackAlpha.800">
-            Bienvenido/a a la <b>autogestión de tus alumnos</b>. Organizá turnos, registrá avances y centralizá todo en un solo lugar.
+        {/* Panel superior suave, redondeado, sin blanco */}
+        <Box
+          bg={panelBg}
+          border="1px solid"
+          borderColor="rgba(255,255,255,0.12)"
+          borderRadius="2xl"
+          backdropFilter="blur(4px)"
+          px={{ base: 6, md: 10 }}
+          py={{ base: 6, md: 8 }}
+          textAlign="center"
+          boxShadow="0 12px 30px rgba(0,0,0,.18)"
+        >
+          <Image src="/vite.png" alt="GrindSup" boxSize={{ base: "72px", md: "202px" }} mx="auto" mb={2} />
+          <Heading size="md" color={textPrimary} fontWeight="800" letterSpacing="-0.01em" mb={1}>
+            Tu panel
+          </Heading>
+          <Text fontSize="md" color={textSecondary}>
+            Autogestioná alumnos, turnos y rutinas desde un solo lugar.
           </Text>
         </Box>
 
-        {/* Grid de accesos */}
-        <Grid templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }} gap={6}>
-          {acciones.map((a) => (
-            <MotionBox
-              key={a.label}
-              whileHover={{ y: -4, boxShadow: `0 10px 30px ${glow}`, scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 260, damping: 18 }}
-              borderRadius="2xl"
-            >
-              <Card
-                as={RouterLink}
-                to={a.to}
-                role="group"
-                aria-label={a.label}
-                bg={cardBg}
+        {/* Grid de acciones */}
+        <Grid mt={{ base: 6, md: 8 }} templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }} gap={6}>
+          {acciones.map((a) => {
+            const Wrapper = a.available ? RouterLink : "div";
+            const linkProps = a.available ? { as: Wrapper, to: a.to } : { as: Wrapper, "aria-disabled": true };
+
+            return (
+              <MotionBox
+                key={a.label}
+                whileHover={{ y: a.available ? -4 : 0, scale: a.available ? 1.02 : 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
                 borderRadius="2xl"
-                shadow="sm"
-                _hover={{ textDecoration: "none", shadow: "lg" }}
-                _focusWithin={{ boxShadow: `0 0 0 3px ${glow}` }}
               >
-                <CardBody p={6}>
-                  <Box display="flex" alignItems="center" gap={4} mb={2}>
-                    <Box
-                      p={3}
-                      borderRadius="xl"
-                      bg={useColorModeValue("green.50", "green.900")}
-                      _groupHover={{ bg: useColorModeValue("green.100", "green.800") }}
-                      transition="all .2s ease"
-                    >
-                      <Icon as={a.icon} boxSize={6} color="green.500" />
-                    </Box>
-                    <Heading size="md">{a.label}</Heading>
-                  </Box>
-                  <Text color="gray.500">{a.desc}</Text>
-                </CardBody>
-              </Card>
-            </MotionBox>
-          ))}
+                <Tooltip label={a.comingSoon ? "Próximamente" : ""} isDisabled={!a.comingSoon} hasArrow>
+                  <Card
+                    {...linkProps}
+                    role="group"
+                    bg={cardBg}
+                    borderRadius="2xl"
+                    border="1px solid"
+                    borderColor={borderCol}
+                    _hover={{ textDecoration: "none", bg: a.available ? cardBgHover : cardBg, cursor: a.available ? "pointer" : "not-allowed" }}
+                    backdropFilter="blur(3px)"
+                  >
+                    {a.comingSoon && (
+                      <Badge position="absolute" top={3} right={3} colorScheme="yellow" borderRadius="full" px={2.5} py={0.5} fontSize="xs" fontWeight="700">
+                        Próximamente
+                      </Badge>
+                    )}
+                    <CardBody p={6}>
+                      <Box display="flex" alignItems="center" gap={4} mb={2}>
+                        <Box
+                          p={3}
+                          borderRadius="xl"
+                          bg={iconBg}
+                          _groupHover={{ bg: iconBgHover }}
+                          transition="all .2s ease"
+                        >
+                          <Icon as={a.icon} boxSize={6} color={iconCol} />
+                        </Box>
+                        <Heading size="md" color={textPrimary}>{a.label}</Heading>
+                      </Box>
+                      <Text color={textSecondary}>{a.desc}</Text>
+                    </CardBody>
+                  </Card>
+                </Tooltip>
+              </MotionBox>
+            );
+          })}
         </Grid>
       </Container>
     </Box>
