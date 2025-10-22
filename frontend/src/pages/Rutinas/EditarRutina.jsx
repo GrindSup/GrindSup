@@ -8,7 +8,7 @@ import {
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { ejerciciosService } from "../../services/ejercicios.servicio";
-import { rutinasService, obtenerDetalleRutina } from "../../services/rutinas.servicio";
+import rutinasService, { obtenerDetalleRutina } from "../../services/rutinas.servicio";
 import BotonVolver from "../../components/BotonVolver";
 
 export default function EditarRutina() {

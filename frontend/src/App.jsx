@@ -3,6 +3,7 @@ import { Box, Container } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
+// Páginas/Componentes
 import InicioDashboard from "./pages/InicioDashboard";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -25,11 +26,29 @@ import ResetPassword from "./pages/Usuarios/ResetPassword";
 import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
 import RegistrarPlan from "./pages/Planes/RegistrarPlan.jsx";
 import DetallePlan from "./pages/Planes/DetallePlan.jsx";
+import EditarPlan from "./pages/Planes/EditarPlan.jsx"; // ⬅️ nuevo
 
 // ✅ Rutinas
 import ListaRutinas from "./pages/Rutinas/ListaRutinas.jsx";
 import NuevaRutina from "./pages/Rutinas/NuevaRutina.jsx";
 import DetalleRutina from "./pages/Rutinas/DetalleRutina.jsx";
+import EditarRutina from "./pages/Rutinas/EditarRutina.jsx"; // ⬅️ nuevo
+
+// ✅ Ejercicios
+import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
+
+// --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
+// Reemplazá estos tres por tus páginas reales cuando las tengas.
+function Placeholder({ title }) {
+  return (
+    <Box bg="white" borderRadius="2xl" p={{ base: 6, md: 8 }}>
+      {title}
+    </Box>
+  );
+}
+const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — próximamente"} />;
+const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
+const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -78,12 +97,20 @@ export default function App() {
               <Route path="/planes" element={guard(<ListaPlanes />)} />
               <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
               <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
+              <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} /> {/* ⬅️ ahora funciona */}
 
               {/* ✅ Rutinas (global + por plan) */}
               <Route path="/rutinas" element={guard(<ListaRutinas />)} />
               <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
               <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
               <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+              <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> {/* ⬅️ ahora funciona */}
+
+              {/* ✅ Ejercicios */}
+              <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
+              <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
+              <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
+              <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
 
               {/* Alias dashboard */}
               <Route path="/dashboard" element={guard(<InicioDashboard />)} />
