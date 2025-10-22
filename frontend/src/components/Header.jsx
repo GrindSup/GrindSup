@@ -36,6 +36,7 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Entrenadores", path: "/entrenadores" },
     { label: "Turnos", path: "/turnos" },
+    { label: "Planes", path: "/planes" },
     { label: "Contacto", path: "/contacto" },
   ];
 
