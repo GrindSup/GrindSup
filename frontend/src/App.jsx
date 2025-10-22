@@ -49,21 +49,6 @@ const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — pr
 const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
 const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
 
-// ✅ Ejercicios
-import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
-
-// --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
-// Reemplazá estos tres por tus páginas reales cuando las tengas.
-function Placeholder({ title }) {
-  return (
-    <Box bg="white" borderRadius="2xl" p={{ base: 6, md: 8 }}>
-      {title}
-    </Box>
-  );
-}
-const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — próximamente"} />;
-const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
-const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -112,20 +97,12 @@ export default function App() {
               <Route path="/planes" element={guard(<ListaPlanes />)} />
               <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
               <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
-<<<<<<< HEAD
-              <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} /> {/* ⬅️ ahora funciona */}
-=======
->>>>>>> b9eb8b0d452b931b230a40358fd08cd6218041df
 
               {/* ✅ Rutinas (global + por plan) */}
               <Route path="/rutinas" element={guard(<ListaRutinas />)} />
               <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
               <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
               <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
-<<<<<<< HEAD
-              <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> {/* ⬅️ ahora funciona */}
-=======
->>>>>>> b9eb8b0d452b931b230a40358fd08cd6218041df
 
               {/* ✅ Ejercicios */}
               <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
