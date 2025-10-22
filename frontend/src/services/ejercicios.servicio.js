@@ -55,3 +55,11 @@ export const ejerciciosService = {
         }
     }
 };
+// Renombra las funciones del objeto para exportarlas individualmente
+export const {
+  getAll: listarEjercicios, // Exporta 'getAll' CON EL NOMBRE 'listarEjercicios'
+  getById: obtenerEjercicioPorId, // (Exporta 'getById' como 'obtenerEjercicioPorId', por si lo necesitas)
+  create: crearEjercicio, // (Exporta 'create' como 'crearEjercicio', por si lo necesitas)
+  update: actualizarEjercicio, // (etc...)
+  delete: eliminarEjercicio,
+} = ejerciciosService;

@@ -1,0 +1,50 @@
+[33mbb3d55d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/HU-Integracion-Sprint01[m[33m, [m[1;31morigin/feature/HU-Integracion-Sprint01[m[33m)[m HEAD@{2025-10-21 23:10:53 -0300}: rebase (finish): returning to refs/heads/feature/HU-Integracion-Sprint01
+[33mbb3d55d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/HU-Integracion-Sprint01[m[33m, [m[1;31morigin/feature/HU-Integracion-Sprint01[m[33m)[m HEAD@{2025-10-21 23:10:21 -0300}: rebase (continue): integrando rutinas/planes/ejercicios
+[33m4d3c361[m HEAD@{2025-10-21 23:09:30 -0300}: rebase (merge): integrando rutinas
+[33m6da7e81[m HEAD@{2025-10-21 23:09:25 -0300}: rebase (reset): '6da7e81'
+[33mdce8f00[m HEAD@{2025-10-21 23:09:25 -0300}: rebase (pick): ajustes de pdf
+[33mf7853ff[m HEAD@{2025-10-21 23:09:11 -0300}: commit: rebase
+[33mf6d67f9[m HEAD@{2025-10-21 23:05:42 -0300}: commit: resolviendo merge
+[33m839cdc0[m HEAD@{2025-10-21 23:02:16 -0300}: commit (merge): cambios para planes y rutinas
+[33m829337f[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): front rutina
+[33m77385a5[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): Rutinas: agrega rutas de Rutinas en App.jsx
+[33m32c70cd[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): Rutinas y Planes de ejercicios
+[33mb382c50[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): estilos finalizados
+[33mbaa8e7e[m[33m ([m[1;31mupstream/feature/HU-Integracion-Sprint01[m[33m)[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (reset): 'onto'
+[33m4298c60[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): Agrega la funcionalidad de filtrado por grupo muscular
+[33m26a5f97[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): Opcion provisoria de agregar un ejercicio a una rutina desde la lista de ejercicios
+[33m63f8cd0[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): agrega confirmacion de cierre de sesion y funcionalidad de eliminar en ListaEjercicios y DetalleEjercicio
+[33m7ea9805[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): estilos finalizados
+[33md2f38b4[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): estilos finalizados
+[33mc583c1e[m HEAD@{2025-10-21 23:00:25 -0300}: rebase (pick): estilos actualizados
+[33maaea394[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m2d67ab1[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m476abb6[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33md831279[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33mf44f2e6[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m0db1e20[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33me96c440[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m64d937d[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m7f5a4d3[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33mdbc5afc[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m75c2893[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m9fb5dda[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m29ee5bd[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m2528880[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m892c548[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m6d5fa4a[m HEAD@{2025-10-21 23:00:24 -0300}: rebase: fast-forward
+[33m6da7e81[m HEAD@{2025-10-21 23:00:24 -0300}: rebase (reset): '6da7e81'
+[33mbaa8e7e[m[33m ([m[1;31mupstream/feature/HU-Integracion-Sprint01[m[33m)[m HEAD@{2025-10-21 23:00:24 -0300}: rebase (start): checkout origin/feature/HU-Integracion-Sprint01
+[33m866fa87[m HEAD@{2025-10-21 22:58:42 -0300}: commit: integrando rutinas/planes/ejercicios
+[33m56827d0[m HEAD@{2025-10-21 20:35:46 -0300}: checkout: moving from feature/HU-8-Registrar-Turno to feature/HU-Integracion-Sprint01
+[33m690492c[m[33m ([m[1;32mfeature/HU-8-Registrar-Turno[m[33m)[m HEAD@{2025-10-21 20:34:32 -0300}: checkout: moving from feature/HU-Integracion-Sprint01 to feature/HU-8-Registrar-Turno
+[33m56827d0[m HEAD@{2025-10-21 20:31:29 -0300}: commit (merge): integrando rutinas
+[33m6da7e81[m HEAD@{2025-10-21 20:30:26 -0300}: checkout: moving from feature/HU-Gestion-Rutinas to feature/HU-Integracion-Sprint01
+[33madaa706[m[33m ([m[1;31mupstream/feature/HU-Gestion-Rutinas[m[33m, [m[1;31morigin/feature/HU-Gestion-Rutinas[m[33m, [m[1;32mfeature/HU-Gestion-Rutinas[m[33m)[m HEAD@{2025-10-21 09:04:57 -0300}: checkout: moving from feature/HU-Integracion-Sprint01 to feature/HU-Gestion-Rutinas
+[33m6da7e81[m HEAD@{2025-10-21 08:57:54 -0300}: checkout: moving from feature/HU-Gestion-Rutinas to feature/HU-Integracion-Sprint01
+[33madaa706[m[33m ([m[1;31mupstream/feature/HU-Gestion-Rutinas[m[33m, [m[1;31morigin/feature/HU-Gestion-Rutinas[m[33m, [m[1;32mfeature/HU-Gestion-Rutinas[m[33m)[m HEAD@{2025-10-21 08:56:42 -0300}: pull --rebase: Fast-forward
+[33m4ea54c8[m HEAD@{2025-10-19 21:39:50 -0300}: commit: planes y rutinas completado
+[33m8ec5afd[m HEAD@{2025-10-18 17:28:04 -0300}: commit (merge): cambios para planes y rutinas
+[33mca1cde0[m HEAD@{2025-10-18 14:39:33 -0300}: commit: front rutina
+[33mfe7fd63[m HEAD@{2025-10-18 14:37:14 -0300}: commit: Rutinas: agrega rutas de Rutinas en App.jsx
+[33m24abbd3[m HEAD@{2025-10-18 14:36:03 -0300}: checkout: moving from feature/HU-Gestion-Rutinas to feature/HU-Gestion-Rutinas
