@@ -1,6 +1,5 @@
 package com.grindsup.backend.service;
 
-import com.grindsup.backend.DTO.AlumnoMinDTO;
 import com.grindsup.backend.DTO.TurnoRequestDTO;
 import com.grindsup.backend.DTO.TurnoResponseDTO;
 import com.grindsup.backend.model.Alumno;
@@ -13,11 +12,9 @@ import com.grindsup.backend.repository.TurnoRepository;
 
 import jakarta.transaction.Transactional;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -125,13 +122,6 @@ public class TurnoService {
                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
     }
 
-    public List<TurnoResponseDTO> getTurnosByEntrenador(Long idEntrenador) {
-    return turnoRepository.findByEntrenador_Id(idEntrenador)
-            .stream()
-            .map(this::mapToResponseDTO)
-            .toList();
-    }
-    
     public void deleteTurno(Long id) {
         if (!turnoRepository.existsById(id)) {
             throw new RuntimeException("Turno no encontrado");
@@ -145,9 +135,7 @@ public class TurnoService {
                 turno.getEntrenador().getUsuario().getNombre(),
                 turno.getTipoTurno().getNombre(),
                 turno.getFecha(),
-                turno.getAlumnos().stream()
-                    .map(a -> new AlumnoMinDTO(a.getId_alumno(), a.getNombre(), a.getApellido()))
-                    .toList());
+                turno.getAlumnos().stream().map(Alumno::getNombre).toList());
     }
 
     @Transactional
@@ -204,19 +192,6 @@ public class TurnoService {
         return mapToResponseDTO(turnoCreado);
     }
 
-    public TurnoResponseDTO actualizarFechaTurno(Long idTurno, Map<String, String> body) {
-        Turno turno = turnoRepository.findById(idTurno)
-                .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
-
-        String nuevaFechaStr = body.get("fecha");
-        OffsetDateTime nuevaFecha = OffsetDateTime.parse(nuevaFechaStr); // formato ISO 8601
-
-        turno.setFecha(nuevaFecha);
-        turnoRepository.save(turno);
-
-        return mapToResponseDTO(turno);
-    }
-
     @Transactional
     public void addAlumnoToTurno(Long turnoId, Long alumnoId) {
         Turno turno = turnoRepository.findById(turnoId)
@@ -238,14 +213,4 @@ public class TurnoService {
         turno.getAlumnos().remove(alumno);
         turnoRepository.save(turno);
     }
-
-    public List<TurnoResponseDTO> filtrarTurnos(Long entrenadorId, String fecha, Long tipoId) {
-    return turnoRepository.findAll().stream()
-            .filter(t -> entrenadorId == null || t.getEntrenador().getId_entrenador().equals(entrenadorId))
-            .filter(t -> fecha == null || t.getFecha().toLocalDate().toString().equals(fecha))
-            .filter(t -> tipoId == null || t.getTipoTurno().getId_tipoturno().equals(tipoId))
-            .map(this::mapToResponseDTO)
-            .toList();
-    }
-
 }

@@ -8,19 +8,10 @@ public class TurnoResponseDTO {
     private String entrenador;
     private String tipo_turno;
     private OffsetDateTime fecha;
-    //private List<String> alumnos;
-    private List<AlumnoMinDTO> alumnos;
+    private List<String> alumnos;
 
-    // public TurnoResponseDTO(Long id_turno, String entrenador, String tipo_turno,
-    //         OffsetDateTime fecha, List<String> alumnos) {
-    //     this.id_turno = id_turno;
-    //     this.entrenador = entrenador;
-    //     this.tipo_turno = tipo_turno;
-    //     this.fecha = fecha;
-    //     this.alumnos = alumnos;
-    // }
     public TurnoResponseDTO(Long id_turno, String entrenador, String tipo_turno,
-            OffsetDateTime fecha, List<AlumnoMinDTO> alumnos) {
+            OffsetDateTime fecha, List<String> alumnos) {
         this.id_turno = id_turno;
         this.entrenador = entrenador;
         this.tipo_turno = tipo_turno;
@@ -44,8 +35,7 @@ public class TurnoResponseDTO {
         return fecha;
     }
 
-    public List<AlumnoMinDTO> getAlumnos() {
+    public List<String> getAlumnos() {
         return alumnos;
     }
-
 }
