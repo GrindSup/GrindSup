@@ -30,7 +30,7 @@ export default function RegistrarAlumnoForm({
   const [submitted, setSubmitted] = useState(false);
 
   const usuario = getUsuario();
-  const entrenadorId = getEntrenadorId(usuario); // si es null, mostramos aviso y bloqueamos submit
+  const entrenadorId = getEntrenadorId(usuario);
 
   const [form, setForm] = useState({
     nombre: "", apellido: "", documento: "", fechaNac: "",
@@ -38,9 +38,10 @@ export default function RegistrarAlumnoForm({
     codigoArea: "+54", contactoNumero: "",
   });
 
+  const [dniDisponible, setDniDisponible] = useState(true);
+  const [checkingDni, setCheckingDni] = useState(false);
   const [lesiones, setLesiones] = useState([]);
   const [enfermedades, setEnfermedades] = useState([]);
-
   const [codigos, setCodigos] = useState([]);
   const [loadingCodigos, setLoadingCodigos] = useState(true);
 
@@ -86,6 +87,34 @@ export default function RegistrarAlumnoForm({
     return e;
   }, [form]);
 
+  useEffect(() => {
+    if (!form.documento?.trim() || !/^[0-9]+$/.test(form.documento)) {
+      setDniDisponible(true);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(async () => {
+      try {
+        setCheckingDni(true);
+        const res = await fetch(`${apiBaseUrl}/alumnos?documento=${encodeURIComponent(form.documento.trim())}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setDniDisponible(!(Array.isArray(data) && data.length > 0));
+      } catch {
+        setDniDisponible(true);
+      } finally {
+        setCheckingDni(false);
+      }
+    }, 600);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [form.documento, apiBaseUrl]);
+
   const isValid = Object.keys(errors).length === 0;
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const hoy = new Date().toISOString().split("T")[0];
@@ -130,7 +159,6 @@ export default function RegistrarAlumnoForm({
 
     setSubmitting(true);
     try {
-      // ✅ pre-check para evitar 409 por documento duplicado
       const dupRes = await fetch(
         `${apiBaseUrl}/alumnos?documento=${encodeURIComponent(form.documento.trim())}`
       );
@@ -228,10 +256,12 @@ export default function RegistrarAlumnoForm({
                 </GridItem>
 
                 <GridItem>
-                  <FormControl isRequired isInvalid={submitted && !!errors.documento}>
+                  <FormControl isRequired isInvalid={(submitted && !!errors.documento) || (!dniDisponible && form.documento.trim() !== "")}>
                     <FormLabel>Documento (DNI)</FormLabel>
                     <Input name="documento" placeholder="Ej: 40123456" value={form.documento} onChange={handleChange} />
-                    {submitted && <FormErrorMessage>{errors.documento}</FormErrorMessage>}
+                    {checkingDni && <Text fontSize="sm" color="gray.500">Verificando DNI...</Text>}
+                    {submitted && errors.documento &&(<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
+                    {!dniDisponible && form.documento.trim() !== "" && (<FormErrorMessage>El documento ya está registrado.</FormErrorMessage>)}
                   </FormControl>
                 </GridItem>
 
@@ -346,7 +376,7 @@ export default function RegistrarAlumnoForm({
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#0f4d11ff" color="white">
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#0f4d11ff" color="white" isDisabled={!dniDisponible || checkingDni}>
                   Registrar
                 </Button>
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>

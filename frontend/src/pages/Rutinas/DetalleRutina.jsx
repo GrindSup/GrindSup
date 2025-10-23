@@ -107,6 +107,7 @@ export default function DetalleRutina() {
         <Table variant="simple">
           <Thead>
             <Tr>
+              <Th>Grupo Muscular</Th>
               <Th>Ejercicio</Th>
               <Th isNumeric>Series</Th>
               <Th isNumeric>Reps</Th>
@@ -116,6 +117,7 @@ export default function DetalleRutina() {
           <Tbody>
             {ejercicios.map((re, idx) => (
               <Tr key={re.id_rutina_ejercicio ?? `${idx}-${re?.ejercicio?.id_ejercicio ?? ""}`}>
+                <Td>{re?.ejercicio?.gruposMusculares?.join(", ") || "-"}</Td>
                 <Td>{re?.ejercicio?.nombre || `#${re?.ejercicio?.id_ejercicio ?? ""}`}</Td>
                 <Td isNumeric>{re.series ?? "-"}</Td>
                 <Td isNumeric>{re.repeticiones ?? "-"}</Td>

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 public class RutinaController {
 
+    private final GrupoMuscularController grupoMuscularController;
+
     @Autowired
     private RutinaRepository rutinaRepository;
 
@@ -43,6 +45,10 @@ public class RutinaController {
 
     @Autowired
     private RutinaService rutinaService;
+
+    RutinaController(GrupoMuscularController grupoMuscularController) {
+        this.grupoMuscularController = grupoMuscularController;
+    }
 
     // ==========================
     // CRUD
@@ -210,13 +216,13 @@ public class RutinaController {
         document.add(Chunk.NEWLINE);
 
         // ======= TABLA DE EJERCICIOS =======
-        PdfPTable table = new PdfPTable(4);
+        PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10);
         table.setSpacingAfter(10);
-        table.setWidths(new float[] { 3f, 1f, 1.5f, 1.5f });
+        table.setWidths(new float[] { 2f, 3f, 1f, 1.5f, 1.5f });
 
-        String[] headers = { "Ejercicio", "Series", "Repeticiones", "Descanso(s)" };
+        String[] headers = { "Grupos Musculares", "Ejercicio", "Series", "Repeticiones", "Descanso(s)" };
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, fontHeader));
             cell.setBackgroundColor(colorPrincipal);
@@ -231,6 +237,7 @@ public class RutinaController {
             Color bg = alternar ? colorSecundario : blanco;
             alternar = !alternar;
 
+            table.addCell(makeCell(re.getGrupo_muscular(), fontNormal, bg));
             table.addCell(makeCell(re.getEjercicio().getNombre(), fontNormal, bg));
             table.addCell(makeCell(str(re.getSeries()), fontNormal, bg));
             table.addCell(makeCell(str(re.getRepeticiones()), fontNormal, bg));
