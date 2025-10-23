@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/turnos")
 public class TurnoController {
@@ -17,12 +19,17 @@ public class TurnoController {
     private TurnoService turnoService;
 
     // Crear turno vacío (sin alumnos)
-    @PostMapping
-    public ResponseEntity<TurnoResponseDTO> createTurno(
-            @RequestBody TurnoRequestDTO turnoDTO,
-            @RequestParam String userId) throws Exception {
+    // @PostMapping
+    // public ResponseEntity<TurnoResponseDTO> createTurno(
+    //         @RequestBody TurnoRequestDTO turnoDTO,
+    //         @RequestParam String userId) throws Exception {
 
-        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, userId));
+    //     return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, userId));
+    // }
+    //Deberiamos usar userID para crear turnos o el ID de entrenador solamente?
+    @PostMapping
+    public ResponseEntity<TurnoResponseDTO> createTurno(@RequestBody TurnoRequestDTO turnoDTO) throws Exception {
+        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, turnoDTO.getUserId()));
     }
 
     // Asignar alumnos a un turno existente
@@ -44,6 +51,20 @@ public class TurnoController {
     public TurnoResponseDTO getById(@PathVariable Long id) {
         return turnoService.getTurnoById(id);
     }
+
+    // @CrossOrigin(origins = "*")
+    // @GetMapping("/entrenador/{idEntrenador}")
+    // public List<TurnoResponseDTO> getTurnosByEntrenador(@PathVariable Long idEntrenador) {
+    //     return turnoService.getTurnosByEntrenador(idEntrenador);
+    // }
+    @GetMapping
+    public List<TurnoResponseDTO> getTurnos(
+        @RequestParam(required = false) Long entrenadorId,
+        @RequestParam(required = false) String fecha,
+        @RequestParam(required = false) Long tipoId) {
+
+        return turnoService.filtrarTurnos(entrenadorId, fecha, tipoId);
+    }   
 
     // Eliminar turno
     @DeleteMapping("/{id}")
@@ -68,5 +89,10 @@ public class TurnoController {
             @RequestBody TurnoRequestDTO turnoDTO,
             @RequestParam String userId) throws Exception {
         return turnoService.modificarTurno(id, turnoDTO, userId);
+    }
+
+    @PutMapping("/{id}/fecha")
+    public ResponseEntity<TurnoResponseDTO> actualizarFecha(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(turnoService.actualizarFechaTurno(id, body));
     }
 }

@@ -38,4 +38,6 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
                                            @Param("desde") OffsetDateTime desde,
                                            @Param("hasta") OffsetDateTime hasta,
                                            @Param("tipo") String tipo);
+                                           
+       List<Turno> findByEntrenador_Id(Long idEntrenador);
 }
