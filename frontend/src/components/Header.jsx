@@ -1,19 +1,26 @@
+// frontend/src/components/Header.jsx
 import {
   Box, Container, Flex, Text, Button, IconButton, Menu,
-  MenuButton, MenuList, MenuItem, Image, Spacer
+  MenuButton, MenuList, MenuItem, Image, Spacer,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearSessionCache } from "../context/auth";
+import { useState } from "react";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoggedIn = !!usuario;
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [logoutPending, setLogoutPending] = useState(false);
+
   const go = (path) => navigate(path);
 
   const handleLogout = async () => {
+    setLogoutPending(true);
     const sesionId = localStorage.getItem("sesionId");
     try {
       if (sesionId) {
@@ -25,8 +32,10 @@ export default function Header({ usuario, setUsuario }) {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
       localStorage.removeItem("token");
-      clearSessionCache();         // ✅ limpia entrenadorId cacheado
+      clearSessionCache();
       setUsuario?.(null);
+      onClose();
+      setLogoutPending(false);
       go("/login");
     }
   };
@@ -80,7 +89,7 @@ export default function Header({ usuario, setUsuario }) {
           {/* Sesión */}
           {!hideMenu && (
             isLoggedIn ? (
-              <Button size="sm" colorScheme="red" onClick={handleLogout} bg="#0f4d11ff">
+              <Button size="sm" onClick={onOpen} bg="#0f4d11ff" color="white">
                 Cerrar sesión
               </Button>
             ) : (
@@ -91,6 +100,35 @@ export default function Header({ usuario, setUsuario }) {
           )}
         </Flex>
       </Container>
+
+       {/* Modal de confirmación estilo GrindSup */}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="0 8px 30px rgba(0,0,0,0.2)">
+          <ModalHeader bg="#108614ff" color="white" fontWeight="bold" textAlign="center">
+            Confirmar cierre de sesión
+          </ModalHeader>
+          <ModalBody textAlign="center" fontSize="md" color="gray.900" py={6} fontWeight="bold">
+            ¿Estás seguro que querés cerrar sesión?
+          </ModalBody>
+          <ModalFooter justifyContent="center" gap={3} py={4}>
+            <Button onClick={onClose} variant="outline" borderRadius="lg">
+              Cancelar
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleLogout}
+              isLoading={logoutPending}
+              borderRadius="lg"
+              px={6}
+              bg="#0f4d11ff" 
+              color="white"
+            >
+              Cerrar sesión
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
