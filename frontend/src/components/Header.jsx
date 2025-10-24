@@ -109,7 +109,7 @@ export default function Header({ usuario, setUsuario }) {
             Confirmar cierre de sesión
           </ModalHeader>
           <ModalBody textAlign="center" fontSize="md" color="gray.900" py={6} fontWeight="bold">
-            ¿Estás seguro que querés cerrar sesión?
+            ¿Estás seguro de que quieres cerrar sesión?
           </ModalBody>
           <ModalFooter justifyContent="center" gap={3} py={4}>
             <Button onClick={onClose} variant="outline" borderRadius="lg">

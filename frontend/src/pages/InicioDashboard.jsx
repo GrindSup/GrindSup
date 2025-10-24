@@ -6,7 +6,8 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { AddIcon, ViewIcon, CalendarIcon, SettingsIcon, InfoOutlineIcon } from "@chakra-ui/icons";
-import { FiActivity } from "react-icons/fi";
+import { FiActivity, FiMap } from "react-icons/fi";
+import { FaRunning } from "react-icons/fa";
 import { motion } from "framer-motion";
 const MotionBox = motion(chakra.div);
 
@@ -25,13 +26,13 @@ export default function InicioDashboard() {
 
   const acciones = useMemo(
     () => [
-      { label: "Planes",           to: "/planes",            icon: InfoOutlineIcon, desc: "Planes por alumno.", available: true },
       { label: "Registrar Alumno", to: "/alumno/registrar",  icon: AddIcon,        desc: "Cargá nuevos alumnos.", available: true },
       { label: "Ver Alumnos",      to: "/alumnos",           icon: ViewIcon,       desc: "Listado y edición.", available: true },
       { label: "Registrar Turno",  to: "/turnos/registrar",  icon: CalendarIcon,   desc: "Agendá clases.", available: true },
       { label: "Ver Turnos",       to: "/turnos",            icon: ViewIcon,       desc: "Calendario y gestión.", available: true },
       { label: "Ejercicios",       to: "/ejercicios",        icon: FiActivity,     desc: "Catálogo.", available: true }, // ✅ funciona
-      { label: "Rutinas",          to: "/rutinas",           icon: InfoOutlineIcon,desc: "Planes de entrenamiento.", available: true },
+      { label: "Rutinas",          to: "/rutinas",           icon: FaRunning,     desc: "Planes de entrenamiento.", available: true },
+      { label: "Planes",           to: "/planes",            icon: FiMap,    desc: "Planes por alumno.", available: true },
       { label: "Configuración",    to: "/config",            icon: SettingsIcon,   desc: "Preferencias.", available: false, comingSoon: true }, // 🚧
     ],
     []
