@@ -32,17 +32,18 @@ public class AlumnoController {
 
     /**
      * GET con filtros opcionales:
-     *  - documento: devuelve 0/1 elemento en una lista
-     *  - entrenadorId: lista de activos del entrenador
-     *  - sin filtros: lista de activos
+     * - documento: devuelve 0/1 elemento en una lista
+     * - entrenadorId: lista de activos del entrenador
+     * - sin filtros: lista de activos
      */
     @GetMapping
     public List<Alumno> getAll(
             @RequestParam(required = false) Long entrenadorId,
-            @RequestParam(required = false) String documento
-    ) {
+            @RequestParam(required = false) String documento) {
+
         if (documento != null && !documento.isBlank()) {
-            return alumnoRepository.findByDocumento(documento)
+            // 🔍 Buscar solo alumnos activos (sin baja lógica)
+            return alumnoRepository.findByDocumentoAndDeletedAtIsNull(documento)
                     .map(List::of)
                     .orElseGet(List::of);
         }
@@ -51,6 +52,7 @@ public class AlumnoController {
             return alumnoRepository.findActivosByEntrenador(entrenadorId);
         }
 
+        // 🔹 Si no se especifica nada, traer solo activos
         return alumnoRepository.findByDeletedAtIsNull();
     }
 
@@ -75,10 +77,14 @@ public class AlumnoController {
         alumno.setCreated_at(ahora);
         alumno.setUpdated_at(ahora);
 
-        if (alumno.getNombre() != null) alumno.setNombre(alumno.getNombre().trim());
-        if (alumno.getApellido() != null) alumno.setApellido(alumno.getApellido().trim());
-        if (alumno.getDocumento() != null) alumno.setDocumento(alumno.getDocumento().trim());
-        if (alumno.getTelefono() != null) alumno.setTelefono(alumno.getTelefono().trim());
+        if (alumno.getNombre() != null)
+            alumno.setNombre(alumno.getNombre().trim());
+        if (alumno.getApellido() != null)
+            alumno.setApellido(alumno.getApellido().trim());
+        if (alumno.getDocumento() != null)
+            alumno.setDocumento(alumno.getDocumento().trim());
+        if (alumno.getTelefono() != null)
+            alumno.setTelefono(alumno.getTelefono().trim());
 
         try {
             return alumnoRepository.save(alumno);
@@ -86,8 +92,7 @@ public class AlumnoController {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "No se pudo crear el alumno (verificá si el documento ya existe).",
-                    ex
-            );
+                    ex);
         }
     }
 
@@ -125,8 +130,7 @@ public class AlumnoController {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "No se pudo actualizar el alumno (verificá si el documento ya existe).",
-                        ex
-                );
+                        ex);
             }
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
@@ -145,18 +149,25 @@ public class AlumnoController {
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
     }
 
-    /** Baja lógica */
+    // 🔹 Baja lógica (soft delete)
     @DeleteMapping("/{id}")
-    public Alumno delete(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
-        return alumnoRepository.findById(id).map(alumno -> {
-            if (body != null && body.containsKey("motivo")) {
-                alumno.setMotivoBaja(body.get("motivo"));
-            } else {
-                alumno.setMotivoBaja("No especificado");
-            }
-            alumno.setDeletedAt(LocalDateTime.now());
-            return alumnoRepository.save(alumno);
-        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+    public Alumno darDeBaja(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String motivo = body.get("motivo");
+
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+
+        alumno.setDeletedAt(LocalDateTime.now());
+        alumno.setMotivoBaja(motivo);
+        alumno.setUpdated_at(java.time.OffsetDateTime.now());
+
+        return alumnoRepository.save(alumno);
+    }
+
+    // 🔹 Eliminación definitiva (solo si querés usarla en casos especiales)
+    @DeleteMapping("/{id}/definitivo")
+    public void eliminarFisicamente(@PathVariable Long id) {
+        alumnoRepository.deleteById(id);
     }
 
     /**
@@ -179,8 +190,7 @@ public class AlumnoController {
             if (actual != null && !actual.equals(entrenadorId)) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Este alumno ya pertenece a otro entrenador. Para múltiples entrenadores migrá a ManyToMany."
-                );
+                        "Este alumno ya pertenece a otro entrenador. Para múltiples entrenadores migrá a ManyToMany.");
             }
         }
         a.setUpdated_at(OffsetDateTime.now());

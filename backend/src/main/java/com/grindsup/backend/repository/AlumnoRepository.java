@@ -11,20 +11,22 @@ import java.util.Optional;
 
 public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
 
-    // Solo activos (sin baja lógica)
-    List<Alumno> findByDeletedAtIsNull();
+  // Solo activos (sin baja lógica)
+  List<Alumno> findByDeletedAtIsNull();
 
-    // Solo eliminados
-    List<Alumno> findByDeletedAtIsNotNull();
+  // Solo eliminados
+  List<Alumno> findByDeletedAtIsNotNull();
 
-    Optional<Alumno> findByDocumento(String documento);
+  // 🔹 Nuevo método para buscar solo alumnos activos por DNI
+  Optional<Alumno> findByDocumentoAndDeletedAtIsNull(String documento);
 
-    @Query("""
-           select a
-           from Alumno a
-           where a.deletedAt is null
-             and a.entrenador.id_entrenador = :entrenadorId
-           """)
-    List<Alumno> findActivosByEntrenador(@Param("entrenadorId") Long entrenadorId);
+  Optional<Alumno> findByDocumento(String documento);
+
+  @Query("""
+      select a
+      from Alumno a
+      where a.deletedAt is null
+        and a.entrenador.id_entrenador = :entrenadorId
+      """)
+  List<Alumno> findActivosByEntrenador(@Param("entrenadorId") Long entrenadorId);
 }
-
