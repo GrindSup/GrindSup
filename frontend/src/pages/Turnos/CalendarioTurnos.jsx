@@ -115,11 +115,11 @@ export default function CalendarioTurnos() {
       )}
 
       <HStack justify="space-between" mb={6} opacity={entrenadorId ? 1 : 0.5}>
-        <Heading size="lg" color="gray.900">
+        <Heading size="lg" color="white">
           Calendario de Turnos
         </Heading>
         <HStack>
-          <Button onClick={prev} bg="#0f4d11ff" color="white" isDisabled={!entrenadorId}>
+          <Button onClick={prev} bg="#258d19" color="white" isDisabled={!entrenadorId}>
             ◀
           </Button>
           <Text
@@ -130,17 +130,17 @@ export default function CalendarioTurnos() {
             borderColor="gray.300" 
             borderRadius="md" 
             p={2} 
-            bg="brand.200"
+            bg="#87c987ff"
           >
             {monthName}
           </Text>
-          <Button onClick={next} bg="#0f4d11ff" color="white" isDisabled={!entrenadorId}>
+          <Button onClick={next} bg="#258d19" color="white" isDisabled={!entrenadorId}>
             ▶
           </Button>
           <Button
             variant="solid"
             onClick={() => navigate("/turnos")}
-            bg="#0f4d11ff"
+            bg="#258d19"
             color="white"
             isDisabled={!entrenadorId}
           >
@@ -149,7 +149,7 @@ export default function CalendarioTurnos() {
           <Button
             colorScheme="brand"
             onClick={() => navigate("/turnos/registrar")}
-            bg="#0f4d11ff"
+            bg="#258d19"
             color="white"
             isDisabled={!entrenadorId}
           >
@@ -166,7 +166,7 @@ export default function CalendarioTurnos() {
         mb={2}
       >
         {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
-          <Box key={d} textAlign="center" borderColor="gray.300" borderRadius="md" p={2} bg="brand.200">
+          <Box key={d} textAlign="center" borderColor="gray.300" borderRadius="md" p={2} bg="#87c987ff">
             {d}
           </Box>
         ))}

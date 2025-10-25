@@ -155,7 +155,7 @@ export default function NuevaRutina() {
     <Box>
       <HStack mb={4}>
         <BotonVolver />
-        <Heading size="lg">Nueva rutina</Heading>
+        <Heading size="lg" color="white">Nueva rutina</Heading>
       </HStack>
 
       {loadError && (
@@ -299,7 +299,7 @@ export default function NuevaRutina() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Descanso (seg)</FormLabel>
+              <FormLabel>Descanso (min)</FormLabel>
               <NumberInput
                 min={0}
                 value={it.descansoSegundos}
@@ -314,15 +314,17 @@ export default function NuevaRutina() {
               icon={<DeleteIcon />}
               onClick={() => removeItem(i)}
               mt={1}
+              bg="#258d19"
+              color="white"
             />
           </HStack>
         ))}
 
         <HStack>
-          <Button leftIcon={<AddIcon />} onClick={addItem}>
+          <Button leftIcon={<AddIcon />} onClick={addItem} bg="#258d19" color="white">
             Agregar ejercicio
           </Button>
-          <Text color="gray.500" fontSize="sm">Podés agregar varios bloques.</Text>
+          <Text color="gray.500" fontSize="sm">Puedes agregar varios bloques.</Text>
         </HStack>
 
         <HStack justify="flex-end" pt={2}>
@@ -331,7 +333,7 @@ export default function NuevaRutina() {
             colorScheme="green"
             onClick={handleSave}
             isLoading={saving}
-            bg="#0f4d11ff"
+            bg="#258d19"
           >
             Guardar rutina
           </Button>

@@ -126,14 +126,14 @@ export default function ListaTurnos() {
       )}
 
       <HStack mb={6} gap={3} wrap="wrap">
-        <Heading size="lg" color="gray.900">
+        <Heading size="lg" color="white">
           Turnos
         </Heading>
         <Spacer />
         <Button
           leftIcon={<CalendarIcon />}
           onClick={() => navigate("/turnos/calendario")}
-          bg="#0f4d11ff"
+          bg="#258d19"
           color="white"
           isDisabled={!entrenadorId}
         >
@@ -142,7 +142,7 @@ export default function ListaTurnos() {
         <Button
           leftIcon={<AddIcon />}
           onClick={() => navigate("/turnos/registrar")}
-          bg="#0f4d11ff"
+          bg="#258d19"
           color="white"
           isDisabled={!entrenadorId}
         >

@@ -12,7 +12,7 @@ html, body, #root {
 body {
   margin: 0;
   min-width: 320px;
-  background: #228B22;       /* fondo claro */
+  background: #007000;       /* fondo claro */
   color: #1F2937;             /* gris oscuro legible */
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }

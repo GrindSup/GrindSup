@@ -28,7 +28,7 @@ function InicioPublico() {
   ];
 
   return (
-    <Box position="relative" minH="100vh" bg="#1E7E1E" overflow="hidden">
+    <Box position="relative" minH="100vh" bg="#00700" overflow="hidden" borderRadius="2xl">
       {/* Fondo con foto + blur + tinte verdoso */}
       <Box position="absolute" inset="-10%" zIndex={0}>
         <Box
@@ -40,6 +40,8 @@ function InicioPublico() {
           filter="blur(8px)"
           transform="scale(1.08)"
           opacity={0.65}
+          borderRadius="2xl"
+          overflow="hidden" 
         />
         {/* Tinte verde para mantener marca */}
         <Box
@@ -74,7 +76,7 @@ function InicioPublico() {
 
             <Badge
               bg="white"
-              color="#0F4D11"
+              color="#258d19"
               borderRadius="full"
               px={3}
               py={1}
@@ -115,7 +117,7 @@ function InicioPublico() {
                 to="/registro"
                 size="lg"
                 bg="white"
-                color="#0F4D11"
+                color="#258d19"
                 px={8}
                 py={5}
                 borderRadius="xl"
@@ -185,7 +187,7 @@ function InicioPublico() {
                         alignItems="center"
                         justifyContent="center"
                       >
-                        <Icon as={f.icon} boxSize={5} color="#0F4D11" />
+                        <Icon as={f.icon} boxSize={5} color="#258d19" />
                       </Box>
                       <Box>
                         <Heading size="md" color="gray.900" mb={1}>
@@ -236,7 +238,7 @@ function InicioPublico() {
                         alignItems="center"
                         justifyContent="center"
                       >
-                        <Icon as={FiCheckCircle} boxSize={5} color="#0F4D11" />
+                        <Icon as={FiCheckCircle} boxSize={5} color="#258d19" />
                       </Box>
                       <Box>
                         <Text color="gray.800" fontWeight="600" mb={1}>
@@ -258,7 +260,7 @@ function InicioPublico() {
       {/* CTA final */}
       <Container maxW="container.xl" py={{ base: 10, md: 14 }} position="relative" zIndex={1}>
         <Box
-          bg="#0F4D11"
+          bg="#258d19"
           color="white"
           borderRadius="2xl"
           px={{ base: 6, md: 10 }}
@@ -267,17 +269,17 @@ function InicioPublico() {
           boxShadow="xl"
         >
           <Heading size="md" fontWeight={800} mb={3}>
-            Empezá gratis hoy
+            Empieza gratis hoy
           </Heading>
           <Text opacity={0.95} mb={5}>
-            Probá GrindSup y organizá tus clases en minutos.
+            Prueba GrindSup y organizá tus clases en minutos.
           </Text>
           <Stack direction={{ base: "column", sm: "row" }} spacing={4} justify="center">
             <Button
               as={RouterLink}
               to="/registro"
               bg="white"
-              color="#0F4D11"
+              color="#007b00"
               borderRadius="xl"
               px={8}
               py={5}
@@ -310,14 +312,14 @@ function InicioPublico() {
 /* === Vista privada: atajo al dashboard === */
 function InicioPrivado() {
   return (
-    <Box bg="#228B22" py={{ base: 8, md: 10 }}>
+    <Box bg="#007000" py={{ base: 8, md: 10 }}>
       <Container maxW="7xl">
         <Box bg="white" borderRadius="2xl" boxShadow="xl" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
           <Heading size="lg" textAlign="center" mb={4} color="gray.900" fontWeight={800}>
-            ¡Hola! <Text as="span" fontWeight="semibold">¿Qué querés hacer hoy?</Text>
+            ¡Hola! <Text as="span" fontWeight="semibold">¿Qué quieres hacer hoy?</Text>
           </Heading>
           <Text textAlign="center" color="gray.600">
-            Andá al <Box as={RouterLink} to="/dashboard" color="#0F4D11" textDecoration="underline">dashboard</Box> para empezar.
+            Andá al <Box as={RouterLink} to="/dashboard" color="#258d19" textDecoration="underline">dashboard</Box> para empezar.
           </Text>
         </Box>
       </Container>

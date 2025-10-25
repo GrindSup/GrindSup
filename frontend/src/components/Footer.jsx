@@ -12,7 +12,7 @@ export default function Footer() {
     >
       <Container maxW="container.lg">
         <Stack spacing={3} textAlign="center">
-          <Text fontWeight="bold" fontSize="lg" color="brand.700">
+          <Text fontWeight="bold" fontSize="lg" color="green.800">
             GrindSup
           </Text>
           <Divider />

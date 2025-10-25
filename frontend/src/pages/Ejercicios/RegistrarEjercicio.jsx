@@ -128,7 +128,7 @@ export default function RegistrarEjercicio() {
   return (
     <Container maxW="lg" py={10}>
       <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white">
-        <Heading size="lg" textAlign="center" mb={6} color="gray.900">Registrar Nuevo Ejercicio</Heading>
+        <Heading size="lg" textAlign="center" mb={6} color="white">Registrar Nuevo Ejercicio</Heading>
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={5} align="stretch">
@@ -150,13 +150,13 @@ export default function RegistrarEjercicio() {
                       <Select placeholder="Seleccione un grupo" value={itemSeleccionado} onChange={(e) => handleGrupoPrincipalChange(index, e.target.value)}>
                         {opcionesDisponibles.map(op => <option key={op} value={op}>{op}</option>)}
                       </Select>
-                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveGrupoPrincipal(index)} aria-label="Eliminar grupo muscular" bg="#0f4d11ff" color="white"/>
+                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveGrupoPrincipal(index)} aria-label="Eliminar grupo muscular" bg="#258d19" color="white"/>
                     </HStack>
                   );
                 })}
               </VStack>
               <Box mt={3}>
-                <Button leftIcon={<AddIcon />} size="sm" variant="solid" colorScheme="green" onClick={handleAddGrupoPrincipal} isDisabled={musculosPrincipalesSeleccionados.length >= todosLosMusculos.length} bg="#0f4d11ff">
+                <Button leftIcon={<AddIcon />} size="sm" variant="solid" onClick={handleAddGrupoPrincipal} isDisabled={musculosPrincipalesSeleccionados.length >= todosLosMusculos.length} bg="#258d19" color="white">
                   Agregar Grupo Muscular
                 </Button>
                 {inlineErrors.principal && <Text color="red.500" fontSize="sm" mt={2}>{inlineErrors.principal}</Text>}
@@ -172,13 +172,13 @@ export default function RegistrarEjercicio() {
                       <Select placeholder="Seleccione un grupo" value={itemSeleccionado} onChange={(e) => handleGrupoSecundarioChange(index, e.target.value)}>
                         {opcionesDisponibles.map(op => <option key={op} value={op}>{op}</option>)}
                       </Select>
-                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveGrupoSecundario(index)} aria-label="Eliminar grupo muscular" bg="#0f4d11ff" color="white"/>
+                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveGrupoSecundario(index)} aria-label="Eliminar grupo muscular" bg="#258d19" color="white"/>
                     </HStack>
                   );
                 })}
               </VStack>
               <Box mt={3}>
-                <Button leftIcon={<AddIcon />} size="sm" variant="solid" colorScheme="green" onClick={handleAddGrupoSecundario} isDisabled={grupoMuscularSecundario.filter(Boolean).length >= todosLosMusculos.length - musculosPrincipalesSeleccionados.length} bg="#0f4d11ff">
+                <Button leftIcon={<AddIcon />} size="sm" variant="solid" colorScheme="green" onClick={handleAddGrupoSecundario} isDisabled={grupoMuscularSecundario.filter(Boolean).length >= todosLosMusculos.length - musculosPrincipalesSeleccionados.length} bg="#258d19">
                   Agregar Grupo Muscular
                 </Button>
                 {inlineErrors.secundario && <Text color="red.500" fontSize="sm" mt={2}>{inlineErrors.secundario}</Text>}
@@ -202,13 +202,13 @@ export default function RegistrarEjercicio() {
                       <Select placeholder="Seleccione equipamiento" value={itemSeleccionado} onChange={(e) => handleEquipamientoChange(index, e.target.value)}>
                         {opcionesDisponibles.map(opcion => <option key={opcion} value={opcion}>{opcion}</option>)}
                       </Select>
-                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveEquipamiento(index)} aria-label="Eliminar equipamiento" bg="#0f4d11ff" color="white"/>
+                      <IconButton icon={<DeleteIcon />} onClick={() => handleRemoveEquipamiento(index)} aria-label="Eliminar equipamiento" bg="#258d19" color="white"/>
                     </HStack>
                   );
                 })}
               </VStack>
               <Box mt={3}>
-                <Button leftIcon={<AddIcon />} size="sm" variant="solid" colorScheme="green" onClick={handleAddEquipamiento} isDisabled={equipamiento.filter(Boolean).length >= todosLosEquipamientos.length} bg="#0f4d11ff">
+                <Button leftIcon={<AddIcon />} size="sm" variant="solid" onClick={handleAddEquipamiento} isDisabled={equipamiento.filter(Boolean).length >= todosLosEquipamientos.length} bg="#258d19" color="white">
                   Agregar Equipamiento
                 </Button>
                 {inlineErrors.equipamiento && <Text color="red.500" fontSize="sm" mt={2}>{inlineErrors.equipamiento}</Text>}
@@ -219,7 +219,7 @@ export default function RegistrarEjercicio() {
             {msg && <Alert status="success"><AlertIcon />{msg}</Alert>}
 
             <HStack pt={4} justify="center" spacing={4}>
-              <Button type="submit" colorScheme="brand" isLoading={loading} loadingText="Guardando..." bg="#0f4d11ff">
+              <Button type="submit" colorScheme="brand" isLoading={loading} loadingText="Guardando..." bg="#258d19">
                 Guardar Ejercicio
               </Button>
               <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>

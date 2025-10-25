@@ -38,7 +38,6 @@ import EditarRutina from "./pages/Rutinas/EditarRutina.jsx";
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
 
 // --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
-// Reemplazá estos tres por tus páginas reales cuando las tengas.
 function Placeholder({ title }) {
   return (
     <Box bg="white" borderRadius="2xl" p={{ base: 6, md: 8 }}>
@@ -68,59 +67,87 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Box minH="100vh" display="flex" flexDirection="column" bg="#228B22">
-        <Header usuario={usuario} setUsuario={setUsuario} />
-        <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
-          <Container maxW="container.xl">
-            <Routes>
-              {/* Home → Dashboard si hay sesión; Landing si no */}
-              <Route path="/" element={usuario ? <InicioDashboard /> : <PantallaInicio />} />
+      <Box minH="100vh" display="flex" flexDirection="column" position="relative">
+        {/* Fondo de pantalla */}
+        <Box
+          position="absolute"
+          inset="0"
+          bgImage="url('/img/gym.png')"  // tu imagen en public/img/gym.png
+          bgSize="cover"
+          bgPos="center"
+          filter="bulr(30px)"
+          transform="scale(0.999)"
+          opacity={0.55}
+          borderRadius="2xl"
+          zIndex={0}
+        />
 
-              {/* Públicas */}
-              <Route path="/login" element={<Login setUsuario={setUsuario} />} />
-              <Route path="/forgot" element={<ForgotPassword />} />
-              <Route path="/reset" element={<ResetPassword />} />
+        {/* Tinte verde translúcido */}
+        <Box
+          position="absolute"
+          inset="0"
+          bg="rgba(0, 126, 0, 0.45)"
+          mixBlendMode="multiply"
+          zIndex={0}
+        />
 
-              {/* Alumnos */}
-              <Route path="/alumnos" element={guard(<AlumnoList />)} />
-              <Route path="/alumno/registrar" element={guard(<RegistrarAlumnoForm />)} />
-              <Route path="/alumno/editar/:id" element={guard(<EditarAlumnoForm />)} />
-              <Route path="/alumno/perfil/:id" element={guard(<PerfilAlumno />)} />
+        {/* Contenido */}
+        <Box position="relative" zIndex={2} flex="1" display="flex" flexDirection="column">
+          <Header usuario={usuario} setUsuario={setUsuario} />
 
-              {/* Turnos */}
-              <Route path="/turnos" element={guard(<ListaTurnos />)} />
-              <Route path="/turnos/registrar" element={guard(<RegistrarTurno />)} />
-              <Route path="/turnos/editar/:id" element={guard(<DetalleTurno />)} />
-              <Route path="/turnos/calendario" element={guard(<CalendarioTurnos />)} />
+          <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
+            <Container maxW="container.xl">
+              <Routes>
+                {/* Home → Dashboard si hay sesión; Landing si no */}
+                <Route path="/" element={usuario ? <InicioDashboard /> : <PantallaInicio />} />
 
-              {/* ✅ Planes */}
-              <Route path="/planes" element={guard(<ListaPlanes />)} />
-              <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
-              <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
-              <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} /> {/* ⬅️ ahora funciona */}
+                {/* Públicas */}
+                <Route path="/login" element={<Login setUsuario={setUsuario} />} />
+                <Route path="/forgot" element={<ForgotPassword />} />
+                <Route path="/reset" element={<ResetPassword />} />
 
-              {/* ✅ Rutinas (global + por plan) */}
-              <Route path="/rutinas" element={guard(<ListaRutinas />)} />
-              <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
-              <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
-              <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
-              <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> {/* ⬅️ ahora funciona */}
+                {/* Alumnos */}
+                <Route path="/alumnos" element={guard(<AlumnoList />)} />
+                <Route path="/alumno/registrar" element={guard(<RegistrarAlumnoForm />)} />
+                <Route path="/alumno/editar/:id" element={guard(<EditarAlumnoForm />)} />
+                <Route path="/alumno/perfil/:id" element={guard(<PerfilAlumno />)} />
 
-              {/* ✅ Ejercicios */}
-              <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
-              <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
-              <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
-              <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
+                {/* Turnos */}
+                <Route path="/turnos" element={guard(<ListaTurnos />)} />
+                <Route path="/turnos/registrar" element={guard(<RegistrarTurno />)} />
+                <Route path="/turnos/editar/:id" element={guard(<DetalleTurno />)} />
+                <Route path="/turnos/calendario" element={guard(<CalendarioTurnos />)} />
 
-              {/* Alias dashboard */}
-              <Route path="/dashboard" element={guard(<InicioDashboard />)} />
+                {/* ✅ Planes */}
+                <Route path="/planes" element={guard(<ListaPlanes />)} />
+                <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
+                <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
+                <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} />
 
-              {/* Default */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Container>
+                {/* ✅ Rutinas */}
+                <Route path="/rutinas" element={guard(<ListaRutinas />)} />
+                <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
+                <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
+                <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+                <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
+
+                {/* ✅ Ejercicios */}
+                <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
+                <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
+                <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
+                <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
+
+                {/* Alias dashboard */}
+                <Route path="/dashboard" element={guard(<InicioDashboard />)} />
+
+                {/* Default */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Container>
+          </Box>
+
+          <Footer />
         </Box>
-        <Footer />
       </Box>
     </BrowserRouter>
   );

@@ -93,7 +93,7 @@ export default function EditarRutina() {
 
   return (
     <Box opacity={loading ? .6 : 1}>
-      <HStack mb={4}><BotonVolver /><Heading size="lg">Editar rutina</Heading></HStack>
+      <HStack mb={4}><BotonVolver /><Heading size="lg" color="white">Editar rutina</Heading></HStack>
 
       <VStack align="stretch" spacing={4} bg="white" p={5} borderRadius="md">
         <FormControl isRequired>
@@ -142,24 +142,24 @@ export default function EditarRutina() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Descanso (seg)</FormLabel>
+              <FormLabel>Descanso (min)</FormLabel>
               <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", v)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
 
-            <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem(i)} mt={1} />
+            <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem(i)} mt={1} bg="#258d19" color="white" />
           </HStack>
         ))}
 
         <HStack>
-          <Button leftIcon={<AddIcon />} onClick={addItem}>Agregar ejercicio</Button>
+          <Button leftIcon={<AddIcon />} onClick={addItem} bg="#258d19" color="white">Agregar ejercicio</Button>
           <Text color="gray.500" fontSize="sm">Podés agregar varios bloques.</Text>
         </HStack>
 
         <HStack justify="flex-end" pt={2}>
           <Button variant="ghost" onClick={() => history.back()}>Cancelar</Button>
-          <Button colorScheme="green" onClick={handleSave} isLoading={saving} bg="#0f4d11ff">
+          <Button colorScheme="green" onClick={handleSave} isLoading={saving} bg="#258d19">
             Guardar cambios
           </Button>
         </HStack>

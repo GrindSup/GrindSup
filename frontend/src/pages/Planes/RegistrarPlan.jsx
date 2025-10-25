@@ -86,7 +86,7 @@ export default function RegistrarPlan() {
     <Container maxW="container.md" py={8}>
       <HStack mb={4} spacing={3}>
         <BotonVolver />
-        <Heading size="lg" color="gray.900">Agregar nuevo plan</Heading>
+        <Heading size="lg" color="white">Agregar nuevo plan</Heading>
       </HStack>
 
       <Box as="form" onSubmit={handleSubmit} bg="white" p={6} borderRadius="2xl" boxShadow="lg">
@@ -135,7 +135,7 @@ export default function RegistrarPlan() {
 
           <HStack justify="flex-end" pt={2}>
             <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
-            <Button type="submit" isLoading={loading} bg="#0f4d11ff" color="white">
+            <Button type="submit" isLoading={loading} bg="#258d19" color="white">
               Guardar plan
             </Button>
           </HStack>

@@ -51,7 +51,7 @@ export default function Login({ setUsuario }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1 className="login-title" style={{ fontWeight: 'bold', fontSize: '1.5rem'}}>Inicio de Sesión</h1>
+        <h1 className="login-title" style={{ fontWeight: 'bold', fontSize: '2rem'}}>Inicio de Sesión</h1>
         <form onSubmit={validar} className="login-form">
           <input
             type="email"
@@ -85,8 +85,8 @@ export default function Login({ setUsuario }) {
           </div>
 
           <div className="button-group">
-            <button type="submit" className="login-button" style={{ fontWeight: 'bold', fontSize: '1rem'}}>Iniciar Sesión</button>
-            <Link to="/" className="back-button as-link" style={{ fontWeight: 'bold', fontSize: '1rem'}}>Volver</Link>
+            <button type="submit" className="login-button" style={{ fontWeight: 'bold', fontSize: '1.2rem'}}>Iniciar Sesión</button>
+            <Link to="/" className="back-button as-link" style={{ fontWeight: 'bold', fontSize: '1.2rem'}}>Volver</Link>
           </div>
         </form>
 

@@ -126,18 +126,18 @@ export default function FichaEjercicio() {
             <Divider />
 
             <Stack direction="row" spacing={4} justify="flex-end" mt={4}>
-              <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} colorScheme="teal" bg="#0f4d11ff">
+              <Button onClick={() => navigate(`/ejercicio/editar/${ejercicio.id_ejercicio}`)} bg="#258d19" color="white">
                 Editar
               </Button>
               <Button
-                bg="red.500"
+                bg="red.600"
                 color="white"
                 _hover={{ bg: "red.600" }}
                 onClick={onOpen}
               >
                 Eliminar
               </Button>
-              <Button variant="ghost" onClick={() => navigate("/ejercicios")}>
+              <Button variant="ghost" onClick={() => navigate("/ejercicios")} bg="#258d19" color="white">
                 Volver
               </Button>
             </Stack>
@@ -149,14 +149,14 @@ export default function FichaEjercicio() {
             <AlertDialogContent>
                 <AlertDialogHeader fontSize="lg" fontWeight="bold">Eliminar Ejercicio</AlertDialogHeader>
                 <AlertDialogBody>
-                    ¿Estás seguro de que querés eliminar <strong>"{ejercicio?.nombre}"</strong>?
+                    ¿Estás seguro de que quieres eliminar <strong>"{ejercicio?.nombre}"</strong>?
                 </AlertDialogBody>
                 <AlertDialogFooter>
                 <Button ref={cancelRef} onClick={onClose} color="white">
                   Cancelar
                 </Button>
                     <Button
-                      bg="red.500"
+                      bg="red.600"
                       color="white"
                       _hover={{ bg: "red.600" }}
                       onClick={handleEliminar}

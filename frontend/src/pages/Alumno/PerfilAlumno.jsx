@@ -126,7 +126,7 @@ export default function PerfilAlumno({ apiBaseUrl = API }) {
             <Divider />
 
             <Stack direction="row" spacing={4} justify="center" mt={4}>
-              <Button onClick={() => navigate(`/alumno/editar/${id}`)} colorScheme="blue" bg="#0f4d11ff">
+              <Button onClick={() => navigate(`/alumno/editar/${id}`)} colorScheme="blue" bg="#258d19">
                 Editar Alumno
               </Button>
               <Button variant="ghost" onClick={() => navigate("/alumnos")}>

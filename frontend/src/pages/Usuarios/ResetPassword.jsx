@@ -10,7 +10,7 @@ import { restablecerContrasena } from "../../services/recupero.servicio";
 
 function CenteredCard({ title, children }) {
   return (
-    <Box minH="100vh" bg="#228B22" display="flex" alignItems="center" justifyContent="center" p={4}>
+    <Box minH="100vh" bg="#007000" display="flex" alignItems="center" justifyContent="center" p={4}>
       <Card w="full" maxW="420px" bg="white">
         <CardHeader><Heading size="lg" textAlign="center">{title}</Heading></CardHeader>
         <CardBody>{children}</CardBody>
@@ -78,7 +78,7 @@ export default function ResetPassword() {
               autoComplete="new-password"
             />
             <InputRightElement>
-              <Button size="sm" colorScheme="green" onClick={() => setShow((s) => !s)} bg="#0f4d11ff" color="white">
+              <Button size="sm" colorScheme="green" onClick={() => setShow((s) => !s)} bg="#258d19" color="white">
                 {show ? <ViewOffIcon /> : <ViewIcon />}
               </Button>
             </InputRightElement>
@@ -95,7 +95,7 @@ export default function ResetPassword() {
           />
         </FormControl>
 
-        <Button type="submit" colorScheme="green" isLoading={loading} w="full" bg="#0f4d11ff">
+        <Button type="submit" colorScheme="green" isLoading={loading} w="full" bg="#258d19" color="white">
           Guardar nueva contraseña
         </Button>
       </form>

@@ -89,11 +89,11 @@ export default function Header({ usuario, setUsuario }) {
           {/* Sesión */}
           {!hideMenu && (
             isLoggedIn ? (
-              <Button size="sm" onClick={onOpen} bg="#0f4d11ff" color="white">
+              <Button size="sm" onClick={onOpen} bg="#258d19" color="white">
                 Cerrar sesión
               </Button>
             ) : (
-              <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#0f4d11ff">
+              <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#258d19">
                 Iniciar sesión
               </Button>
             )
@@ -105,7 +105,7 @@ export default function Header({ usuario, setUsuario }) {
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay bg="blackAlpha.600" />
         <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="0 8px 30px rgba(0,0,0,0.2)">
-          <ModalHeader bg="#108614ff" color="white" fontWeight="bold" textAlign="center">
+          <ModalHeader bg="#007000" color="white" fontWeight="bold" textAlign="center">
             Confirmar cierre de sesión
           </ModalHeader>
           <ModalBody textAlign="center" fontSize="md" color="gray.900" py={6} fontWeight="bold">
@@ -121,7 +121,7 @@ export default function Header({ usuario, setUsuario }) {
               isLoading={logoutPending}
               borderRadius="lg"
               px={6}
-              bg="#0f4d11ff" 
+              bg="#258d19" 
               color="white"
             >
               Cerrar sesión

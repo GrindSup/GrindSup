@@ -90,17 +90,16 @@ export default function DetalleRutina() {
       <HStack justify="space-between" mb={4} flexWrap="wrap" gap={3}>
         <HStack gap={3}>
           <BotonVolver />
-          <Heading size="lg">{rutina?.nombre || `Rutina #${idRutina}`}</Heading>
+          <Heading size="lg" color="white">{rutina?.nombre || `Rutina #${idRutina}`}</Heading>
         </HStack>
 
         <HStack>
           <Tag colorScheme="teal">Duración estimada: {humanizeSecs(totalSecs)}</Tag>
-          <Button onClick={() => navigate(`/planes/${idPlan}/rutinas`)}>Volver</Button>
         </HStack>
       </HStack>
 
       {!!rutina?.descripcion && (
-        <Text mb={4} color="gray.800">{rutina.descripcion}</Text>
+        <Text mb={4} color="white" fontWeight="bold">{rutina.descripcion}</Text>
       )}
 
       <Box bg="white" p={4} borderRadius="lg" boxShadow="md">
@@ -111,7 +110,7 @@ export default function DetalleRutina() {
               <Th>Ejercicio</Th>
               <Th isNumeric>Series</Th>
               <Th isNumeric>Reps</Th>
-              <Th isNumeric>Descanso (seg)</Th>
+              <Th isNumeric>Descanso (min)</Th>
             </Tr>
           </Thead>
           <Tbody>

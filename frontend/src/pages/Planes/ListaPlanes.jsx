@@ -68,7 +68,7 @@ export default function ListaPlanes() {
     <Container maxW="7xl" py={8}>
       <HStack align="center" mb={4} gap={3} wrap="wrap">
         <BotonVolver />
-        <Heading size="lg" color="gray.900">Planes</Heading>
+        <Heading size="lg" color="white">Planes</Heading>
         <Spacer />
         <InputGroup maxW="360px">
           <InputLeftElement pointerEvents="none">
@@ -82,7 +82,7 @@ export default function ListaPlanes() {
             borderRadius="full"
           />
         </InputGroup>
-        <Button onClick={goNuevo} bg="#0f4d11ff" color="white">
+        <Button onClick={goNuevo} bg="#258d19" color="white">
           Agregar nuevo plan
         </Button>
       </HStack>
@@ -107,7 +107,7 @@ export default function ListaPlanes() {
             <Text color="gray.600" mb={4}>
               Todavía no cargaste planes o no coinciden con el filtro.
             </Text>
-            <Button onClick={goNuevo} bg="#0f4d11ff" color="white">
+            <Button onClick={goNuevo} bg="#258d19" color="white">
               Agregar nuevo plan
             </Button>
           </Box>
@@ -136,7 +136,7 @@ export default function ListaPlanes() {
                   </Text>
                 </CardBody>
                 <CardFooter>
-                  <Button size="sm" bg="#0f4d11ff" color="white" onClick={() => goDetalle(id)}>
+                  <Button size="sm" bg="#258d19" color="white" onClick={() => goDetalle(id)}>
                     Ver detalle
                   </Button>
                 </CardFooter>

@@ -59,7 +59,7 @@ export default function EditarPlan() {
     <Container maxW="container.md" py={8}>
       <HStack mb={4} spacing={3}>
         <BotonVolver />
-        <Heading size="lg" color="gray.900">Editar plan #{idPlan}</Heading>
+        <Heading size="lg" color="white">Editar plan N°{idPlan}</Heading>
       </HStack>
 
       <Box as="form" onSubmit={handleSave} bg="white" p={6} borderRadius="2xl" boxShadow="lg" opacity={loading ? .6 : 1}>
@@ -86,7 +86,7 @@ export default function EditarPlan() {
 
           <HStack justify="flex-end" pt={2}>
             <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
-            <Button type="submit" isLoading={saving} bg="#0f4d11ff" color="white">
+            <Button type="submit" isLoading={saving} bg="#258d19" color="white">
               Guardar cambios
             </Button>
           </HStack>

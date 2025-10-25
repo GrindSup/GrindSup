@@ -168,7 +168,7 @@ export default function ListaRutinas() {
       <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={4}>
         <HStack spacing={3}>
           <BotonVolver />
-          <Heading size="lg" color="gray.900">Rutinas</Heading>
+          <Heading size="lg" color="white">Rutinas</Heading>
         </HStack>
 
         <HStack spacing={3}>
@@ -199,7 +199,7 @@ export default function ListaRutinas() {
             />
           </InputGroup>
 
-          <Button onClick={handleNuevaRutina} bg="#0f4d11ff" color="white" borderRadius="full" minWidth="150px">
+          <Button onClick={handleNuevaRutina} bg="#258d19" color="white" borderRadius="full" minWidth="150px">
             + Nueva rutina
           </Button>
         </HStack>
@@ -217,7 +217,7 @@ export default function ListaRutinas() {
             <Icon as={MdFitnessCenter} boxSize={12} color="gray.400" mb={3} />
             <Heading size="md" mb={2} color="gray.800">No hay rutinas</Heading>
             <Text color="gray.600" mb={5}>No existen rutinas o no coinciden con el filtro.</Text>
-            <Button onClick={handleNuevaRutina} bg="#0f4d11ff" color="white" borderRadius="full">Cargar nueva</Button>
+            <Button onClick={handleNuevaRutina} bg="#258d19" color="white" borderRadius="full">Cargar nueva</Button>
           </Box>
         </Center>
       )}
@@ -243,7 +243,7 @@ export default function ListaRutinas() {
                 </CardHeader>
                 <CardBody pt={0}>
                   <HStack spacing={2} mb={3} wrap="wrap">
-                    {!!planId && <Tag colorScheme="gray" borderRadius="full">Plan #{planId}</Tag>}
+                    {!!planId && <Tag colorScheme="gray" borderRadius="full">Plan N°{planId}</Tag>}
                     {!!r.__alumno && <Tag colorScheme="green" borderRadius="full">{r.__alumno}</Tag>}
                     {!!r.dificultad && <Tag colorScheme="purple" borderRadius="full">{r.dificultad}</Tag>}
                   </HStack>
@@ -254,7 +254,7 @@ export default function ListaRutinas() {
                   <HStack spacing={3} wrap="wrap">
                     <Button
                       size="sm"
-                      bg="#0f4d11ff"
+                      bg="#258d19"
                       color="white"
                       borderRadius="full"
                       onClick={() => navigate(`/planes/${planId}/rutinas/${idRutina}`)}
@@ -287,6 +287,8 @@ export default function ListaRutinas() {
                       colorScheme="red"
                       borderRadius="full"
                       onClick={() => handleEliminar(planId, idRutina, r.nombre)}
+                      bg="#258d19"
+                      color="white"
                     >
                       Eliminar
                     </Button>

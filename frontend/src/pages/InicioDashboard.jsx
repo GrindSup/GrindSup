@@ -13,13 +13,13 @@ const MotionBox = motion(chakra.div);
 
 export default function InicioDashboard() {
   // Fondo verde original + panel suave (no blanco)
-  const bg = "#228B22";
+  const bg = "transparent";
   const panelBg = "rgba(0,0,0,0.10)";                 // leve oscurecido
   const cardBg = "rgba(255,255,255,0.08)";            // “glass” muy sutil
   const cardBgHover = "rgba(255,255,255,0.12)";
   const borderCol = "rgba(255,255,255,0.16)";
-  const textPrimary = "whiteAlpha.900";
-  const textSecondary = "whiteAlpha.800";
+  const textPrimary = "black";
+  const textSecondary = "black";
   const iconBg = "rgba(255,255,255,0.10)";
   const iconBgHover = "rgba(255,255,255,0.16)";
   const iconCol = "white";
@@ -43,7 +43,7 @@ export default function InicioDashboard() {
       <Container maxW="container.xl">
         {/* Panel superior suave, redondeado, sin blanco */}
         <Box
-          bg={panelBg}
+          bg="#e8e8e8ff"
           border="1px solid"
           borderColor="rgba(255,255,255,0.12)"
           borderRadius="2xl"
@@ -54,10 +54,10 @@ export default function InicioDashboard() {
           boxShadow="0 12px 30px rgba(0,0,0,.18)"
         >
           <Image src="/vite.png" alt="GrindSup" boxSize={{ base: "72px", md: "202px" }} mx="auto" mb={2} />
-          <Heading size="md" color={textPrimary} fontWeight="800" letterSpacing="-0.01em" mb={1}>
+          <Heading size="lg" color={textPrimary} fontWeight="900" letterSpacing="-0.01em" mb={1}>
             Tu panel
           </Heading>
-          <Text fontSize="md" color={textSecondary}>
+          <Text fontSize="lg" color={textSecondary}>
             Autogestioná alumnos, turnos y rutinas desde un solo lugar.
           </Text>
         </Box>
@@ -79,11 +79,16 @@ export default function InicioDashboard() {
                   <Card
                     {...linkProps}
                     role="group"
-                    bg={cardBg}
+                    bg="#e8e8e8ff"
                     borderRadius="2xl"
                     border="1px solid"
                     borderColor={borderCol}
-                    _hover={{ textDecoration: "none", bg: a.available ? cardBgHover : cardBg, cursor: a.available ? "pointer" : "not-allowed" }}
+                    _hover={{
+                    textDecoration: "none",
+                    bg: "#87c987ff",                     // seguimos con blanco
+                    boxShadow: "0 8px 20px rgba(5,239,28,0.2), 0 4px 10px rgba(0,0,0,0.08)", // sutil iluminación verde
+                    cursor: a.available ? "pointer" : "not-allowed"
+                  }}
                     backdropFilter="blur(3px)"
                   >
                     {a.comingSoon && (
@@ -96,7 +101,7 @@ export default function InicioDashboard() {
                         <Box
                           p={3}
                           borderRadius="xl"
-                          bg={iconBg}
+                          bg="#258d19"
                           _groupHover={{ bg: iconBgHover }}
                           transition="all .2s ease"
                         >

@@ -237,7 +237,7 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#0f4d11ff" color="white" onClick={()=>removeItem("les", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#258d19" color="white" onClick={()=>removeItem("les", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
@@ -263,7 +263,7 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#0f4d11ff" color="white" onClick={()=>removeItem("dis", idx)} />
+                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} bg="#258d19" color="white" onClick={()=>removeItem("dis", idx)} />
                     </HStack>
                   ))}
                 </GridItem>
@@ -280,7 +280,7 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#0f4d11ff" color="white">
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#258d19" color="white">
                   Guardar cambios
                 </Button>
                 <Button variant="ghost" onClick={() => navigate("/alumnos")}>
@@ -299,7 +299,7 @@ function SectionHeader({ title, onAdd }) {
   return (
     <HStack justify="space-between">
       <FormLabel m={0}>{title}</FormLabel>
-      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#0f4d11ff" color="white">
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#258d19" color="white">
         Agregar
       </Button>
     </HStack>

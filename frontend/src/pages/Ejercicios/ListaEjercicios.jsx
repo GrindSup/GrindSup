@@ -134,7 +134,7 @@ export default function ListaEjercicios() {
             <Flex justifyContent="space-between" alignItems="center" mb={6} wrap="wrap" gap={4}>
                 <HStack spacing={4} alignItems="center">
                     <BotonVolver />
-                    <Heading as="h1" size="xl">
+                    <Heading as="h1" size="xl" color="white">
                         Lista de Ejercicios
                     </Heading>
                 </HStack>
@@ -145,7 +145,7 @@ export default function ListaEjercicios() {
                     as={Button} 
                     rightIcon={<ChevronDownIcon />} 
                     minW="200px"
-                    bg="#0f4d11ff"      
+                    bg="#258d19"      
                     color="white"      
                     _hover={{ bg: "#0b3a0c" }} 
                     _active={{ bg: "#082b09" }}
@@ -184,7 +184,8 @@ export default function ListaEjercicios() {
                         colorScheme="brand"
                         variant="solid"
                         onClick={() => navigate('/ejercicio/registrar')}
-                        bg="#0f4d11ff"
+                        bg="#258d19"
+                        color="white"
                     >
                         Nuevo Ejercicio
                     </Button>
@@ -226,15 +227,16 @@ export default function ListaEjercicios() {
                                         <IconButton
                                           aria-label="Agregar a rutina"
                                           icon={<AddIcon />}
-                                          colorScheme="green"
+                                          bg="#258d19"
+                                          color="white"
                                           isRound
                                           onClick={() => abrirModalAgregar(ej)}
                                         />
                                         <HStack>
-                                            <Button variant='solid' colorScheme='blue' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#0f4d11ff">
+                                            <Button variant='solid' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#258d19" color="white">
                                                 Editar
                                             </Button>
-                                            <Button size="sm" bg="red.500" color="white" _hover={{ bg: "red.600" }} onClick={() => abrirDialogoEliminar(ej)}>
+                                            <Button size="sm" bg="red.600" color="white" _hover={{ bg: "red.600" }} onClick={() => abrirDialogoEliminar(ej)}>
                                                 Eliminar
                                             </Button>
                                         </HStack>
@@ -257,14 +259,14 @@ export default function ListaEjercicios() {
                             Eliminar Ejercicio
                         </AlertDialogHeader>
                         <AlertDialogBody>
-                            ¿Estás seguro de que querés eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
+                            ¿Estás seguro de que quieres eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
                         </AlertDialogBody>
                         <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose} color="white">
+                            <Button ref={cancelRef} onClick={onClose} bg="#258d19" color="white">
                             Cancelar
                             </Button>
                             <Button
-                            bg="red.500"
+                            bg="red.600"
                             color="white"
                             _hover={{ bg: "red.600" }}
                             onClick={handleEliminar}
@@ -299,8 +301,8 @@ export default function ListaEjercicios() {
                     Cancelar
                   </Button>
                   <Button
-                    colorScheme="green"
-                    bg="#0f4d11ff"
+                    bg="#258d19"
+                    color="white"
                     onClick={handleAgregarARutina}
                     isDisabled={!rutinaSeleccionada}
                   >

@@ -143,7 +143,7 @@ export default function RegistrarTurno() {
                   <Select placeholder={esIndividual ? "Seleccione un alumno" : "Buscar/seleccionar alumno"} value={alumnoAAgregar} onChange={(e)=>setAlumnoAAgregar(e.target.value)}>
                     {alumnos.map(a => <option key={a.id_alumno} value={a.id_alumno}>{nombreCompleto(a)}</option>)}
                   </Select>
-                  <Button onClick={handleAgregarAlumno} variant="solid" bg="#0f4d11ff" color="white">+ Agregar</Button>
+                  <Button onClick={handleAgregarAlumno} variant="solid" bg="#258d19" color="white">+ Agregar</Button>
                 </HStack>
 
                 {seleccionados.length
@@ -166,7 +166,7 @@ export default function RegistrarTurno() {
 
             {/* Botones Guardar / Cancelar alineados */}
             <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={4} justify="center">
-              <Button type="submit" isLoading={loading} loadingText="Guardando..." px={10} bg="#0f4d11ff" color="white">
+              <Button type="submit" isLoading={loading} loadingText="Guardando..." px={10} bg="#258d19" color="white">
                 Guardar turno
               </Button>
               <Button variant="ghost" type="button" onClick={goBack}>

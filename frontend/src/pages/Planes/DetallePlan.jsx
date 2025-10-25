@@ -149,12 +149,12 @@ export default function DetallePlan() {
       <HStack mb={4} gap={3} wrap="wrap" justify="space-between">
         <HStack gap={3}>
           <BotonVolver />
-          <Heading size="lg" color="gray.900">Plan N°{idPlan}</Heading>
+          <Heading size="lg" color="white">Plan N°{idPlan}</Heading>
         </HStack>
         <HStack gap={2}>
           {/* ✅ Editar plan ahora navega a /planes/:idPlan/editar */}
-          <Button variant="solid" onClick={goEditarPlan} bg="#0f4d11ff" color="white">Editar plan</Button>
-          <Button bg="#0f4d11ff" color="white" onClick={goNuevaRutina}>Agregar rutina</Button>
+          <Button variant="solid" onClick={goEditarPlan} bg="#258d19" color="white">Editar plan</Button>
+          <Button bg="#258d19" color="white" onClick={goNuevaRutina}>Agregar rutina</Button>
         </HStack>
       </HStack>
 
@@ -182,13 +182,13 @@ export default function DetallePlan() {
             </VStack>
           </Box>
 
-          <Heading size="md" mb={3} color="gray.900">Rutinas del plan</Heading>
+          <Heading size="md" mb={3} color="white">Rutinas del plan</Heading>
 
           {rutinas.length === 0 ? (
             <Center bg="white" p={10} borderRadius="2xl" boxShadow="md">
               <VStack>
                 <Text color="gray.700">Este plan todavía no tiene rutinas.</Text>
-                <Button mt={2} onClick={goNuevaRutina} bg="#0f4d11ff" color="white">Crear primera rutina</Button>
+                <Button mt={2} onClick={goNuevaRutina} bg="#258d19" color="white">Crear primera rutina</Button>
               </VStack>
             </Center>
           ) : (
@@ -222,8 +222,8 @@ export default function DetallePlan() {
                         <Button size="sm" variant="outline" onClick={() => goDetalleRutina(idRutina)}>Ver detalle</Button>
                         {/* ✅ Editar rutina ahora navega a /planes/:idPlan/rutinas/:idRutina/editar */}
                         <Button size="sm" variant="outline" onClick={() => goEditarRutina(idRutina)}>Editar</Button>
-                        <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} bg="#0f4d11ff" color="white">Exportar PDF</Button>
-                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)}>Eliminar</Button>
+                        <Button size="sm" onClick={() => exportPdf(idRutina, r.nombre)} bg="#258d19" color="white">Exportar PDF</Button>
+                        <Button size="sm" colorScheme="red" onClick={() => handleDeleteRutina(idRutina)} bg="#258d19" color="white">Eliminar</Button>
                       </HStack>
 
                       <AccordionPanel pb={4} px={5}>
@@ -235,7 +235,7 @@ export default function DetallePlan() {
                               <Box key={idx} p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
                                 <Text fontWeight="semibold">{it?.ejercicio?.nombre ?? it?.ejercicio?.id ?? "Ejercicio"}</Text>
                                 <Text fontSize="sm" color="gray.600">
-                                  Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}s
+                                  Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}min
                                 </Text>
                               </Box>
                             ))}
