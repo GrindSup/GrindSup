@@ -260,7 +260,7 @@ function InicioPublico() {
       {/* CTA final */}
       <Container maxW="container.xl" py={{ base: 10, md: 14 }} position="relative" zIndex={1}>
         <Box
-          bg="#258d19"
+          bg="#007b00"
           color="white"
           borderRadius="2xl"
           px={{ base: 6, md: 10 }}
