@@ -114,11 +114,10 @@ Ampliar las funcionalidades del sistema incorporando la gestión completa de eje
 
 ## 🟦 Sprint 4 – Roles, Permisos y Administración Avanzada (2 semanas)
 
-**Objetivo:**  
+**Objetivo:**
 Fortalecer la seguridad y administración del sistema mediante la implementación de permisos por roles, gestión de entrenadores y optimización del manejo de ejercicios.  
 Este sprint busca consolidar la funcionalidad de los módulos existentes y mejorar la experiencia del usuario administrador.
 
-### ✅ Tareas principales
 - Implementar la gestión de **roles y permisos**, definiendo accesos diferenciados entre administradores, entrenadores y alumnos.  
 - Incorporar el **estado de los entrenadores** (activo/inactivo) para facilitar su control dentro de la plataforma.  
 - Desarrollar la funcionalidad para **listar y gestionar entrenadores** desde el panel administrativo.  
@@ -127,7 +126,7 @@ Este sprint busca consolidar la funcionalidad de los módulos existentes y mejor
 - Mejorar la documentación técnica y el manual de usuario, incluyendo la descripción de permisos y vistas correspondientes.  
 - Realizar pruebas integradas para validar los nuevos flujos de acceso y administración.  
 
-### 👥 Historias de Usuario implementadas
+**Historias de Usuario implementadas**
 - **HU-69:** Permiso de roles.  
 - **HU-39:** Estado de entrenador.  
 - **HU-82:** Registrar entrenador.  
@@ -135,7 +134,7 @@ Este sprint busca consolidar la funcionalidad de los módulos existentes y mejor
 - **HU-38:** Listado de entrenadores.  
 - **HU-14:** Buscar ejercicios.  
 
-### 🧩 Roles del equipo
+**Roles del equipo**
 - **Product Owner:** Agustina Silva  
 - **Scrum Master:** Azul Oyola  
 - **Programación Backend:** Martín Gamboa, Agustina Silva, Azul Oyola  
