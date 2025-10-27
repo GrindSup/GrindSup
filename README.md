@@ -114,7 +114,7 @@ Ampliar las funcionalidades del sistema incorporando la gestión completa de eje
 
 ## 🟦 Sprint 4 – Roles, Permisos y Administración Avanzada (2 semanas)
 
-**Objetivo:**  
+**Objetivo:** 
 Fortalecer la seguridad y administración del sistema mediante la implementación de permisos por roles, gestión de entrenadores y optimización del manejo de ejercicios.  
 Este sprint busca consolidar la funcionalidad de los módulos existentes y mejorar la experiencia del usuario administrador.
 
