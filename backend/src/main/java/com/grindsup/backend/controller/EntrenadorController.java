@@ -7,12 +7,15 @@ import com.grindsup.backend.repository.EntrenadorRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/entrenadores")
+@CrossOrigin(origins = "*")
 public class EntrenadorController {
 
     @Autowired
@@ -24,50 +27,121 @@ public class EntrenadorController {
     @Autowired
     private EstadoRepository estadoRepository;
 
+    // -----------------------------
+    // HU 38: Listado de entrenadores activos
+    // -----------------------------
     @GetMapping
-    public List<Entrenador> getAll() {
-        return entrenadorRepository.findAll();
+    public List<Entrenador> getAllActivos() {
+        return entrenadorRepository.findAll()
+                .stream()
+                .filter(e -> e.getDeleted_at() == null) // solo entrenadores activos
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public Entrenador getById(@PathVariable Long id) {
-        return entrenadorRepository.findById(id).orElse(null);
+    public ResponseEntity<Entrenador> getById(@PathVariable Long id) {
+        return entrenadorRepository.findById(id)
+                .filter(e -> e.getDeleted_at() == null)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    // -----------------------------
+    // HU 82: Registrar entrenador
+    // -----------------------------
     @PostMapping
-    public Entrenador create(@RequestBody Entrenador entrenador) {
+    public ResponseEntity<?> create(@RequestBody Entrenador entrenador) {
+        // Validar usuario
         if (entrenador.getUsuario() != null) {
             Usuario usuario = usuarioRepository.findById(entrenador.getUsuario().getId_usuario()).orElse(null);
+            if (usuario == null)
+                return ResponseEntity.badRequest().body("Usuario no encontrado");
             entrenador.setUsuario(usuario);
+        } else {
+            return ResponseEntity.badRequest().body("Usuario es obligatorio");
         }
+
+        // Validar estado
         if (entrenador.getEstado() != null) {
             Estado estado = estadoRepository.findById(entrenador.getEstado().getId_estado()).orElse(null);
+            if (estado == null)
+                return ResponseEntity.badRequest().body("Estado no encontrado");
             entrenador.setEstado(estado);
         }
-        return entrenadorRepository.save(entrenador);
+
+        // Timestamps
+        OffsetDateTime ahora = OffsetDateTime.now();
+        entrenador.setCreated_at(ahora);
+        entrenador.setUpdated_at(ahora);
+
+        Entrenador guardado = entrenadorRepository.save(entrenador);
+        return ResponseEntity.status(201).body(guardado);
     }
 
+    // -----------------------------
+    // Actualizar entrenador
+    // -----------------------------
     @PutMapping("/{id}")
-    public Entrenador update(@PathVariable Long id, @RequestBody Entrenador entrenador) {
-        return entrenadorRepository.findById(id).map(existing -> {
-            existing.setExperiencia(entrenador.getExperiencia());
-            existing.setTelefono(entrenador.getTelefono());
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
+        return entrenadorRepository.findById(id)
+                .filter(e -> e.getDeleted_at() == null)
+                .map(existing -> {
+                    existing.setExperiencia(entrenadorDetails.getExperiencia());
+                    existing.setTelefono(entrenadorDetails.getTelefono());
 
-            if (entrenador.getUsuario() != null) {
-                Usuario usuario = usuarioRepository.findById(entrenador.getUsuario().getId_usuario()).orElse(null);
-                existing.setUsuario(usuario);
-            }
-            if (entrenador.getEstado() != null) {
-                Estado estado = estadoRepository.findById(entrenador.getEstado().getId_estado()).orElse(null);
-                existing.setEstado(estado);
-            }
-            return entrenadorRepository.save(existing);
-        }).orElse(null);
+                    // Usuario
+                    if (entrenadorDetails.getUsuario() != null) {
+                        Usuario usuario = usuarioRepository.findById(entrenadorDetails.getUsuario().getId_usuario())
+                                .orElse(null);
+                        if (usuario != null)
+                            existing.setUsuario(usuario);
+                    }
+
+                    // Estado
+                    if (entrenadorDetails.getEstado() != null) {
+                        Estado estado = estadoRepository.findById(entrenadorDetails.getEstado().getId_estado())
+                                .orElse(null);
+                        if (estado != null)
+                            existing.setEstado(estado);
+                    }
+
+                    existing.setUpdated_at(OffsetDateTime.now());
+                    return ResponseEntity.ok(entrenadorRepository.save(existing));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    // -----------------------------
+    // HU 39: Actualizar estado de entrenador
+    // -----------------------------
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<?> actualizarEstado(@PathVariable Long id, @RequestBody Estado nuevoEstado) {
+        return entrenadorRepository.findById(id)
+                .filter(e -> e.getDeleted_at() == null)
+                .map(entrenador -> {
+                    Estado estado = estadoRepository.findById(nuevoEstado.getId_estado()).orElse(null);
+                    if (estado == null)
+                        return ResponseEntity.badRequest().body("Estado no encontrado");
+
+                    entrenador.setEstado(estado);
+                    entrenador.setUpdated_at(OffsetDateTime.now());
+                    return ResponseEntity.ok(entrenadorRepository.save(entrenador));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // -----------------------------
+    // Eliminación lógica
+    // -----------------------------
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        entrenadorRepository.deleteById(id);
-        return "Entrenador eliminado con id " + id;
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        return entrenadorRepository.findById(id)
+                .filter(e -> e.getDeleted_at() == null)
+                .map(entrenador -> {
+                    entrenador.setDeleted_at(OffsetDateTime.now());
+                    entrenadorRepository.save(entrenador);
+                    return ResponseEntity.ok("Entrenador eliminado correctamente (eliminación lógica).");
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

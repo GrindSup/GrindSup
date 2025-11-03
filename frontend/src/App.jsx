@@ -36,18 +36,10 @@ import EditarRutina from "./pages/Rutinas/EditarRutina.jsx";
 
 // ✅ Ejercicios
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx";
+import EditarEjercicio from "./pages/Ejercicios/EditarEjercicio.jsx";
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
 
-// --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
-function Placeholder({ title }) {
-  return (
-    <Box bg="white" borderRadius="2xl" p={{ base: 6, md: 8 }}>
-      {title}
-    </Box>
-  );
-}
-const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — próximamente"} />;
-const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
-const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {

@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/ejercicios")
-@CrossOrigin(origins = "*") 
+@CrossOrigin(origins = "*")
 public class EjercicioController {
 
     @Autowired
@@ -73,11 +73,12 @@ public class EjercicioController {
                     existing.setEquipamiento(ejercicioDetails.getEquipamiento());
 
                     if (ejercicioDetails.getEstado() != null) {
-                        Estado estado = estadoRepository.findById(ejercicioDetails.getEstado().getId_estado()).orElse(null);
+                        Estado estado = estadoRepository.findById(ejercicioDetails.getEstado().getId_estado())
+                                .orElse(null);
                         existing.setEstado(estado);
                     }
                     existing.setUpdated_at(OffsetDateTime.now());
-                    
+
                     Ejercicio actualizado = ejercicioRepository.save(existing);
                     return ResponseEntity.ok(actualizado);
                 })
@@ -90,7 +91,7 @@ public class EjercicioController {
                 .map(ejercicio -> {
                     ejercicio.setDeleted_at(OffsetDateTime.now());
                     ejercicioRepository.save(ejercicio);
-                    return ResponseEntity.ok("Ejercicio eliminado correctamente (eliminación lógica).");
+                    return ResponseEntity.ok("Ejercicio eliminado correctamente");
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
