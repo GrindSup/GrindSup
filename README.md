@@ -129,10 +129,8 @@ Este sprint busca consolidar la funcionalidad de los módulos existentes y mejor
 **Historias de Usuario implementadas**
 - **HU-69:** Permiso de roles.  
 - **HU-39:** Estado de entrenador.  
-- **HU-82:** Registrar entrenador.  
-- **HU-19:** Eliminar ejercicio.  
+- **HU-82:** Registrar entrenador.   
 - **HU-38:** Listado de entrenadores.  
-- **HU-14:** Buscar ejercicios.  
 
 **Roles del equipo**
 - **Product Owner:** Agustina Silva  
