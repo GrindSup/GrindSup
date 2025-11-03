@@ -96,7 +96,6 @@ Ampliar las funcionalidades del sistema incorporando la gestión completa de eje
 * HU-17: Modificar ejercicio.
 * HU-18: Desactivar ejercicio.
 * HU-19: Eliminar ejercicio.
-* HU-82: Registrar entrenador.
 * HU-21: Registrar rutina.
 * HU-22: Eliminar rutina.
 * HU-23: Modificar rutina.
@@ -130,9 +129,7 @@ Este sprint busca consolidar la funcionalidad de los módulos existentes y mejor
 - **HU-69:** Permiso de roles.  
 - **HU-39:** Estado de entrenador.  
 - **HU-82:** Registrar entrenador.  
-- **HU-19:** Eliminar ejercicio.  
-- **HU-38:** Listado de entrenadores.  
-- **HU-14:** Buscar ejercicios.  
+- **HU-38:** Listado de entrenadores.    
 
 **Roles:**
 - **Product Owner:** Agustina Silva  
