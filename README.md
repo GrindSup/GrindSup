@@ -96,7 +96,6 @@ Ampliar las funcionalidades del sistema incorporando la gestión completa de eje
 * HU-17: Modificar ejercicio.
 * HU-18: Desactivar ejercicio.
 * HU-19: Eliminar ejercicio.
-* HU-82: Registrar entrenador.
 * HU-21: Registrar rutina.
 * HU-22: Eliminar rutina.
 * HU-23: Modificar rutina.
