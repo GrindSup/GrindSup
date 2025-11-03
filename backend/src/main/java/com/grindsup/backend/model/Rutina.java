@@ -12,7 +12,7 @@ public class Rutina {
     private Long id_rutina;
 
     @ManyToOne
-    @JoinColumn(name = "id_plan", nullable = false)
+    @JoinColumn(name = "id_plan", nullable = true)
     private PlanEntrenamiento plan;
 
     @Column(length = 100)

@@ -20,7 +20,7 @@ export default function ListaRutinas() {
 
   const [rutinas, setRutinas] = useState([]);
   const [planes, setPlanes] = useState([]);
-  const [planSel, setPlanSel] = useState("");        // ← vacío = TODOS
+  const [planSel, setPlanSel] = useState(""); // vacío = TODOS / Sin plan
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -30,11 +30,11 @@ export default function ListaRutinas() {
       try {
         setLoading(true);
 
-        // 1) planes para enriquecer etiquetas
+        // 1) planes
         const ps = await planesService.listAll();
         setPlanes(ps);
 
-        // 2) rutinas (global o por plan si viene por URL)
+        // 2) rutinas
         let data = [];
         try {
           if (idPlanFromUrl) {
@@ -53,9 +53,9 @@ export default function ListaRutinas() {
           data = [];
         }
 
-        // 3) enriquecer con planId y nombre alumno
+        // 3) enriquecer con planId y alumno
         const enrich = data.map((r) => {
-          const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null;
+          const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null; // null = sin plan
           const plan = (ps || []).find((p) => String(p.id_plan ?? p.id) === String(planId));
           const alumno = plan?.alumno
             ? [plan.alumno?.nombre, plan.alumno?.apellido].filter(Boolean).join(" ")
@@ -65,12 +65,11 @@ export default function ListaRutinas() {
 
         setRutinas(enrich);
 
-        // 4) planSel por URL únicamente (no auto-filtrar por “último plan”)
         if (idPlanFromUrl) {
           setPlanSel(String(idPlanFromUrl));
           localStorage.setItem("lastPlanId", String(idPlanFromUrl));
         } else {
-          setPlanSel(""); // ← mostrar TODAS
+          setPlanSel(""); // mostrar todas
         }
 
         setError("");
@@ -83,14 +82,15 @@ export default function ListaRutinas() {
     })();
   }, [idPlanFromUrl]);
 
-  // Filtro combinado: por plan seleccionado + texto de búsqueda
+  // Filtro combinado: plan + texto
   const filtradas = useMemo(() => {
     const term = q.trim().toLowerCase();
     const wantPlan = String(planSel || "").trim();
 
     return rutinas.filter((r) => {
-      const planIdDeLaRutina = String(r.__planId ?? r.plan?.id_plan ?? r.id_plan ?? "");
-      if (wantPlan && planIdDeLaRutina !== wantPlan) return false;
+      const planIdDeLaRutina = String(r.__planId ?? "");
+      if (wantPlan && wantPlan !== "SIN_PLAN" && planIdDeLaRutina !== wantPlan) return false;
+      if (wantPlan === "SIN_PLAN" && planIdDeLaRutina) return false;
 
       if (!term) return true;
       const nom = (r?.nombre ?? "").toLowerCase();
@@ -101,22 +101,21 @@ export default function ListaRutinas() {
   }, [rutinas, q, planSel]);
 
   const handleNuevaRutina = () => {
-    // si hay un plan elegido, se asocia ahí; si no, pedimos que elijan uno
-    const destinoPlan = planSel || idPlanFromUrl;
-    if (!destinoPlan) {
-      setError("Seleccioná un plan en el selector para crear una rutina asociada.");
-      return;
+    if (planSel === "SIN_PLAN") {
+      navigate("/rutinas/nueva"); // ruta independiente
+    } else {
+      const destinoPlan = planSel || idPlanFromUrl;
+      if (!destinoPlan) {
+        setError("Seleccioná un plan en el selector para crear una rutina asociada.");
+        return;
+      }
+      navigate(`/planes/${destinoPlan}/rutinas/nueva`);
     }
-    localStorage.setItem("lastPlanId", String(destinoPlan));
-    navigate(`/planes/${destinoPlan}/rutinas/nueva`);
   };
 
-  // ---- Exportar PDF (GET /api/rutinas/{id}/exportar) ----
   const exportPdf = async (idRutina, nombre) => {
     try {
-      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, {
-        responseType: "blob",
-      });
+      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, { responseType: "blob" });
       const blob = new Blob([resp.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -128,37 +127,29 @@ export default function ListaRutinas() {
       a.remove();
       URL.revokeObjectURL(url);
       toast({ title: "PDF exportado", status: "success" });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast({ title: "No se pudo exportar el PDF", status: "error" });
     }
   };
 
-  // ---- Editar / Eliminar ----
   const goEditar = (planId, idRutina) => {
-    if (!planId) {
-      toast({ title: "No se puede editar: rutina sin plan asociado.", status: "warning" });
-      return;
-    }
-    navigate(`/planes/${planId}/rutinas/${idRutina}/editar`);
+    navigate(`/planes/${planId || ""}/rutinas/${idRutina}/editar`);
   };
 
   const handleEliminar = async (planId, idRutina, nombre) => {
     if (!idRutina) return;
-    const ok = window.confirm(`¿Eliminar la rutina "${nombre || idRutina}"? Esta acción no se puede deshacer.`);
+    const ok = window.confirm(`¿Eliminar la rutina "${nombre || idRutina}"?`);
     if (!ok) return;
 
-    // Optimista
     const prev = rutinas;
     setRutinas((rs) => rs.filter((r) => String(r.id_rutina ?? r.id) !== String(idRutina)));
 
     try {
-      const removed = await rutinasService.remove(planId, idRutina);
-      if (!removed) throw new Error("El backend no confirmó la eliminación");
+      const removed = await rutinasService.remove(planId || null, idRutina);
+      if (!removed) throw new Error("No se confirmó la eliminación");
       toast({ title: "Rutina eliminada", status: "success" });
-    } catch (e) {
-      console.error(e);
-      setRutinas(prev); // revert
+    } catch {
+      setRutinas(prev);
       toast({ title: "No se pudo eliminar", status: "error" });
     }
   };
@@ -181,6 +172,7 @@ export default function ListaRutinas() {
             placeholder={planes.length ? "Seleccioná plan…" : "No hay planes"}
           >
             <option value="">Todos los planes</option>
+            <option value="SIN_PLAN">Sin plan</option>
             {planes.map((p) => (
               <option key={p.id_plan ?? p.id} value={p.id_plan ?? p.id}>
                 #{p.id_plan ?? p.id} — {(p.objetivo ?? "Sin objetivo").slice(0, 60)}
@@ -226,7 +218,7 @@ export default function ListaRutinas() {
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={7}>
           {filtradas.map((r) => {
             const idRutina = r.id_rutina ?? r.id;
-            const planId = r.__planId ?? idPlanFromUrl ?? (localStorage.getItem("lastPlanId") || "");
+            const planId = r.__planId ?? null;
 
             return (
               <Card
@@ -243,7 +235,7 @@ export default function ListaRutinas() {
                 </CardHeader>
                 <CardBody pt={0}>
                   <HStack spacing={2} mb={3} wrap="wrap">
-                    {!!planId && <Tag colorScheme="gray" borderRadius="full">Plan N°{planId}</Tag>}
+                    <Tag colorScheme="gray" borderRadius="full">{planId ? `Plan N°${planId}` : "Sin plan"}</Tag>
                     {!!r.__alumno && <Tag colorScheme="green" borderRadius="full">{r.__alumno}</Tag>}
                     {!!r.dificultad && <Tag colorScheme="purple" borderRadius="full">{r.dificultad}</Tag>}
                   </HStack>

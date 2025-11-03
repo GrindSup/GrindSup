@@ -49,9 +49,8 @@ export default function NuevaRutina() {
         // 1) ejercicios
         let ejercicios = [];
         try {
-          ejercicios = await ejerciciosService.getAll(); // GET /api/ejercicios
+          ejercicios = await ejerciciosService.getAll();
         } catch {
-          // fallback ultra básico por si usan otro nombre de endpoint
           const r = await axiosInstance.get("/api/ejercicios");
           ejercicios = r.data;
         }
@@ -59,41 +58,30 @@ export default function NuevaRutina() {
 
         // 2) planes
         if (idPlan) {
-          // vengo con un plan → traigo el detalle para mostrar resumen (o al menos el objeto)
           try {
             const p = await planesService.getById(idPlan);
             setPlanInfo(p || null);
           } catch {
-            // si no hay /api/planes/:id, no rompo
             setPlanInfo(null);
           }
           setPlanSel(String(idPlan));
-          setPlanes([]); // no necesito listado
+          setPlanes([]);
         } else {
-          // no viene id → listar planes del ENTRENADOR
           const idEnt = await ensureEntrenadorId();
           let data = [];
-          // a) /entrenadores/{id}/planes
           try {
             const r = await axiosInstance.get(`/api/entrenadores/${idEnt}/planes`);
             data = r.data;
           } catch {
-            // b) /planes?entrenadorId=...
             try {
-              const r2 = await axiosInstance.get(`/api/planes`, {
-                params: { entrenadorId: idEnt },
-              });
+              const r2 = await axiosInstance.get(`/api/planes`, { params: { entrenadorId: idEnt } });
               data = r2.data;
             } catch {
-              // c) /planes (sin filtro) – último recurso
               const r3 = await axiosInstance.get(`/api/planes`);
               data = r3.data;
             }
           }
           setPlanes(Array.isArray(data) ? data : []);
-          if (!planSel && Array.isArray(data) && data.length) {
-            setPlanSel(String(data[0].id_plan ?? data[0].id));
-          }
         }
       } catch (e) {
         setLoadError("No se pudieron cargar datos iniciales.");
@@ -101,7 +89,7 @@ export default function NuevaRutina() {
         setLoadingInit(false);
       }
     })();
-  }, [idPlan]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [idPlan]);
 
   // helpers UI
   const addItem = () =>
@@ -115,15 +103,13 @@ export default function NuevaRutina() {
 
   // save
   const handleSave = async () => {
-    const planIdFinal = idPlan || planSel;
-    if (!planIdFinal) {
-      toast({ title: "Seleccioná un plan", status: "warning" });
-      return;
-    }
+    const planIdFinal = planSel || null; // permite null → sin plan
+
     if (!nombre.trim()) {
       toast({ title: "El nombre es obligatorio", status: "warning" });
       return;
     }
+
     const ejercicios = items
       .filter((x) => x.idEjercicio)
       .map((x) => ({
@@ -137,9 +123,10 @@ export default function NuevaRutina() {
 
     try {
       setSaving(true);
-      await rutinasService.crear(planIdFinal, payload); // POST /api/planes/{idPlan}/rutinas
+      await rutinasService.crear(planIdFinal, payload);
       toast({ title: "Rutina creada", status: "success" });
-      navigate(`/planes/${planIdFinal}`); // volvemos al detalle del plan (donde listás rutinas)
+      if (planIdFinal) navigate(`/planes/${planIdFinal}`);
+      else navigate("/rutinas"); // ruta general para rutinas sin plan
     } catch (e) {
       const msg =
         e?.response?.data?.message ||
@@ -166,7 +153,6 @@ export default function NuevaRutina() {
       )}
 
       <VStack align="stretch" spacing={4} bg="white" p={5} borderRadius="md">
-        {/* Resumen del plan si vengo con :idPlan */}
         {!!idPlan && (
           <Skeleton isLoaded={!loadingInit}>
             <HStack spacing={3} flexWrap="wrap" mb={1}>
@@ -177,12 +163,7 @@ export default function NuevaRutina() {
                 <Tag colorScheme="gray" borderRadius="full">
                   <TagLabel>
                     Alumno:{" "}
-                    {[
-                      planInfo.alumno?.nombre,
-                      planInfo.alumno?.apellido,
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || `#${planInfo.alumno?.id_alumno ?? ""}`}
+                    {[planInfo.alumno?.nombre, planInfo.alumno?.apellido].filter(Boolean).join(" ") || `#${planInfo.alumno?.id_alumno ?? ""}`}
                   </TagLabel>
                 </Tag>
               )}
@@ -205,9 +186,8 @@ export default function NuevaRutina() {
           </Skeleton>
         )}
 
-        {/* Selector de Plan (si NO vino por URL) */}
         {!idPlan && (
-          <FormControl isRequired isDisabled={loadingInit}>
+          <FormControl isDisabled={loadingInit}>
             <FormLabel>Plan</FormLabel>
             <Select
               value={planSel}
@@ -215,19 +195,13 @@ export default function NuevaRutina() {
               placeholder={loadingInit ? "Cargando planes..." : "Seleccioná un plan…"}
               bg="white"
             >
+              <option value="SIN_PLAN">Sin plan</option>
               {planes.map((p) => {
                 const id = p.id_plan ?? p.id;
-                const alumnoNombre = [
-                  p?.alumno?.nombre,
-                  p?.alumno?.apellido,
-                ]
-                  .filter(Boolean)
-                  .join(" ");
+                const alumnoNombre = [p?.alumno?.nombre, p?.alumno?.apellido].filter(Boolean).join(" ");
                 return (
                   <option key={id} value={id}>
-                    {`#${id} — ${alumnoNombre || "Alumno"} — ${(
-                      p?.objetivo || "Sin objetivo"
-                    ).slice(0, 50)}`}
+                    {`#${id} — ${alumnoNombre || "Alumno"} — ${(p?.objetivo || "Sin objetivo").slice(0, 50)}`}
                   </option>
                 );
               })}
@@ -237,20 +211,12 @@ export default function NuevaRutina() {
 
         <FormControl isRequired>
           <FormLabel>Nombre</FormLabel>
-          <Input
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej: Fuerza tren superior"
-          />
+          <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Fuerza tren superior" />
         </FormControl>
 
         <FormControl>
           <FormLabel>Descripción</FormLabel>
-          <Textarea
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Notas o instrucciones generales…"
-          />
+          <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Notas o instrucciones generales…" />
         </FormControl>
 
         <Divider />
@@ -278,33 +244,21 @@ export default function NuevaRutina() {
 
             <FormControl>
               <FormLabel>Series</FormLabel>
-              <NumberInput
-                min={1}
-                value={it.series}
-                onChange={(_, v) => changeItem(i, "series", v)}
-              >
+              <NumberInput min={1} value={it.series} onChange={(_, v) => changeItem(i, "series", v)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
 
             <FormControl>
               <FormLabel>Reps</FormLabel>
-              <NumberInput
-                min={1}
-                value={it.repeticiones}
-                onChange={(_, v) => changeItem(i, "repeticiones", v)}
-              >
+              <NumberInput min={1} value={it.repeticiones} onChange={(_, v) => changeItem(i, "repeticiones", v)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
 
             <FormControl>
               <FormLabel>Descanso (min)</FormLabel>
-              <NumberInput
-                min={0}
-                value={it.descansoSegundos}
-                onChange={(_, v) => changeItem(i, "descansoSegundos", v)}
-              >
+              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", v)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
@@ -329,12 +283,7 @@ export default function NuevaRutina() {
 
         <HStack justify="flex-end" pt={2}>
           <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
-          <Button
-            colorScheme="green"
-            onClick={handleSave}
-            isLoading={saving}
-            bg="#258d19"
-          >
+          <Button colorScheme="green" onClick={handleSave} isLoading={saving} bg="#258d19">
             Guardar rutina
           </Button>
         </HStack>
