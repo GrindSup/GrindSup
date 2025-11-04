@@ -129,7 +129,10 @@ Este sprint busca consolidar la funcionalidad de los módulos existentes y mejor
 - **HU-69:** Permiso de roles.  
 - **HU-39:** Estado de entrenador.  
 - **HU-82:** Registrar entrenador.   
-- **HU-38:** Listado de entrenadores.  
+- **HU-38:** Listado de entrenadores.
+- **HU-30:** Visualizar progreso de Alumno.
+- **HU-31:** Modificar progreso de Alumno.
+- **HU-32:** Actualización automática. 
 
 **Roles del equipo**
 - **Product Owner:** Agustina Silva  
