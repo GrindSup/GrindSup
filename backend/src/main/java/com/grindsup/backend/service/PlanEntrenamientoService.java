@@ -24,6 +24,7 @@ public class PlanEntrenamientoService {
 
     @Autowired
     private PlanEntrenamientoRepository planRepository;
+    //deberia ser final?
     @Autowired
     private EstadoRepository estadoRepository;
 
@@ -66,5 +67,13 @@ public class PlanEntrenamientoService {
         plan.setEstado(estado);
         plan.setUpdated_at(OffsetDateTime.now());
         planRepository.save(plan);
+    }
+
+    public List<PlanEntrenamiento> listarPlanesPorAlumnoYEstado(Long idAlumno, Long idEstado) {
+        return planRepository.findByAlumno_IdAlumnoAndEstado_IdEstado(idAlumno, idEstado);
+    }
+
+    public List<PlanEntrenamiento> listarPlanesPorEstado(Long idEstado) {
+        return planRepository.findByEstado_IdEstado(idEstado);
     }
 }

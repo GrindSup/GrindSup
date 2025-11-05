@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PlanEntrenamientoRepository extends JpaRepository<PlanEntrenamiento, Long> {
     List<PlanEntrenamiento> findByAlumno_IdAlumno(Long idAlumno);
     List<PlanEntrenamiento> findByEntrenador_IdEntrenador(Long idEntrenador);
+    List<PlanEntrenamiento> findByAlumno_IdAlumnoAndEstado_IdEstado(Long idAlumno, Long idEstado);
+    List<PlanEntrenamiento> findByEstado_IdEstado(Long idEstado);
 }

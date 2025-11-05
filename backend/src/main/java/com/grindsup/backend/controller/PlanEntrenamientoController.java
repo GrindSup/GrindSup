@@ -192,4 +192,21 @@ public class PlanEntrenamientoController {
     planService.actualizarEstado(id, idEstado);
     return ResponseEntity.ok("Estado actualizado correctamente");
     }
+
+    @GetMapping("/alumno/{idAlumno}/estado/{idEstado}")
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumnoYEstado(
+            @PathVariable Long idAlumno,
+            @PathVariable Long idEstado) {
+
+        List<PlanEntrenamiento> planes = planService.listarPlanesPorAlumnoYEstado(idAlumno, idEstado);
+        return ResponseEntity.ok(planes);
+    }
+    
+    @GetMapping("/estado/{idEstado}")
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorEstado(
+            @PathVariable Long idEstado) {
+
+        List<PlanEntrenamiento> planes = planService.listarPlanesPorEstado(idEstado);
+        return ResponseEntity.ok(planes);
+    }
 }
