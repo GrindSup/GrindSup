@@ -142,7 +142,7 @@ export default function App() {
                 {/* ✅ Entrenadores */}
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
                 <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
-                <Route path="/entrenadores/editar/:id" element={guard(<EditarEntrenador />)} />
+                <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
                 <Route path="/entrenadores/perfil/:id" element={guard(<PerfilEntrenador />)} />
 
                 {/* Alias dashboard */}

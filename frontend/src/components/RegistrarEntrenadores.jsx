@@ -12,7 +12,6 @@ export default function RegistroEntrenador() {
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
-    documento: "",
     email: "",
     telefono: "",
     password: "",
@@ -20,28 +19,8 @@ export default function RegistroEntrenador() {
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [dniDisponible, setDniDisponible] = useState(true);
-  const [checkingDni, setCheckingDni] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
-
-  // ✅ Validación en tiempo real del DNI
-  useEffect(() => {
-    const checkDni = async () => {
-      if (!form.documento || form.documento.trim().length < 7) return;
-      setCheckingDni(true);
-      try {
-        const resp = await axiosInstance.get(`/api/entrenadores/validar-dni/${form.documento}`);
-        setDniDisponible(resp.data.disponible);
-      } catch (e) {
-        console.error("Error validando DNI:", e);
-      } finally {
-        setCheckingDni(false);
-      }
-    };
-    const timeout = setTimeout(checkDni, 500);
-    return () => clearTimeout(timeout);
-  }, [form.documento]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,9 +30,6 @@ export default function RegistroEntrenador() {
     const errs = {};
     if (!form.nombre.trim()) errs.nombre = "El nombre es obligatorio.";
     if (!form.apellido.trim()) errs.apellido = "El apellido es obligatorio.";
-    if (!form.documento.trim()) errs.documento = "El documento es obligatorio.";
-    else if (form.documento.trim().length < 7)
-      errs.documento = "Debe tener al menos 7 dígitos.";
     if (!form.email.trim()) errs.email = "El correo es obligatorio.";
     if (!form.telefono.trim()) errs.telefono = "El teléfono es obligatorio.";
     if (!form.password.trim()) errs.password = "La contraseña es obligatoria.";
@@ -65,7 +41,6 @@ export default function RegistroEntrenador() {
     setSubmitted(true);
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length > 0 || !dniDisponible) return;
 
     try {
       await axiosInstance.post("/api/entrenadores/registro", form);
@@ -131,38 +106,6 @@ export default function RegistroEntrenador() {
                 />
                 {submitted && errors.apellido && (
                   <FormErrorMessage>{errors.apellido}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-
-            {/* 🧠 Validación DNI en tiempo real */}
-            <GridItem colSpan={{ base: 1, md: 2 }}>
-              <FormControl
-                isRequired
-                isInvalid={
-                  (submitted && !!errors.documento) ||
-                  (!dniDisponible && form.documento.trim() !== "")
-                }
-              >
-                <FormLabel>Documento (DNI)</FormLabel>
-                <Input
-                  name="documento"
-                  placeholder="Ej: 40123456"
-                  value={form.documento}
-                  onChange={handleChange}
-                />
-                {checkingDni && (
-                  <Text fontSize="sm" color="gray.500">
-                    Verificando DNI...
-                  </Text>
-                )}
-                {submitted && errors.documento && (
-                  <FormErrorMessage>{errors.documento}</FormErrorMessage>
-                )}
-                {!dniDisponible && form.documento.trim() !== "" && (
-                  <FormErrorMessage>
-                    El documento ya está registrado.
-                  </FormErrorMessage>
                 )}
               </FormControl>
             </GridItem>

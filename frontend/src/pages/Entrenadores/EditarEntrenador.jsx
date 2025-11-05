@@ -10,7 +10,7 @@ import axios from "axios";
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 export default function EditarEntrenador({ apiBaseUrl = API }) {
-  const { id } = useParams();
+  const { idEntrenador } = useParams();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -23,20 +23,21 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
     telefono: "",
     experiencia: "",
     correo: "",
-    dni: "",
   });
 
   useEffect(() => {
     const fetchEntrenador = async () => {
       try {
-        const { data } = await axios.get(`${apiBaseUrl}/entrenadores/${id}`);
+        const { data } = await axios.get(`${apiBaseUrl}/entrenadores/${idEntrenador}`);
         setEntrenador({
+          idEntrenador: data.idEntrenador,
           nombre: data.usuario?.nombre || "",
           apellido: data.usuario?.apellido || "",
           telefono: data.telefono || "",
           experiencia: data.experiencia || "",
           correo: data.usuario?.correo || "",
-          dni: data.usuario?.dni || "",
+          id_usuario: data.usuario?.id_usuario,
+          id_estado: data.estado?.id_estado,
         });
       } catch (err) {
         toast({
@@ -48,7 +49,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
       }
     };
     fetchEntrenador();
-  }, [id, apiBaseUrl, toast]);
+  }, [idEntrenador, apiBaseUrl, toast]);
 
   const errors = useMemo(() => {
     const e = {};
@@ -56,8 +57,6 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
     if (!entrenador.apellido?.trim()) e.apellido = "El apellido es obligatorio";
     if (entrenador.telefono && !/^\+?\d+$/.test(entrenador.telefono))
       e.telefono = "El teléfono debe ser numérico (puede incluir +)";
-    if (!entrenador.experiencia?.trim())
-      e.experiencia = "La experiencia es obligatoria";
     return e;
   }, [entrenador]);
 
@@ -83,16 +82,19 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
     setSubmitting(true);
     try {
       const payload = {
+        idEntrenador,
         telefono: entrenador.telefono.trim(),
         experiencia: entrenador.experiencia.trim(),
         usuario: {
+          id_usuario: entrenador.id_usuario,
           nombre: entrenador.nombre.trim(),
           apellido: entrenador.apellido.trim(),
           correo: entrenador.correo.trim(),
         },
+        estado: { id_estado: entrenador.id_estado },
       };
 
-      await axios.put(`${apiBaseUrl}/entrenadores/${id}`, payload);
+      await axios.put(`${apiBaseUrl}/entrenadores/${idEntrenador}`, payload);
 
       toast({
         status: "success",
@@ -178,7 +180,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                 </GridItem>
 
                 <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl isRequired isInvalid={submitted && !!errors.experiencia}>
+                  <FormControl isInvalid={submitted && !!errors.experiencia}>
                     <FormLabel>Experiencia</FormLabel>
                     <Input
                       name="experiencia"

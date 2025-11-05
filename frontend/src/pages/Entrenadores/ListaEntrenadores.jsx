@@ -1,4 +1,4 @@
-// src/components/ListaEntrenadores.jsx
+// src\pages\Entrenadores\ListaEntrenadores.jsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -46,8 +46,7 @@ export default function ListaEntrenadores() {
     const q = search.toLowerCase();
     return (
       e.usuario?.nombre?.toLowerCase().includes(q) ||
-      e.usuario?.apellido?.toLowerCase().includes(q) ||
-      String(e.usuario?.documento ?? "").includes(q)
+      e.usuario?.apellido?.toLowerCase().includes(q)
     );
   });
 
@@ -140,6 +139,11 @@ export default function ListaEntrenadores() {
                     <Heading size="md">
                       {e.usuario?.nombre} {e.usuario?.apellido}
                     </Heading>
+                    <HStack spacing={2} mt={2}>        
+                      <Badge colorScheme="purple">
+                        {e.estado?.nombre || "Activo"}
+                      </Badge>
+                    </HStack>
                   </Box>
                   <Spacer />
                 </Flex>
