@@ -185,4 +185,11 @@ public class PlanEntrenamientoController {
 
         return ResponseEntity.ok(nuevaRutina);
     }
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<?> actualizarEstadoRutina(
+        @PathVariable Long id,
+        @RequestParam Long idEstado) {
+    planService.actualizarEstado(id, idEstado);
+    return ResponseEntity.ok("Estado actualizado correctamente");
+    }
 }

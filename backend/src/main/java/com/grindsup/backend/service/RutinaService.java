@@ -9,10 +9,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.Rutina;
 import com.grindsup.backend.model.RutinaEjercicio;
-import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.RutinaEjercicioRepository;
 import com.grindsup.backend.repository.RutinaRepository;
 
@@ -23,14 +21,11 @@ public class RutinaService {
 
     private final RutinaRepository rutinaRepository;
     private final RutinaEjercicioRepository rutinaEjercicioRepository;
-    private final EstadoRepository estadoRepository;
 
     public RutinaService(RutinaRepository rutinaRepository,
-                         RutinaEjercicioRepository rutinaEjercicioRepository,
-                         EstadoRepository estadoRepository) {
+                         RutinaEjercicioRepository rutinaEjercicioRepository) {
         this.rutinaRepository = rutinaRepository;
         this.rutinaEjercicioRepository = rutinaEjercicioRepository;
-        this.estadoRepository = estadoRepository;
     }
 
     /** Borrado lógico por ID de rutina. */
@@ -60,17 +55,5 @@ public class RutinaService {
             throw new IllegalArgumentException("La rutina no pertenece al plan indicado");
         }
         softDelete(idRutina);
-    }
-
-    @Transactional
-    public void actualizarEstado(Long idRutina, Long idEstado) {
-        // deberiamos asignar un valor por defecto en caso de no encontrar?
-        Estado estado = estadoRepository.findById(idEstado)
-        .orElseThrow(() -> new EntityNotFoundException("Estado no encontrado"));
-        Rutina rutina = rutinaRepository.findById(idRutina)
-            .orElseThrow(() -> new EntityNotFoundException("Rutina no encontrada"));
-        rutina.setEstado(estado);
-        rutina.setUpdated_at(OffsetDateTime.now());
-        rutinaRepository.save(rutina);
     }
 }
