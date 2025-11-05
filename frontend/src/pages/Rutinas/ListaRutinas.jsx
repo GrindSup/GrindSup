@@ -19,7 +19,7 @@ export default function ListaRutinas() {
 
   const [rutinas, setRutinas] = useState([]);
   const [planes, setPlanes] = useState([]);
-  const [planSel, setPlanSel] = useState(""); // "" = todas, "SIN_PLAN" = sin plan
+  const [planSel, setPlanSel] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -229,6 +229,8 @@ export default function ListaRutinas() {
                 boxShadow="md"
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
                 transition="all .18s ease"
+                onClick={() => goDetalle(planId, idRutina)} 
+                cursor="pointer" 
               >
                 <CardHeader pb={2}>
                   <Heading size="md" noOfLines={1} color="gray.900">{r.nombre ?? "Sin título"}</Heading>
@@ -246,21 +248,15 @@ export default function ListaRutinas() {
                 <Spacer />
                 <CardFooter>
                   <HStack spacing={3} wrap="wrap">
-                    <Button
-                      size="sm"
-                      bg="#258d19"
-                      color="white"
-                      borderRadius="full"
-                      onClick={() => goDetalle(planId, idRutina)}
-                    >
-                      Ver detalle
-                    </Button>
 
                     <Button
                       size="sm"
                       variant="outline"
                       borderRadius="full"
-                      onClick={() => goEditar(planId, idRutina)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goEditar(planId, idRutina);
+                      }}
                     >
                       Editar
                     </Button>
@@ -269,7 +265,10 @@ export default function ListaRutinas() {
                       size="sm"
                       variant="outline"
                       borderRadius="full"
-                      onClick={() => exportPdf(idRutina, r.nombre)}
+                      onClick={(e) => { 
+                        e.stopPropagation();
+                        exportPdf(idRutina, r.nombre);
+                      }}
                     >
                       Exportar PDF
                     </Button>
@@ -278,7 +277,10 @@ export default function ListaRutinas() {
                       size="sm"
                       colorScheme="red"
                       borderRadius="full"
-                      onClick={() => handleEliminar(planId, idRutina, r.nombre)}
+                      onClick={(e) => { 
+                        e.stopPropagation();
+                        handleEliminar(planId, idRutina, r.nombre);
+                      }}
                     >
                       Eliminar
                     </Button>
@@ -288,7 +290,10 @@ export default function ListaRutinas() {
                         size="sm"
                         variant="outline"
                         borderRadius="full"
-                        onClick={() => navigate(`/planes/${planId}`)}
+                        onClick={(e) => { // <-- CAMBIO 7: Añadido (e) y stopPropagation
+                          e.stopPropagation();
+                          navigate(`/planes/${planId}`);
+                        }}
                       >
                         Ir al plan
                       </Button>
