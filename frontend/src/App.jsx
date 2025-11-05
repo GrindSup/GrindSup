@@ -37,6 +37,11 @@ import EditarRutina from "./pages/Rutinas/EditarRutina.jsx";
 // ✅ Ejercicios
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
 
+// ✅ Reportes y Estadísticas
+import ReportesHome from "./pages/Reportes/ReportesHome.jsx";
+import ReportesPage from "./pages/Reportes/ReportesPage";       // alumnos (altas/bajas + activos)
+import ReportesPlanes from "./pages/Reportes/ReportesPlanes.jsx"; // ratings de planes
+
 // --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
 function Placeholder({ title }) {
   return (
@@ -75,7 +80,7 @@ export default function App() {
           bgImage="url('/img/gym.png')"  // tu imagen en public/img/gym.png
           bgSize="cover"
           bgPos="center"
-          filter="bulr(30px)"
+          filter="blur(30px)"
           transform="scale(0.999)"
           opacity={0.55}
           borderRadius="2xl"
@@ -137,6 +142,12 @@ export default function App() {
                 <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
                 <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
 
+                                
+                
+                {/* ✅ Reportes y Estadísticas */}
+                <Route path="/reportes" element={guard(<ReportesHome />)} />
+                <Route path="/reportes/alumnos" element={guard(<ReportesPage />)} />
+                <Route path="/reportes/planes" element={guard(<ReportesPlanes />)} />
                 {/* Alias dashboard */}
                 <Route path="/dashboard" element={guard(<InicioDashboard />)} />
 
