@@ -1,4 +1,3 @@
-// frontend/src/pages/Rutinas/ListaRutinas.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Container, Heading, HStack, Input, InputGroup, InputLeftElement,
@@ -20,7 +19,7 @@ export default function ListaRutinas() {
 
   const [rutinas, setRutinas] = useState([]);
   const [planes, setPlanes] = useState([]);
-  const [planSel, setPlanSel] = useState(""); // vacío = TODOS / Sin plan
+  const [planSel, setPlanSel] = useState(""); // "" = todas, "SIN_PLAN" = sin plan
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -30,32 +29,28 @@ export default function ListaRutinas() {
       try {
         setLoading(true);
 
-        // 1) planes
+        // 1️⃣ Obtener todos los planes (si existen)
         const ps = await planesService.listAll();
         setPlanes(ps);
 
-        // 2) rutinas
+        // 2️⃣ Obtener rutinas (todas o por plan)
         let data = [];
-        try {
-          if (idPlanFromUrl) {
-            const r = await axiosInstance.get(`/api/planes/${idPlanFromUrl}/rutinas`);
+        if (idPlanFromUrl) {
+          const r = await axiosInstance.get(`/api/planes/${idPlanFromUrl}/rutinas`);
+          data = Array.isArray(r.data) ? r.data : [];
+        } else {
+          try {
+            const r = await axiosInstance.get("/api/rutinas");
             data = Array.isArray(r.data) ? r.data : [];
-          } else {
-            try {
-              const r = await axiosInstance.get("/api/rutinas");
-              data = Array.isArray(r.data) ? r.data : [];
-            } catch {
-              const r = await axiosInstance.get("/api/rutinas?all=1");
-              data = Array.isArray(r.data) ? r.data : [];
-            }
+          } catch {
+            const r = await axiosInstance.get("/api/rutinas?all=1");
+            data = Array.isArray(r.data) ? r.data : [];
           }
-        } catch {
-          data = [];
         }
 
-        // 3) enriquecer con planId y alumno
+        // 3️⃣ Enriquecer con datos del plan y alumno
         const enrich = data.map((r) => {
-          const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null; // null = sin plan
+          const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null;
           const plan = (ps || []).find((p) => String(p.id_plan ?? p.id) === String(planId));
           const alumno = plan?.alumno
             ? [plan.alumno?.nombre, plan.alumno?.apellido].filter(Boolean).join(" ")
@@ -64,16 +59,10 @@ export default function ListaRutinas() {
         });
 
         setRutinas(enrich);
-
-        if (idPlanFromUrl) {
-          setPlanSel(String(idPlanFromUrl));
-          localStorage.setItem("lastPlanId", String(idPlanFromUrl));
-        } else {
-          setPlanSel(""); // mostrar todas
-        }
-
+        setPlanSel(idPlanFromUrl ? String(idPlanFromUrl) : "");
         setError("");
-      } catch {
+      } catch (err) {
+        console.error(err);
         setError("No pude cargar las rutinas.");
         setRutinas([]);
       } finally {
@@ -82,15 +71,15 @@ export default function ListaRutinas() {
     })();
   }, [idPlanFromUrl]);
 
-  // Filtro combinado: plan + texto
+  /* ---------- FILTROS ---------- */
   const filtradas = useMemo(() => {
     const term = q.trim().toLowerCase();
     const wantPlan = String(planSel || "").trim();
 
     return rutinas.filter((r) => {
-      const planIdDeLaRutina = String(r.__planId ?? "");
-      if (wantPlan && wantPlan !== "SIN_PLAN" && planIdDeLaRutina !== wantPlan) return false;
-      if (wantPlan === "SIN_PLAN" && planIdDeLaRutina) return false;
+      const planId = String(r.__planId ?? "");
+      if (wantPlan && wantPlan !== "SIN_PLAN" && planId !== wantPlan) return false;
+      if (wantPlan === "SIN_PLAN" && planId) return false;
 
       if (!term) return true;
       const nom = (r?.nombre ?? "").toLowerCase();
@@ -100,17 +89,27 @@ export default function ListaRutinas() {
     });
   }, [rutinas, q, planSel]);
 
+  /* ---------- ACCIONES ---------- */
   const handleNuevaRutina = () => {
-    if (planSel === "SIN_PLAN") {
-      navigate("/rutinas/nueva"); // ruta independiente
-    } else {
-      const destinoPlan = planSel || idPlanFromUrl;
-      if (!destinoPlan) {
-        setError("Seleccioná un plan en el selector para crear una rutina asociada.");
-        return;
-      }
-      navigate(`/planes/${destinoPlan}/rutinas/nueva`);
+    // Si el plan seleccionado es SIN_PLAN o ninguno, crear rutina independiente
+    if (!planSel || planSel === "SIN_PLAN") {
+      navigate("/rutinas/nueva");
+      return;
     }
+
+    // Si hay un plan seleccionado válido (numérico)
+    navigate(`/planes/${planSel}/rutinas/nueva`);
+  };
+
+  const goDetalle = (planId, idRutina) => {
+    // Si no hay plan o no es un número, ir a ruta sin plan
+    if (!planId || planId === "SIN_PLAN") navigate(`/rutinas/${idRutina}`);
+    else navigate(`/planes/${planId}/rutinas/${idRutina}`);
+  };
+
+  const goEditar = (planId, idRutina) => {
+    if (!planId || planId === "SIN_PLAN") navigate(`/rutinas/${idRutina}/editar`);
+    else navigate(`/planes/${planId}/rutinas/${idRutina}/editar`);
   };
 
   const exportPdf = async (idRutina, nombre) => {
@@ -132,10 +131,6 @@ export default function ListaRutinas() {
     }
   };
 
-  const goEditar = (planId, idRutina) => {
-    navigate(`/planes/${planId || ""}/rutinas/${idRutina}/editar`);
-  };
-
   const handleEliminar = async (planId, idRutina, nombre) => {
     if (!idRutina) return;
     const ok = window.confirm(`¿Eliminar la rutina "${nombre || idRutina}"?`);
@@ -154,8 +149,10 @@ export default function ListaRutinas() {
     }
   };
 
+  /* ---------- UI ---------- */
   return (
     <Container maxW="7xl" py={10}>
+      {/* Header */}
       <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={4}>
         <HStack spacing={3}>
           <BotonVolver />
@@ -171,7 +168,7 @@ export default function ListaRutinas() {
             borderRadius="full"
             placeholder={planes.length ? "Seleccioná plan…" : "No hay planes"}
           >
-            <option value="">Todos los planes</option>
+            <option value="">Todas las rutinas</option>
             <option value="SIN_PLAN">Sin plan</option>
             {planes.map((p) => (
               <option key={p.id_plan ?? p.id} value={p.id_plan ?? p.id}>
@@ -197,12 +194,14 @@ export default function ListaRutinas() {
         </HStack>
       </HStack>
 
+      {/* Estado de carga / error */}
       {loading && <Center py={10}><Spinner size="xl" /></Center>}
 
       {!loading && error && (
         <Alert status="warning" borderRadius="lg"><AlertIcon />{error}</Alert>
       )}
 
+      {/* Sin resultados */}
       {!loading && !error && filtradas.length === 0 && (
         <Center py={10}>
           <Box textAlign="center" bg="white" p={10} borderRadius="2xl" boxShadow="lg" maxW="lg">
@@ -214,6 +213,7 @@ export default function ListaRutinas() {
         </Center>
       )}
 
+      {/* Listado */}
       {!loading && !error && filtradas.length > 0 && (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={7}>
           {filtradas.map((r) => {
@@ -230,9 +230,10 @@ export default function ListaRutinas() {
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
                 transition="all .18s ease"
               >
-                <CardHeader pb={2} borderTopRadius="2xl">
+                <CardHeader pb={2}>
                   <Heading size="md" noOfLines={1} color="gray.900">{r.nombre ?? "Sin título"}</Heading>
                 </CardHeader>
+
                 <CardBody pt={0}>
                   <HStack spacing={2} mb={3} wrap="wrap">
                     <Tag colorScheme="gray" borderRadius="full">{planId ? `Plan N°${planId}` : "Sin plan"}</Tag>
@@ -241,6 +242,7 @@ export default function ListaRutinas() {
                   </HStack>
                   <Text noOfLines={3} color="gray.700">{r.descripcion ?? "Sin descripción."}</Text>
                 </CardBody>
+
                 <Spacer />
                 <CardFooter>
                   <HStack spacing={3} wrap="wrap">
@@ -249,8 +251,7 @@ export default function ListaRutinas() {
                       bg="#258d19"
                       color="white"
                       borderRadius="full"
-                      onClick={() => navigate(`/planes/${planId}/rutinas/${idRutina}`)}
-                      isDisabled={!planId}
+                      onClick={() => goDetalle(planId, idRutina)}
                     >
                       Ver detalle
                     </Button>
@@ -260,7 +261,6 @@ export default function ListaRutinas() {
                       variant="outline"
                       borderRadius="full"
                       onClick={() => goEditar(planId, idRutina)}
-                      isDisabled={!planId}
                     >
                       Editar
                     </Button>
@@ -279,21 +279,20 @@ export default function ListaRutinas() {
                       colorScheme="red"
                       borderRadius="full"
                       onClick={() => handleEliminar(planId, idRutina, r.nombre)}
-                      bg="#258d19"
-                      color="white"
                     >
                       Eliminar
                     </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      borderRadius="full"
-                      onClick={() => navigate(`/planes/${planId}`)}
-                      isDisabled={!planId}
-                    >
-                      Ir al plan
-                    </Button>
+                    {planId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        borderRadius="full"
+                        onClick={() => navigate(`/planes/${planId}`)}
+                      >
+                        Ir al plan
+                      </Button>
+                    )}
                   </HStack>
                 </CardFooter>
               </Card>
