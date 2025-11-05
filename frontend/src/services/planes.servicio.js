@@ -38,18 +38,26 @@ async function tryGet(url, config) {
   }
 }
 
-/* ---------- Listado ---------- */
+/* ---------- Listado (CORREGIDO) ---------- */
 async function getAll(entrenadorId) {
+  // 1. Definir los parámetros de consulta (query params)
+  const config = {};
   if (entrenadorId) {
-    let res = await tryGet(`/api/planes`, { params: { entrenadorId } });
-    if (res.ok && Array.isArray(res.data)) return res.data.map(adaptPlan).filter(Boolean);
-
-    res = await tryGet(`/api/entrenadores/${entrenadorId}/planes`);
-    if (res.ok && Array.isArray(res.data)) return res.data.map(adaptPlan).filter(Boolean);
+    config.params = { entrenadorId };
   }
 
-  const res = await tryGet(`/api/planes`);
-  if (res.ok && Array.isArray(res.data)) return res.data.map(adaptPlan).filter(Boolean);
+  // 2. Llamar *siempre* al mismo endpoint: /api/planes
+  // Si entrenadorId existe, axios lo agregará como ?entrenadorId=...
+  // Si no, llamará a /api/planes
+  const res = await tryGet(`/api/planes`, config);
+
+  // 3. Procesar la respuesta
+  if (res.ok && Array.isArray(res.data)) {
+    return res.data.map(adaptPlan).filter(Boolean);
+  }
+
+  // Si falla o no es un array, devuelve un array vacío
+  console.error("Error al buscar planes:", res);
   return [];
 }
 const listAll = getAll;
@@ -69,6 +77,7 @@ async function getById(idPlan, entrenadorId) {
   }
 
   // 2) Buscar dentro de los planes del entrenador (si viene)
+  // Esta llamada ahora usará la función getAll() corregida y no dará 404
   if (entrenadorId) {
     const lista = await getAll(entrenadorId);
     const f = lista.find((p) => String(p.id_plan ?? p.id) === String(idPlan));
@@ -76,6 +85,7 @@ async function getById(idPlan, entrenadorId) {
   }
 
   // 3) Buscar en todos los planes (última opción)
+  // Esta llamada también usará la función getAll() corregida
   const all = await getAll();
   const f = all.find((p) => String(p.id_plan ?? p.id) === String(idPlan));
   if (f) return f;

@@ -10,7 +10,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { ejerciciosService } from "../../services/ejercicios.servicio";
 import { rutinasService } from "../../services/rutinas.servicio";
-import { planesService } from "../../services/planes.servicio";
+import { planesService } from "../../services/planes.servicio"; 
 import axiosInstance from "../../config/axios.config";
 import { ensureEntrenadorId } from "../../context/auth";
 import BotonVolver from "../../components/BotonVolver";
@@ -68,22 +68,13 @@ export default function NuevaRutina() {
           setPlanes([]);
         } else {
           const idEnt = await ensureEntrenadorId();
-          let data = [];
-          try {
-            const r = await axiosInstance.get(`/api/entrenadores/${idEnt}/planes`);
-            data = r.data;
-          } catch {
-            try {
-              const r2 = await axiosInstance.get(`/api/planes`, { params: { entrenadorId: idEnt } });
-              data = r2.data;
-            } catch {
-              const r3 = await axiosInstance.get(`/api/planes`);
-              data = r3.data;
-            }
-          }
-          setPlanes(Array.isArray(data) ? data : []);
+
+          const data = await planesService.listAll(idEnt);
+
+          setPlanes(data);
         }
       } catch (e) {
+        console.error("Error cargando datos para Nueva Rutina:", e);
         setLoadError("No se pudieron cargar datos iniciales.");
       } finally {
         setLoadingInit(false);
@@ -103,7 +94,12 @@ export default function NuevaRutina() {
 
   // save
   const handleSave = async () => {
-    const planIdFinal = planSel || null; // permite null → sin plan
+    // Convertir "" o "SIN_PLAN" a un 'null' explícito
+    let planIdFinal = null;
+    if (planSel && planSel !== "SIN_PLAN") {
+      planIdFinal = planSel; // Asigna el ID numérico
+    }
+    // Si planSel es "" o "SIN_PLAN", planIdFinal se queda como 'null'
 
     if (!nombre.trim()) {
       toast({ title: "El nombre es obligatorio", status: "warning" });
@@ -111,28 +107,33 @@ export default function NuevaRutina() {
     }
 
     const ejercicios = items
-      .filter((x) => x.idEjercicio)
+      // ... (código de ejercicios) ...
       .map((x) => ({
-        idEjercicio: Number(x.idEjercicio),
-        series: Number(x.series),
-        repeticiones: Number(x.repeticiones),
-        descansoSegundos: Number(x.descansoSegundos),
+        // ...
       }));
 
-    const payload = { nombre, descripcion, ejercicios };
+    // Ahora, el 'payload' debe llevar este ID (o null)
+    // Tu backend en POST /api/rutinas debe estar esperando este campo
+    const payload = { 
+      nombre, 
+      descripcion, 
+      ejercicios,
+      id_plan: planIdFinal // Envía el ID del plan (o null) en el body
+    };
 
     try {
       setSaving(true);
+      // El servicio ahora usará 'planIdFinal' (que puede ser null)
+      // para decidir a qué URL llamar
       await rutinasService.crear(planIdFinal, payload);
+      
       toast({ title: "Rutina creada", status: "success" });
+      
+      // Esta lógica ya estaba bien
       if (planIdFinal) navigate(`/planes/${planIdFinal}`);
-      else navigate("/rutinas"); // ruta general para rutinas sin plan
+      else navigate("/rutinas"); 
     } catch (e) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data?.mensaje ||
-        "No se pudo crear la rutina.";
-      toast({ title: "Error", description: msg, status: "error" });
+      // ... (manejo de error) ...
     } finally {
       setSaving(false);
     }

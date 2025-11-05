@@ -186,7 +186,7 @@ public class AlumnoController {
         if (a.getEntrenador() == null) {
             a.setEntrenador(e);
         } else {
-            Long actual = a.getEntrenador().getId_entrenador();
+            Long actual = a.getEntrenador().getIdEntrenador();
             if (actual != null && !actual.equals(entrenadorId)) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,

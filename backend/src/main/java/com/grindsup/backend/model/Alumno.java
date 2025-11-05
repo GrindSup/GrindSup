@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Table(
     name = "alumnos",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"documento", "id_entrenador"})
+        @UniqueConstraint(columnNames = {"documento", "idEntrenador"})
     }
 )
 public class Alumno {

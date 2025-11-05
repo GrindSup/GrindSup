@@ -156,7 +156,7 @@ private com.grindsup.backend.repository.PlanEntrenamientoRepository planReposito
 public ResponseEntity<?> obtenerPlanesPorEntrenador(@PathVariable Long id) {
     try {
         List<com.grindsup.backend.model.PlanEntrenamiento> planes =
-                planRepository.findByEntrenador_Id_entrenador(id);
+                planRepository.findByEntrenador_IdEntrenador(id);
 
         return ResponseEntity.ok(planes);
     } catch (Exception e) {

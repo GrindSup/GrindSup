@@ -28,7 +28,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
       FROM Turno t
       JOIN FETCH t.entrenador e
       JOIN FETCH t.tipoTurno tt
-      WHERE e.id_entrenador = :entrenadorId
+      WHERE e.idEntrenador = :entrenadorId
         AND (:desde IS NULL OR t.fecha >= :desde)
         AND (:hasta IS NULL OR t.fecha <= :hasta)
         AND (:tipo IS NULL OR LOWER(tt.nombre) = LOWER(:tipo))
