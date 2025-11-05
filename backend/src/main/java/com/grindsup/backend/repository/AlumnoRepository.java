@@ -26,7 +26,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
       select a
       from Alumno a
       where a.deletedAt is null
-        and a.entrenador.id_entrenador = :entrenadorId
+        and a.entrenador.idEntrenador = :entrenadorId
       """)
   List<Alumno> findActivosByEntrenador(@Param("entrenadorId") Long entrenadorId);
 }

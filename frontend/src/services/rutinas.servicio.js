@@ -58,7 +58,13 @@ async function obtenerDetalleRutina(idPlan, idRutina) {
 
 /* ---------- Crear ---------- */
 async function crear(idPlan, payload) {
-  // payload: { nombre, descripcion, ejercicios:[{idEjercicio, series, repeticiones, descansoSegundos}] }
+  // Si el plan es "SIN_PLAN", vacío o null, usar endpoint general
+  if (!idPlan || idPlan === "SIN_PLAN") {
+    const r = await axiosInstance.post(`/api/rutinas`, payload);
+    return r.data;
+  }
+
+  // Si hay plan válido, usar el endpoint con ID de plan
   const r = await axiosInstance.post(`/api/planes/${idPlan}/rutinas`, payload);
   return r.data;
 }

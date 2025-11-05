@@ -144,4 +144,24 @@ public class EntrenadorController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+// -----------------------------
+// Listar planes por entrenador
+// -----------------------------
+
+@Autowired
+private com.grindsup.backend.repository.PlanEntrenamientoRepository planRepository;
+
+@GetMapping("/{id}/planes")
+public ResponseEntity<?> obtenerPlanesPorEntrenador(@PathVariable Long id) {
+    try {
+        List<com.grindsup.backend.model.PlanEntrenamiento> planes =
+                planRepository.findByEntrenador_IdEntrenador(id);
+
+        return ResponseEntity.ok(planes);
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError()
+                .body("Error al obtener planes del entrenador: " + e.getMessage());
+    }
+}
 }

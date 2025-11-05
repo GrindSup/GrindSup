@@ -122,14 +122,16 @@ export default function App() {
                 <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
                 <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
                 <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} />
-
+                
                 {/* ✅ Rutinas */}
                 <Route path="/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
                 <Route path="/rutinas/nueva" element={guard(<NuevaRutina />)} />
                 <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+                <Route path="/rutinas/:idRutina" element={guard(<DetalleRutina />)} /> 
                 <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
+                <Route path="/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> 
 
                 {/* ✅ Ejercicios */}
                 <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
