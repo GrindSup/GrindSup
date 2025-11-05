@@ -23,7 +23,9 @@ import DetalleCliente from "../pages/Clientes/DetalleCliente";
 
 // Entrenadores
 import ListaEntrenadores from "../pages/Entrenadores/ListaEntrenadores";
-import FormularioEntrenador from "../pages/Entrenadores/FormularioEntrenador";
+import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
+import EditarEntrenador from "./pages/Entrenadores/EditarEntrenador.jsx";
+import PerfilEntrenador from "./pages/Entrenadores/PerfilEntrenador.jsx";
 
 // Ejercicios
 import ListaEjercicios from "../pages/Ejercicios/ListaEjercicios";
@@ -69,7 +71,10 @@ export default function AppRouter() {
 
       {/* Entrenadores */}
       <Route path="/entrenadores" element={<ListaEntrenadores />} />
-      <Route path="/entrenadores/nuevo" element={<FormularioEntrenador />} />
+      <Route path="/entrenador/registrar" element={guard(<RegistrarEntrenadores />)} />
+      <Route path="/entrenador/perfil/:id" element={guard(<PerfilEntrenador />)} />
+      <Route path="/entrenador/editar/:id" element={guard(<EditarEntrenador />)} />
+      
 
       {/* Ejercicios */}
       <Route path="/ejercicios" element={<ListaEjercicios />} />

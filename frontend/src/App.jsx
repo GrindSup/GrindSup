@@ -22,6 +22,8 @@ import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 
+import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
+
 // ✅ Planes
 import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
 import RegistrarPlan from "./pages/Planes/RegistrarPlan.jsx";
@@ -39,6 +41,11 @@ import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
 import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx";
 import EditarEjercicio from "./pages/Ejercicios/EditarEjercicio.jsx";
 import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
+
+// ✅ Entrenadores
+import ListaEntrenadores from "./pages/Entrenadores/ListaEntrenadores.jsx";
+import EditarEntrenador from "./pages/Entrenadores/EditarEntrenador.jsx";
+import PerfilEntrenador from "./pages/Entrenadores/PerfilEntrenador.jsx";
 
 
 export default function App() {
@@ -129,6 +136,12 @@ export default function App() {
                 <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
                 <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
                 <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
+
+                {/* ✅ Entrenadores */}
+                <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
+                <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
+                <Route path="/entrenadores/editar/:id" element={guard(<EditarEntrenador />)} />
+                <Route path="/entrenadores/perfil/:id" element={guard(<PerfilEntrenador />)} />
 
                 {/* Alias dashboard */}
                 <Route path="/dashboard" element={guard(<InicioDashboard />)} />
