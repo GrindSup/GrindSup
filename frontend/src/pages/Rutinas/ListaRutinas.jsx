@@ -9,7 +9,7 @@ import { MdFitnessCenter } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../config/axios.config";
 import { planesService } from "../../services/planes.servicio";
-import { rutinasService } from "../../services/rutinas.servicio";
+import rutinasService from "../../services/rutinas.servicio";
 import BotonVolver from "../../components/BotonVolver.jsx";
 
 export default function ListaRutinas() {

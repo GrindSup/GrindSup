@@ -9,7 +9,7 @@ import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { ejerciciosService } from "../../services/ejercicios.servicio";
-import { rutinasService } from "../../services/rutinas.servicio";
+import rutinasService from "../../services/rutinas.servicio"; // Importación default (correcta)
 import { planesService } from "../../services/planes.servicio"; 
 import axiosInstance from "../../config/axios.config";
 import { ensureEntrenadorId } from "../../context/auth";
@@ -49,7 +49,8 @@ export default function NuevaRutina() {
         // 1) ejercicios
         let ejercicios = [];
         try {
-          ejercicios = await ejerciciosService.getAll();
+          // Usamos la importación nombrada (correcta)
+          ejercicios = await ejerciciosService.getAll(); 
         } catch {
           const r = await axiosInstance.get("/api/ejercicios");
           ejercicios = r.data;
@@ -68,9 +69,7 @@ export default function NuevaRutina() {
           setPlanes([]);
         } else {
           const idEnt = await ensureEntrenadorId();
-
           const data = await planesService.listAll(idEnt);
-
           setPlanes(data);
         }
       } catch (e) {
@@ -94,46 +93,50 @@ export default function NuevaRutina() {
 
   // save
   const handleSave = async () => {
-    // Convertir "" o "SIN_PLAN" a un 'null' explícito
     let planIdFinal = null;
     if (planSel && planSel !== "SIN_PLAN") {
-      planIdFinal = planSel; // Asigna el ID numérico
+      planIdFinal = planSel;
     }
-    // Si planSel es "" o "SIN_PLAN", planIdFinal se queda como 'null'
 
     if (!nombre.trim()) {
       toast({ title: "El nombre es obligatorio", status: "warning" });
       return;
     }
 
+    // --- ¡CORRECCIÓN 1! ---
+    // Aquí formateamos los ejercicios del estado para el backend.
     const ejercicios = items
-      // ... (código de ejercicios) ...
+      .filter((x) => x.idEjercicio) // Filtramos filas que no tengan ejercicio seleccionado
       .map((x) => ({
-        // ...
+        idEjercicio: Number(x.idEjercicio),
+        series: Number(x.series),
+        repeticiones: Number(x.repeticiones),
+        descansoSegundos: Number(x.descansoSegundos),
       }));
+    // -----------------------
 
-    // Ahora, el 'payload' debe llevar este ID (o null)
-    // Tu backend en POST /api/rutinas debe estar esperando este campo
     const payload = { 
-      nombre, 
-      descripcion, 
-      ejercicios,
-      id_plan: planIdFinal // Envía el ID del plan (o null) en el body
+      nombre: nombre.trim(), 
+      descripcion: descripcion.trim(), 
+      ejercicios, // Ahora 'ejercicios' tiene el formato correcto
+      id_plan: planIdFinal 
     };
 
     try {
       setSaving(true);
-      // El servicio ahora usará 'planIdFinal' (que puede ser null)
-      // para decidir a qué URL llamar
-      await rutinasService.crear(planIdFinal, payload);
+      await rutinasService.crear(planIdFinal, payload); //
       
       toast({ title: "Rutina creada", status: "success" });
       
-      // Esta lógica ya estaba bien
       if (planIdFinal) navigate(`/planes/${planIdFinal}`);
       else navigate("/rutinas"); 
+
     } catch (e) {
-      // ... (manejo de error) ...
+      // --- ¡CORRECCIÓN 2! ---
+      // Agregamos manejo de errores para notificar al usuario.
+      const msg = e?.response?.data?.message || e?.response?.data?.mensaje || "No se pudo crear la rutina.";
+      toast({ title: "Error", description: msg, status: "error" });
+      // -----------------------
     } finally {
       setSaving(false);
     }
@@ -245,21 +248,21 @@ export default function NuevaRutina() {
 
             <FormControl>
               <FormLabel>Series</FormLabel>
-              <NumberInput min={1} value={it.series} onChange={(_, v) => changeItem(i, "series", v)}>
+              <NumberInput min={1} value={it.series} onChange={(_, v) => changeItem(i, "series", Number(v) || 1)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
 
             <FormControl>
               <FormLabel>Reps</FormLabel>
-              <NumberInput min={1} value={it.repeticiones} onChange={(_, v) => changeItem(i, "repeticiones", v)}>
+              <NumberInput min={1} value={it.repeticiones} onChange={(_, v) => changeItem(i, "repeticiones", Number(v) || 1)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>
 
             <FormControl>
               <FormLabel>Descanso (min)</FormLabel>
-              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", v)}>
+              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", Number(v) || 0)}>
                 <NumberInputField />
               </NumberInput>
             </FormControl>

@@ -8,7 +8,7 @@ import {
 import { MdTimer } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { planesService } from "../../services/planes.servicio";
-import { rutinasService } from "../../services/rutinas.servicio";
+import rutinasService from "../../services/rutinas.servicio";
 import { ensureEntrenadorId } from "../../context/auth";
 import axiosInstance from "../../config/axios.config";
 import BotonVolver from "../../components/BotonVolver";

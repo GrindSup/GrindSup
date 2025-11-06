@@ -63,7 +63,7 @@ public class EntrenadorController {
 
         // Validar estado
         if (entrenador.getEstado() != null) {
-            Estado estado = estadoRepository.findById(entrenador.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(entrenador.getEstado().getIdEstado()).orElse(null);
             if (estado == null)
                 return ResponseEntity.badRequest().body("Estado no encontrado");
             entrenador.setEstado(estado);
@@ -99,7 +99,7 @@ public class EntrenadorController {
 
                     // Estado
                     if (entrenadorDetails.getEstado() != null) {
-                        Estado estado = estadoRepository.findById(entrenadorDetails.getEstado().getId_estado())
+                        Estado estado = estadoRepository.findById(entrenadorDetails.getEstado().getIdEstado())
                                 .orElse(null);
                         if (estado != null)
                             existing.setEstado(estado);
@@ -119,7 +119,7 @@ public class EntrenadorController {
         return entrenadorRepository.findById(id)
                 .filter(e -> e.getDeleted_at() == null)
                 .map(entrenador -> {
-                    Estado estado = estadoRepository.findById(nuevoEstado.getId_estado()).orElse(null);
+                    Estado estado = estadoRepository.findById(nuevoEstado.getIdEstado()).orElse(null);
                     if (estado == null)
                         return ResponseEntity.badRequest().body("Estado no encontrado");
 

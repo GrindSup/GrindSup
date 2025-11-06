@@ -4,22 +4,31 @@ import com.grindsup.backend.model.Rutina;
 import com.grindsup.backend.model.RutinaEjercicio;
 import com.grindsup.backend.model.PlanEntrenamiento;
 import com.grindsup.backend.model.Estado;
+import com.grindsup.backend.model.Ejercicio; // <-- 1. IMPORTAR
 import com.grindsup.backend.repository.RutinaRepository;
 import com.grindsup.backend.repository.RutinaEjercicioRepository;
 import com.grindsup.backend.repository.PlanEntrenamientoRepository;
 import com.grindsup.backend.repository.EstadoRepository;
+import com.grindsup.backend.repository.EjercicioRepository; // <-- 2. IMPORTAR
 import com.grindsup.backend.service.RutinaService;
+import com.grindsup.backend.DTO.RutinaUpdateRequestDTO; 
+import com.grindsup.backend.DTO.CrearRutinarequestDTO; // <-- 3. IMPORTAR
+import com.grindsup.backend.DTO.EjercicioRutinaDTO; // <-- 4. IMPORTAR
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import java.awt.Color;
+import java.time.OffsetDateTime; // <-- 5. IMPORTAR
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional; // <-- 7. IMPORTAR
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus; // <-- 8. IMPORTAR
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// <-- 6. IMPORTAR
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,108 +39,139 @@ import java.util.stream.Collectors;
 public class RutinaController {
 
     private final GrupoMuscularController grupoMuscularController;
-
     @Autowired
     private RutinaRepository rutinaRepository;
-
     @Autowired
     private RutinaEjercicioRepository rutinaEjercicioRepository;
-
     @Autowired
     private PlanEntrenamientoRepository planRepository;
-
     @Autowired
     private EstadoRepository estadoRepository;
-
     @Autowired
     private RutinaService rutinaService;
+    
+    @Autowired // <-- 9. AÑADIR INYECCIÓN
+    private EjercicioRepository ejercicioRepository;
 
     RutinaController(GrupoMuscularController grupoMuscularController) {
         this.grupoMuscularController = grupoMuscularController;
     }
 
-    // ==========================
-    // CRUD
-    // ==========================
 
     @GetMapping
     public List<Rutina> getAll() {
-        return rutinaRepository.findAll();
+        return rutinaRepository.findAll()
+                .stream()
+                .filter(r -> r.getDeleted_at() == null) // Filtro de borrado lógico (¡Correcto!)
+                .toList();
     }
-
+    
     @GetMapping("/{id}")
     public Rutina getById(@PathVariable Long id) {
         return rutinaRepository.findById(id).orElse(null);
     }
-
+    
+    // ===========================================
+    // MÉTODO CREATE CORREGIDO
+    // ===========================================
     @PostMapping
-    public Rutina create(@RequestBody Rutina rutina) {
-        if (rutina.getPlan() != null) {
-            PlanEntrenamiento plan = planRepository.findById(rutina.getPlan().getId_plan()).orElse(null);
+    @Transactional 
+    public ResponseEntity<Rutina> create(@RequestBody CrearRutinarequestDTO request) {// <-- 11. CAMBIAR SIGNATURA
+        
+        // 1) Crear rutina y setear metadatos
+        Rutina rutina = new Rutina();
+        rutina.setNombre(request.getNombre());
+        rutina.setDescripcion(request.getDescripcion());
+
+        // 2) Manejar el Plan (si viene)
+        if (request.getPlanId() != null) {
+            PlanEntrenamiento plan = planRepository.findById(request.getPlanId())
+                    .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + request.getPlanId()));
             rutina.setPlan(plan);
+        } else {
+            rutina.setPlan(null); // Es una rutina sin plan
         }
-        if (rutina.getEstado() != null) {
-            Estado estado = estadoRepository.findById(rutina.getEstado().getId_estado()).orElse(null);
-            rutina.setEstado(estado);
+
+        // 3) Estado por defecto (o usar request si viene)
+        Long estadoId = (request.getIdEstado() != null) ? request.getIdEstado() : 1L; // 1L = Activo
+        Estado estadoRutina = estadoRepository.findById(estadoId)
+            .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+        rutina.setEstado(estadoRutina);
+        
+        // (Timestamps se setean por @PrePersist en la entidad Rutina)
+
+        // 4) Primero guardo la rutina (para tener id_rutina)
+        Rutina nuevaRutina = rutinaRepository.save(rutina);
+
+        // 5) Ahora guardo los ejercicios asociados (lógica copiada de PlanEntrenamientoController)
+        if (request.getEjercicios() != null && !request.getEjercicios().isEmpty()) {
+            List<RutinaEjercicio> lista = new ArrayList<>();
+            for (EjercicioRutinaDTO dto : request.getEjercicios()) {
+                Ejercicio ejercicio = ejercicioRepository.findById(dto.getIdEjercicio())
+                        .orElseThrow(() -> new RuntimeException("Ejercicio no encontrado: " + dto.getIdEjercicio()));
+
+                RutinaEjercicio re = new RutinaEjercicio();
+
+                // --- CORRECCIÓN ---
+                // AHORA solo seteamos los OBJETOS.
+                re.setRutina(nuevaRutina);
+                re.setEjercicio(ejercicio);
+
+                // --- (ELIMINAMOS ESTAS LÍNEAS) ---
+                // re.setId_rutina(nuevaRutina.getId_rutina());
+                // re.setId_ejercicio(ejercicio.getId_ejercicio());
+
+                // ... (seteo de series, reps, etc. sin cambios) ...
+                re.setSeries(dto.getSeries());
+                re.setRepeticiones(dto.getRepeticiones());
+                re.setDescanso_segundos(dto.getDescansoSegundos());
+                re.setObservaciones(dto.getObservaciones());
+                re.setGrupo_muscular(dto.getGrupoMuscular());
+                re.setEstado(estadoRutina); 
+
+                lista.add(re);
+            }
+            rutinaEjercicioRepository.saveAll(lista);
         }
-        return rutinaRepository.save(rutina);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaRutina);
     }
+
+    // ===========================================
+    // (Resto de los métodos sin cambios)
+    // ===========================================
 
     @PutMapping("/{id}")
-    public Rutina update(@PathVariable Long id, @RequestBody Rutina rutina) {
-        return rutinaRepository.findById(id).map(existing -> {
-            existing.setNombre(rutina.getNombre());
-            existing.setDescripcion(rutina.getDescripcion());
-            if (rutina.getPlan() != null) {
-                PlanEntrenamiento plan = planRepository.findById(rutina.getPlan().getId_plan()).orElse(null);
-                existing.setPlan(plan);
-            }
-            if (rutina.getEstado() != null) {
-                Estado estado = estadoRepository.findById(rutina.getEstado().getId_estado()).orElse(null);
-                existing.setEstado(estado);
-            }
-            return rutinaRepository.save(existing);
-        }).orElse(null);
+    public Rutina update(@PathVariable Long id, @RequestBody RutinaUpdateRequestDTO dto) {
+        return rutinaService.update(id, dto);
     }
-
-    /** REST estándar: DELETE /api/rutinas/{id} — usa borrado lógico del service */
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         rutinaService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
-
-    /** Alias compatible: POST /api/rutinas/{id}/delete */
+    
     @PostMapping("/{id}/delete")
     public ResponseEntity<Void> deleteAlias(@PathVariable Long id) {
         rutinaService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
 
-    // ==========================
-    // HU24 - Visualizar Rutina
-    // ==========================
     @GetMapping("/{id}/detalle")
     public ResponseEntity<?> getRutinaDetalle(@PathVariable Long id) {
         return rutinaRepository.findById(id)
                 .map(rutina -> {
-                    List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findAll()
-                            .stream()
-                            .filter(re -> re.getRutina().getId_rutina().equals(id) && re.getDeleted_at() == null)
-                            .collect(Collectors.toList());
-
+                    List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findActivosByRutinaId(id);
                     Map<String, Object> resultado = new HashMap<>();
                     resultado.put("rutina", rutina);
-                    resultado.put("ejercicios", ejercicios);
-
+                    resultado.put("ejercicios", ejercicios); 
                     return ResponseEntity.ok(resultado);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ==========================
-    // HU25 - Exportar Rutina a PDF
-    // ==========================
+    // ... (Método exportarRutinaPDF y helpers sin cambios) ...
     @GetMapping("/{id}/exportar")
     public void exportarRutinaPDF(@PathVariable Long id, HttpServletResponse response) throws Exception {
         Rutina rutina = rutinaRepository.findById(id).orElse(null);
@@ -140,37 +180,25 @@ public class RutinaController {
             return;
         }
 
-        List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findAll()
-                .stream()
-                .filter(re -> re.getRutina().getId_rutina().equals(id) && re.getDeleted_at() == null)
-                .collect(Collectors.toList());
+        List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findActivosByRutinaId(id);
 
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=rutina_" + id + ".pdf");
-
         Document document = new Document(PageSize.A4, 40, 40, 60, 40);
         PdfWriter.getInstance(document, response.getOutputStream());
         document.open();
-
-        // ======= COLORES =======
         Color colorPrincipal = new Color(40, 167, 69);
         Color colorSecundario = new Color(230, 247, 237);
         Color blanco = Color.WHITE;
-
-        // ======= FUENTES =======
-        String rutaFuente = "C:/Windows/Fonts/times.ttf"; // Times New Roman
+        String rutaFuente = "C:/Windows/Fonts/times.ttf"; 
         BaseFont baseFont = BaseFont.createFont(rutaFuente, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
         Font fontTitulo = new Font(baseFont, 22, Font.BOLD, colorPrincipal);
         Font fontNormal = new Font(baseFont, 12, Font.NORMAL, Color.BLACK);
         Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, blanco);
-
-        // ======= LOGO Y TITULO EN LA MISMA FILA =======
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[] { 1f, 3f }); // ancho relativo
+        headerTable.setWidths(new float[] { 1f, 3f }); 
         headerTable.getDefaultCell().setBorder(Rectangle.NO_BORDER);
-
-        // Columna 1: logo
         try {
             String rutaLogo = "C:/Users/Blue Oyola/GrindSupBackend/backend/src/main/resources/static/logo-grindsup.png";
             Image logo = Image.getInstance(rutaLogo);
@@ -184,44 +212,32 @@ public class RutinaController {
             emptyCell.setBorder(Rectangle.NO_BORDER);
             headerTable.addCell(emptyCell);
         }
-
-        // Columna 2: título
         PdfPCell titleCell = new PdfPCell(new Phrase(rutina.getNombre(), fontTitulo));
         titleCell.setBorder(Rectangle.NO_BORDER);
         titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         titleCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         headerTable.addCell(titleCell);
-
         document.add(headerTable);
         document.add(Chunk.NEWLINE);
-
-        // ======= DESCRIPCION DETALLADA =======
         Paragraph desc = new Paragraph("Descripción: " + rutina.getDescripcion(), fontNormal);
         document.add(desc);
-
         if (rutina.getPlan() != null) {
             Paragraph plan = new Paragraph("Plan asociado: " + rutina.getPlan().getId_plan(), fontNormal);
             document.add(plan);
-
             String duracionStr = humanizeSecs(calcDurationSecs(ejercicios));
             Paragraph duracion = new Paragraph("Duración: " + duracionStr, fontNormal);
             document.add(duracion);
-
             if (rutina.getPlan().getAlumno() != null) {
                 Paragraph alumno = new Paragraph("Alumno: " + rutina.getPlan().getAlumno().getNombre(), fontNormal);
                 document.add(alumno);
             }
         }
-
         document.add(Chunk.NEWLINE);
-
-        // ======= TABLA DE EJERCICIOS =======
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10);
         table.setSpacingAfter(10);
         table.setWidths(new float[] { 2f, 3f, 1f, 1.5f, 1.5f });
-
         String[] headers = { "Grupos Musculares", "Ejercicio", "Series", "Repeticiones", "Descanso(s)" };
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, fontHeader));
@@ -231,31 +247,24 @@ public class RutinaController {
             cell.setBorderColor(colorPrincipal.darker());
             table.addCell(cell);
         }
-
         boolean alternar = false;
         for (RutinaEjercicio re : ejercicios) {
             Color bg = alternar ? colorSecundario : blanco;
             alternar = !alternar;
-
             table.addCell(makeCell(re.getGrupo_muscular(), fontNormal, bg));
             table.addCell(makeCell(re.getEjercicio().getNombre(), fontNormal, bg));
             table.addCell(makeCell(str(re.getSeries()), fontNormal, bg));
             table.addCell(makeCell(str(re.getRepeticiones()), fontNormal, bg));
             table.addCell(makeCell(str(re.getDescanso_segundos()), fontNormal, bg));
         }
-
         document.add(table);
-
-        // ======= PIE DE PAGINA =======
         Paragraph footer = new Paragraph("Generado por GrindSup - " + new Date(),
                 FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.GRAY));
         footer.setAlignment(Element.ALIGN_RIGHT);
         document.add(footer);
-
         document.close();
     }
 
-    // ======= MÉTODOS AUXILIARES =======
     private PdfPCell makeCell(String texto, Font font, Color bg) {
         PdfPCell cell = new PdfPCell(new Phrase(texto != null ? texto : "", font));
         cell.setBackgroundColor(bg);
@@ -265,12 +274,9 @@ public class RutinaController {
         cell.setBorderColor(new Color(230, 230, 230));
         return cell;
     }
-
     private String str(Object o) {
         return o != null ? o.toString() : "";
     }
-
-    // ======= CALCULO DE DURACION =======
     private long calcDurationSecs(List<RutinaEjercicio> ejercicios) {
         if (ejercicios == null)
             return 0;
@@ -283,7 +289,6 @@ public class RutinaController {
         }
         return total;
     }
-
     private String humanizeSecs(long totalSecs) {
         if (totalSecs <= 0)
             return "—";
@@ -296,5 +301,4 @@ public class RutinaController {
         }
         return "≈ " + m + "m " + s + "s";
     }
-
 }

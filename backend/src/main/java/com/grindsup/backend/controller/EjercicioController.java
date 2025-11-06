@@ -45,7 +45,7 @@ public class EjercicioController {
         }
 
         if (ejercicio.getEstado() != null) {
-            Estado estado = estadoRepository.findById(ejercicio.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(ejercicio.getEstado().getIdEstado()).orElse(null);
             if (estado == null)
                 return ResponseEntity.badRequest().body("El estado indicado no existe.");
             ejercicio.setEstado(estado);
@@ -73,7 +73,7 @@ public class EjercicioController {
                     existing.setEquipamiento(ejercicioDetails.getEquipamiento());
 
                     if (ejercicioDetails.getEstado() != null) {
-                        Estado estado = estadoRepository.findById(ejercicioDetails.getEstado().getId_estado())
+                        Estado estado = estadoRepository.findById(ejercicioDetails.getEstado().getIdEstado())
                                 .orElse(null);
                         existing.setEstado(estado);
                     }

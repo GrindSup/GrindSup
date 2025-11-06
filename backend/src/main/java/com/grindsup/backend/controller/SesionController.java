@@ -41,7 +41,7 @@ public class SesionController {
             sesion.setUsuario(usuario);
         }
         if (sesion.getEstado() != null) {
-            Estado estado = estadoRepository.findById(sesion.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(sesion.getEstado().getIdEstado()).orElse(null);
             sesion.setEstado(estado);
         }
         return sesionRepository.save(sesion);
@@ -60,7 +60,7 @@ public class SesionController {
                 existing.setUsuario(usuario);
             }
             if (sesion.getEstado() != null) {
-                Estado estado = estadoRepository.findById(sesion.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(sesion.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
             return sesionRepository.save(existing);

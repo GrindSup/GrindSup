@@ -1,4 +1,4 @@
-﻿// frontend/src/services/rutinas.servicio.js
+﻿// src/services/rutinas.servicio.js
 import axiosInstance from "../config/axios.config";
 
 /* ---------- Adaptadores ---------- */
@@ -19,6 +19,7 @@ function adaptRutina(raw, planIdHint) {
   };
 }
 
+/* ---------- Helper para GET seguro ---------- */
 async function tryGet(url, config) {
   try {
     const r = await axiosInstance.get(url, config);
@@ -35,43 +36,47 @@ async function listByPlan(idPlan) {
   if (res.ok && Array.isArray(res.data)) {
     return res.data.map((x) => adaptRutina(x, idPlan)).filter(Boolean);
   }
+
   // 2) /api/rutinas?planId=...
   res = await tryGet(`/api/rutinas`, { params: { planId: idPlan } });
   if (res.ok && Array.isArray(res.data)) {
     return res.data.map((x) => adaptRutina(x, idPlan)).filter(Boolean);
   }
+
   return [];
 }
 
-/* ---------- Detalle ---------- */
+/* ---------- Detalle (¡CORREGIDO!) ---------- */
 async function obtenerDetalleRutina(idPlan, idRutina) {
-  // 1) /api/planes/{idPlan}/rutinas/{idRutina}/detalle
-  let res = await tryGet(`/api/planes/${idPlan}/rutinas/${idRutina}/detalle`);
-  if (res.ok && res.data) return res.data;
+  // Si tenemos un plan, intentamos primero el endpoint anidado
+  if (idPlan) {
+    const res = await tryGet(`/api/planes/${idPlan}/rutinas/${idRutina}/detalle`);
+    if (res.ok && res.data) return res.data;
+  }
 
-  // 2) fallback simple
-  res = await tryGet(`/api/rutinas/${idRutina}`);
-  if (res.ok && res.data) return res.data;
+  // --- ESTA ES LA LÍNEA CORREGIDA ---
+  // Fallback si falla o no hay idPlan: DEBE apuntar a /detalle
+  const resFallback = await tryGet(`/api/rutinas/${idRutina}/detalle`);
+  if (resFallback.ok && resFallback.data) return resFallback.data;
 
   return null;
 }
 
 /* ---------- Crear ---------- */
 async function crear(idPlan, payload) {
-  // Si el plan es "SIN_PLAN", vacío o null, usar endpoint general
+  // Si el plan es “SIN_PLAN”, vacío o null, usar endpoint general
   if (!idPlan || idPlan === "SIN_PLAN") {
     const r = await axiosInstance.post(`/api/rutinas`, payload);
     return r.data;
   }
 
-  // Si hay plan válido, usar el endpoint con ID de plan
+  // Si hay plan válido, usar el endpoint anidado
   const r = await axiosInstance.post(`/api/planes/${idPlan}/rutinas`, payload);
   return r.data;
 }
 
-/* ---------- Actualizar (estable según lo que mostró tu log) ---------- */
+/* ---------- Actualizar ---------- */
 async function update(idPlan, idRutina, payload) {
-  // ✅ Tu backend aceptó: PUT /api/rutinas/:id con camelCase
   const body = {
     nombre: payload?.nombre ?? "",
     descripcion: payload?.descripcion ?? "",
@@ -89,17 +94,13 @@ async function update(idPlan, idRutina, payload) {
   return r.data ?? true;
 }
 
-/* ---------- Eliminar (fallbacks típicos de Spring) ---------- */
+/* ---------- Eliminar ---------- */
 async function remove(idPlan, idRutina) {
   const attempts = [
     { method: "delete", url: `/api/planes/${idPlan}/rutinas/${idRutina}` },
     { method: "delete", url: `/api/rutinas/${idRutina}` },
-    { method: "delete", url: `/api/rutinas`, config: { params: { planId: idPlan, rutinaId: idRutina } } },
-    { method: "delete", url: `/api/rutinas`, config: { params: { planId: idPlan, idRutina } } },
-    { method: "delete", url: `/api/planes/${idPlan}/rutinas`, config: { data: { idRutina } } },
-    { method: "delete", url: `/api/rutinas`, config: { data: { planId: idPlan, idRutina } } },
-    { method: "post",   url: `/api/planes/${idPlan}/rutinas/${idRutina}/delete` },
-    { method: "post",   url: `/api/rutinas/${idRutina}/delete` },
+    { method: "post", url: `/api/planes/${idPlan}/rutinas/${idRutina}/delete` },
+    { method: "post", url: `/api/rutinas/${idRutina}/delete` },
   ];
 
   for (const att of attempts) {
@@ -115,8 +116,8 @@ async function remove(idPlan, idRutina) {
   return false;
 }
 
-/* ---------- Exports ---------- */
-export const rutinasService = {
+/* ---------- Export único ---------- */
+const rutinasService = {
   listByPlan,
   obtenerDetalleRutina,
   crear,
@@ -125,4 +126,3 @@ export const rutinasService = {
 };
 
 export default rutinasService;
-export { listByPlan, obtenerDetalleRutina, crear, update, remove };

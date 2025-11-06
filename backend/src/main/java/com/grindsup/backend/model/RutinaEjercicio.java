@@ -1,29 +1,36 @@
 package com.grindsup.backend.model;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "rutina_ejercicios")
-@IdClass(RutinaEjercicioId.class)
+@IdClass(RutinaEjercicioId.class) // <-- Esto usa la clase corregida de arriba
+@EntityListeners(AuditingEntityListener.class) 
 public class RutinaEjercicio {
 
+    // --- CORRECCIÓN ---
+    // 1. ELIMINAMOS los campos 'id_ejercicio' e 'id_rutina' duplicados.
+    
+    // 2. AÑADIMOS @Id a las relaciones @ManyToOne.
+    // JPA entenderá que el ID de 'Ejercicio' es la clave.
     @Id
-    @Column(name = "id_ejercicio")
-    private Long id_ejercicio; // Debe coincidir con el nombre en RutinaEjercicioId
-
-    @Id
-    @Column(name = "id_rutina")
-    private Long id_rutina; // Debe coincidir con el nombre en RutinaEjercicioId
-
     @ManyToOne
-    @JoinColumn(name = "id_ejercicio", insertable = false, updatable = false)
+    @JoinColumn(name = "id_ejercicio") 
     private Ejercicio ejercicio;
 
+    // 3. AÑADIMOS @Id a las relaciones @ManyToOne.
+    // JPA entenderá que el ID de 'Rutina' es la clave.
+    @Id
     @ManyToOne
-    @JoinColumn(name = "id_rutina", insertable = false, updatable = false)
+    @JoinColumn(name = "id_rutina") 
     private Rutina rutina;
 
+    // ... (El resto de los campos no cambian) ...
     private Integer repeticiones;
     private Integer series;
     private Integer descanso_segundos;
@@ -32,12 +39,14 @@ public class RutinaEjercicio {
     @JoinColumn(name = "id_estado")
     private Estado estado;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp 
+    @Column(name = "created_at", nullable = false, updatable = false) 
     private OffsetDateTime created_at;
 
+    @UpdateTimestamp 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updated_at;
-
+    
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
@@ -47,7 +56,10 @@ public class RutinaEjercicio {
     @Column(length = 100)
     private String grupo_muscular;
 
-    // Getters y Setters
+    // --- Getters y Setters (Corregidos) ---
+    // (Solo dejamos los getters/setters para 'ejercicio' y 'rutina')
+    // (ELIMINAMOS los getters/setters para 'id_ejercicio' e 'id_rutina')
+    // ...
     public Ejercicio getEjercicio() {
         return ejercicio;
     }
@@ -63,7 +75,7 @@ public class RutinaEjercicio {
     public void setRutina(Rutina rutina) {
         this.rutina = rutina;
     }
-
+    // ... (El resto de getters/setters no cambia) ...
     public Integer getRepeticiones() {
         return repeticiones;
     }
@@ -125,21 +137,4 @@ public class RutinaEjercicio {
 
     public String getGrupo_muscular() { return grupo_muscular; }
     public void setGrupo_muscular(String grupo_muscular) { this.grupo_muscular = grupo_muscular; }
-
-    public Long getId_ejercicio() {
-    return id_ejercicio;
-    }
-
-    public void setId_ejercicio(Long id_ejercicio) {
-        this.id_ejercicio = id_ejercicio;
-    }
-
-    public Long getId_rutina() {
-        return id_rutina;
-    }
-
-    public void setId_rutina(Long id_rutina) {
-        this.id_rutina = id_rutina;
-    }
-
 }

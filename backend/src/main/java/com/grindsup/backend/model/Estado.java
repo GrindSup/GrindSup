@@ -9,7 +9,7 @@ public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id_estado;
+    private Long idEstado;
 
     @Column(nullable = false, length = 50)
     private String nombre;
@@ -30,12 +30,12 @@ public class Estado {
     private OffsetDateTime deleted_at;
 
     // Getters y Setters
-    public Long getId_estado() {
-        return id_estado;
+    public Long getIdEstado() {
+        return idEstado;
     }
 
-    public void setId_estado(Long id_estado) {
-        this.id_estado = id_estado;
+    public void setIdEstado(Long idEstado) {
+        this.idEstado = idEstado;
     }
 
     public String getNombre() {

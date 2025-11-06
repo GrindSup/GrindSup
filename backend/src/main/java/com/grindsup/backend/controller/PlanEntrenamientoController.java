@@ -78,7 +78,7 @@ public class PlanEntrenamientoController {
                 existing.setAlumno(alumno);
             }
             if (plan.getEstado() != null) {
-                Estado estado = estadoRepository.findById(plan.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(plan.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
 
@@ -158,23 +158,21 @@ public class PlanEntrenamientoController {
 
                 RutinaEjercicio re = new RutinaEjercicio();
 
-                // --- Muy importante: setear LOS IDS de la PK compuesta ---
-                re.setId_rutina(nuevaRutina.getId_rutina());      // campo primario en la entidad
-                re.setId_ejercicio(ejercicio.getId_ejercicio()); // campo primario en la entidad
-
-                // y además mantener las referencias para JPA/Hibernate
+                // --- CORRECCIÓN ---
+                // AHORA solo seteamos los OBJETOS.
                 re.setRutina(nuevaRutina);
                 re.setEjercicio(ejercicio);
 
-                // campos del DTO
+                // --- (ELIMINAMOS ESTAS LÍNEAS) ---
+                // re.setId_rutina(nuevaRutina.getId_rutina());
+                // re.setId_ejercicio(ejercicio.getId_ejercicio());
+
+                // ... (seteo de series, reps, etc. sin cambios) ...
                 re.setSeries(dto.getSeries());
                 re.setRepeticiones(dto.getRepeticiones());
                 re.setDescanso_segundos(dto.getDescansoSegundos());
                 re.setObservaciones(dto.getObservaciones());
-                // si tenés campo grupo_muscular en la entidad:
-                // re.setGrupo_muscular(dto.getGrupoMuscular());
-
-                re.setEstado(estadoRutina); // o buscá otro estado si corresponde
+                re.setEstado(estadoRutina);
                 re.setCreated_at(OffsetDateTime.now());
                 re.setUpdated_at(OffsetDateTime.now());
 

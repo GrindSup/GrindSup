@@ -1,3 +1,4 @@
+// src/main/java/com/grindsup/backend/repository/RutinaEjercicioRepository.java
 package com.grindsup.backend.repository;
 
 import com.grindsup.backend.model.RutinaEjercicio;
@@ -12,13 +13,21 @@ import java.util.List;
 
 public interface RutinaEjercicioRepository extends JpaRepository<RutinaEjercicio, RutinaEjercicioId> {
 
-    // Traer por el id_rutina del propio registro (columna/field del composite key)
-    @Query("SELECT re FROM RutinaEjercicio re WHERE re.id_rutina = :idRutina")
+    // Traer por el id_rutina
+    // --- CORREGIDO ---
+    @Query("SELECT re FROM RutinaEjercicio re WHERE re.rutina.id_rutina = :idRutina")
     List<RutinaEjercicio> findAllByRutinaId(@Param("idRutina") Long idRutina);
 
-    // Borrado por id_rutina (ojo: @Modifying + @Transactional)
+    // Traer solo los activos 
+    // --- CORREGIDO ---
+    @Query("SELECT re FROM RutinaEjercicio re WHERE re.rutina.id_rutina = :idRutina AND re.deleted_at IS NULL")
+    List<RutinaEjercicio> findActivosByRutinaId(@Param("idRutina") Long idRutina);
+
+
+    // Borrado físico por id_rutina 
+    // --- CORREGIDO ---
     @Modifying
     @Transactional
-    @Query("DELETE FROM RutinaEjercicio re WHERE re.id_rutina = :idRutina")
+    @Query("DELETE FROM RutinaEjercicio re WHERE re.rutina.id_rutina = :idRutina")
     void deleteAllByRutinaId(@Param("idRutina") Long idRutina);
 }
