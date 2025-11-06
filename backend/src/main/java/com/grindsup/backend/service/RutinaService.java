@@ -1,4 +1,3 @@
-// src/main/java/com/grindsup/backend/service/RutinaService.java
 package com.grindsup.backend.service;
 
 import java.time.OffsetDateTime;
@@ -42,28 +41,20 @@ public class RutinaService {
     @Transactional
     public Rutina update(Long idRutina, RutinaUpdateRequestDTO dto) {
 
-        // 1️⃣ Buscar rutina
         Rutina rutina = rutinaRepository.findById(idRutina)
                 .orElseThrow(() -> new EntityNotFoundException("Rutina no encontrada con id: " + idRutina));
 
-        // 2️⃣ Actualizar datos básicos
         rutina.setNombre(dto.getNombre());
         rutina.setDescripcion(dto.getDescripcion());
-        // No es necesario guardar aquí, se guardará al final de la transacción
 
-        // 3️⃣ Eliminar ejercicios antiguos (usando la query corregida)
         rutinaEjercicioRepository.deleteAllByRutinaId(idRutina);
 
-        // 🔥 Forzar sincronización y limpiar el contexto de persistencia
-        // (Esto es crucial para evitar errores de clave primaria en el saveAll)
         entityManager.flush();
         entityManager.clear();
         
-        // 4️⃣ Volvemos a buscar la rutina porque el 'clear' la quitó del contexto
         Rutina rutinaRef = rutinaRepository.findById(idRutina)
                 .orElseThrow(() -> new EntityNotFoundException("Rutina no encontrada post-clear: " + idRutina));
 
-        // 5️⃣ Crear lista de nuevos ejercicios
         List<RutinaEjercicio> nuevosEjercicios = new ArrayList<>();
 
         if (dto.getEjercicios() != null) {
@@ -74,16 +65,8 @@ public class RutinaService {
 
                 RutinaEjercicio nuevoItem = new RutinaEjercicio();
 
-                // --- CORRECCIÓN ---
-                // Asignar solo las relaciones de objeto
                 nuevoItem.setRutina(rutinaRef);
                 nuevoItem.setEjercicio(ejercicio);
-
-                // (Líneas eliminadas)
-                // nuevoItem.setId_rutina(idRutina);
-                // nuevoItem.setId_ejercicio(ejDto.getIdEjercicio());
-                
-                // Asignar el resto de los campos
                 nuevoItem.setSeries(ejDto.getSeries());
                 nuevoItem.setRepeticiones(ejDto.getRepeticiones());
                 nuevoItem.setDescanso_segundos(ejDto.getDescansoSegundos());
@@ -92,7 +75,6 @@ public class RutinaService {
             }
         }
 
-        // 6️⃣ Guardar nuevos ejercicios
         rutinaEjercicioRepository.saveAll(nuevosEjercicios);
 
         return rutinaRef;
@@ -107,7 +89,6 @@ public class RutinaService {
         r.setDeleted_at(now);
         rutinaRepository.save(r);
 
-        // Usamos la query corregida
         List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findAllByRutinaId(idRutina);
         for (RutinaEjercicio re : ejercicios) {
             re.setDeleted_at(now);

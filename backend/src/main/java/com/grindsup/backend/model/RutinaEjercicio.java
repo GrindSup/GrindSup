@@ -9,28 +9,20 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "rutina_ejercicios")
-@IdClass(RutinaEjercicioId.class) // <-- Esto usa la clase corregida de arriba
+@IdClass(RutinaEjercicioId.class) 
 @EntityListeners(AuditingEntityListener.class) 
 public class RutinaEjercicio {
 
-    // --- CORRECCIÓN ---
-    // 1. ELIMINAMOS los campos 'id_ejercicio' e 'id_rutina' duplicados.
-    
-    // 2. AÑADIMOS @Id a las relaciones @ManyToOne.
-    // JPA entenderá que el ID de 'Ejercicio' es la clave.
     @Id
     @ManyToOne
     @JoinColumn(name = "id_ejercicio") 
     private Ejercicio ejercicio;
 
-    // 3. AÑADIMOS @Id a las relaciones @ManyToOne.
-    // JPA entenderá que el ID de 'Rutina' es la clave.
     @Id
     @ManyToOne
     @JoinColumn(name = "id_rutina") 
     private Rutina rutina;
 
-    // ... (El resto de los campos no cambian) ...
     private Integer repeticiones;
     private Integer series;
     private Integer descanso_segundos;
@@ -56,10 +48,6 @@ public class RutinaEjercicio {
     @Column(length = 100)
     private String grupo_muscular;
 
-    // --- Getters y Setters (Corregidos) ---
-    // (Solo dejamos los getters/setters para 'ejercicio' y 'rutina')
-    // (ELIMINAMOS los getters/setters para 'id_ejercicio' e 'id_rutina')
-    // ...
     public Ejercicio getEjercicio() {
         return ejercicio;
     }
@@ -75,7 +63,7 @@ public class RutinaEjercicio {
     public void setRutina(Rutina rutina) {
         this.rutina = rutina;
     }
-    // ... (El resto de getters/setters no cambia) ...
+
     public Integer getRepeticiones() {
         return repeticiones;
     }

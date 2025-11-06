@@ -71,39 +71,32 @@ public class RutinaController {
         return rutinaRepository.findById(id).orElse(null);
     }
     
-    // ===========================================
-    // MÉTODO CREATE CORREGIDO
-    // ===========================================
+
     @PostMapping
     @Transactional 
     public ResponseEntity<Rutina> create(@RequestBody CrearRutinarequestDTO request) {// <-- 11. CAMBIAR SIGNATURA
         
-        // 1) Crear rutina y setear metadatos
+
         Rutina rutina = new Rutina();
         rutina.setNombre(request.getNombre());
         rutina.setDescripcion(request.getDescripcion());
 
-        // 2) Manejar el Plan (si viene)
         if (request.getPlanId() != null) {
             PlanEntrenamiento plan = planRepository.findById(request.getPlanId())
                     .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + request.getPlanId()));
             rutina.setPlan(plan);
         } else {
-            rutina.setPlan(null); // Es una rutina sin plan
+            rutina.setPlan(null); 
         }
 
-        // 3) Estado por defecto (o usar request si viene)
         Long estadoId = (request.getIdEstado() != null) ? request.getIdEstado() : 1L; // 1L = Activo
         Estado estadoRutina = estadoRepository.findById(estadoId)
             .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
         rutina.setEstado(estadoRutina);
         
-        // (Timestamps se setean por @PrePersist en la entidad Rutina)
 
-        // 4) Primero guardo la rutina (para tener id_rutina)
         Rutina nuevaRutina = rutinaRepository.save(rutina);
 
-        // 5) Ahora guardo los ejercicios asociados (lógica copiada de PlanEntrenamientoController)
         if (request.getEjercicios() != null && !request.getEjercicios().isEmpty()) {
             List<RutinaEjercicio> lista = new ArrayList<>();
             for (EjercicioRutinaDTO dto : request.getEjercicios()) {
@@ -112,16 +105,8 @@ public class RutinaController {
 
                 RutinaEjercicio re = new RutinaEjercicio();
 
-                // --- CORRECCIÓN ---
-                // AHORA solo seteamos los OBJETOS.
                 re.setRutina(nuevaRutina);
                 re.setEjercicio(ejercicio);
-
-                // --- (ELIMINAMOS ESTAS LÍNEAS) ---
-                // re.setId_rutina(nuevaRutina.getId_rutina());
-                // re.setId_ejercicio(ejercicio.getId_ejercicio());
-
-                // ... (seteo de series, reps, etc. sin cambios) ...
                 re.setSeries(dto.getSeries());
                 re.setRepeticiones(dto.getRepeticiones());
                 re.setDescanso_segundos(dto.getDescansoSegundos());
@@ -136,10 +121,6 @@ public class RutinaController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaRutina);
     }
-
-    // ===========================================
-    // (Resto de los métodos sin cambios)
-    // ===========================================
 
     @PutMapping("/{id}")
     public Rutina update(@PathVariable Long id, @RequestBody RutinaUpdateRequestDTO dto) {
@@ -171,7 +152,6 @@ public class RutinaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ... (Método exportarRutinaPDF y helpers sin cambios) ...
     @GetMapping("/{id}/exportar")
     public void exportarRutinaPDF(@PathVariable Long id, HttpServletResponse response) throws Exception {
         Rutina rutina = rutinaRepository.findById(id).orElse(null);
