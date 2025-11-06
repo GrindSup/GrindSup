@@ -12,6 +12,7 @@ import { AddIcon, EditIcon, DeleteIcon, SearchIcon, ChevronDownIcon } from '@cha
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 import rutinasService from '../../services/rutinas.servicio.js';
+import { planesService } from '../../services/planes.servicio.js'; 
 
 const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
@@ -56,12 +57,31 @@ export default function ListaEjercicios() {
 
   const fetchRutinas = async () => {
     try {
-      // ⚠️ Si usás planes, reemplazá el 1 por el id del plan actual
-      const rutinasData = await rutinasService.listByPlan(1);
-      setRutinas(rutinasData);
+      const ps = await planesService.listAll();
+
+      let data = [];
+      try {
+        const r = await axiosInstance.get("/api/rutinas");
+        data = Array.isArray(r.data) ? r.data : [];
+      } catch {
+        const r = await axiosInstance.get("/api/rutinas?all=1");
+        data = Array.isArray(r.data) ? r.data : [];
+      }
+
+      const enrich = data.map((r) => {
+        const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null;
+        const plan = (ps || []).find((p) => String(p.id_plan ?? p.id) === String(planId));
+        const alumno = plan?.alumno
+          ? [plan.alumno?.nombre, plan.alumno?.apellido].filter(Boolean).join(" ")
+          : null;
+        return { ...r, planId: planId, __alumno: alumno };
+      });
+
+      setRutinas(enrich);
     } catch (err) {
       console.error("Error al cargar rutinas:", err);
       setRutinas([]);
+      toast({ title: "Error al cargar la lista de rutinas", status: "error", duration: 3000 });
     }
   };
 
@@ -104,17 +124,24 @@ export default function ListaEjercicios() {
   const handleAgregarARutina = async () => {
     if (!rutinaSeleccionada || !ejercicioParaAgregar) return;
 
+    const rutina = rutinas.find(r => (r.id_rutina ?? r.id).toString() === rutinaSeleccionada);
+    if (!rutina) {
+        toast({ title: "Error", description: "Rutina seleccionada no encontrada.", status: "error" });
+        return;
+    }
+    
+    const planId = rutina.planId;
+    const rutinaId = rutina.id_rutina ?? rutina.id;
+
     try {
-      const rutina = rutinas.find(r => r.id.toString() === rutinaSeleccionada);
-      if (!rutina) throw new Error("Rutina no encontrada.");
+      const detalle = await rutinasService.obtenerDetalleRutina(planId, rutinaId);
+      if (!detalle) throw new Error("No se pudo obtener el detalle de la rutina.");
 
-      // Obtenemos los detalles actuales de la rutina
-      const detalle = await rutinasService.obtenerDetalleRutina(rutina.planId, rutina.id);
-      const ejerciciosExistentes = detalle?.ejercicios ?? [];
+      const infoRutina = detalle.rutina ?? {};
+      const ejerciciosExistentes = detalle.ejercicios ?? [];
 
-      // Evitar duplicados
       const yaExiste = ejerciciosExistentes.some(
-        (e) => e.id_ejercicio === ejercicioParaAgregar.id_ejercicio
+        (e) => (e.ejercicio?.id_ejercicio ?? e.id_ejercicio) == ejercicioParaAgregar.id_ejercicio
       );
       if (yaExiste) {
         toast({
@@ -128,20 +155,29 @@ export default function ListaEjercicios() {
         return;
       }
 
-      const nuevosEjercicios = [
-        ...ejerciciosExistentes,
-        {
-          idEjercicio: ejercicioParaAgregar.id_ejercicio,
-          series: 3,
-          repeticiones: 10,
-          descansoSegundos: 60,
-        },
-      ];
+      const ejerciciosDtoExistentes = ejerciciosExistentes.map(e => ({
+          idEjercicio: e.ejercicio?.id_ejercicio ?? e.id_ejercicio,
+          series: e.series,
+          repeticiones: e.repeticiones,
+          descansoSegundos: e.descanso_segundos ?? e.descansoSegundos ?? 60,
+      }));
 
-      await rutinasService.update(rutina.planId, rutina.id, {
-        ...detalle,
-        ejercicios: nuevosEjercicios,
-      });
+      const nuevoEjercicioDto = {
+        idEjercicio: ejercicioParaAgregar.id_ejercicio,
+        series: 3,
+        repeticiones: 10,
+        descansoSegundos: 60,
+      };
+
+      const payloadEjercicios = [...ejerciciosDtoExistentes, nuevoEjercicioDto];
+
+      const payload = {
+        nombre: infoRutina.nombre,
+        descripcion: infoRutina.descripcion,
+        ejercicios: payloadEjercicios,
+      };
+
+      await rutinasService.update(planId, rutinaId, payload);
 
       toast({
         title: "Ejercicio agregado",
@@ -302,7 +338,6 @@ export default function ListaEjercicios() {
         </>
       )}
 
-      {/* Modal eliminar */}
       <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
@@ -319,7 +354,7 @@ export default function ListaEjercicios() {
               <Button
                 bg="red.600"
                 color="white"
-                _hover={{ bg: "red.600" }}
+                _hover={{ bg: "red.700" }}
                 onClick={handleEliminar}
                 ml={3}
               >
@@ -330,7 +365,6 @@ export default function ListaEjercicios() {
         </AlertDialogOverlay>
       </AlertDialog>
 
-      {/* Modal agregar a rutina */}
       <Modal isOpen={isAddOpen} onClose={onAddClose}>
         <ModalOverlay />
         <ModalContent>
@@ -341,11 +375,17 @@ export default function ListaEjercicios() {
             <RadioGroup onChange={setRutinaSeleccionada} value={rutinaSeleccionada}>
               <Stack>
                 {rutinas.length > 0 ? (
-                  rutinas.map((r) => (
-                    <Radio key={r.id} value={r.id.toString()}>
-                      {r.nombre}
-                    </Radio>
-                  ))
+                  rutinas.map((r) => {
+                    const id = r.id_rutina ?? r.id;
+                    const planInfo = r.planId ? `(Plan #${r.planId})` : "(Sin Plan)";
+                    const alumnoInfo = r.__alumno ? `- ${r.__alumno}` : "";
+
+                    return (
+                      <Radio key={id} value={id.toString()}>
+                        {r.nombre} <Text as="span" fontSize="sm" color="gray.500">{planInfo} {alumnoInfo}</Text>
+                      </Radio>
+                    )
+                  })
                 ) : (
                   <Text color="gray.500">No hay rutinas disponibles.</Text>
                 )}
