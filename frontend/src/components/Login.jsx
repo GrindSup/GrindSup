@@ -1,6 +1,8 @@
+// frontend/src/components/Login.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../config/axios.config";
+import GoogleButton from "./GoogleButton";
 import "./Login.css";
 
 export default function Login({ setUsuario }) {
@@ -51,7 +53,21 @@ export default function Login({ setUsuario }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1 className="login-title" style={{ fontWeight: 'bold', fontSize: '2rem'}}>Inicio de Sesión</h1>
+        <h1 className="login-title" style={{ fontWeight: "bold", fontSize: "2rem" }}>
+          Inicio de Sesión
+        </h1>
+
+        {/* Botón Google arriba como opción rápida */}
+        <GoogleButton label="Continuar con Google" />
+
+        {/* separador */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "1rem 0" }}>
+          <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+          <span style={{ color: "#6b7280", fontSize: 13, fontWeight: 600 }}>o</span>
+          <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+        </div>
+
+        {/* Form tradicional */}
         <form onSubmit={validar} className="login-form">
           <input
             type="email"
@@ -85,12 +101,26 @@ export default function Login({ setUsuario }) {
           </div>
 
           <div className="button-group">
-            <button type="submit" className="login-button" style={{ fontWeight: 'bold', fontSize: '1.2rem'}}>Iniciar Sesión</button>
-            <Link to="/" className="back-button as-link" style={{ fontWeight: 'bold', fontSize: '1.2rem'}}>Volver</Link>
+            <button type="submit" className="login-button" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
+              Iniciar Sesión
+            </button>
+            <Link to="/" className="back-button as-link" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
+              Volver
+            </Link>
           </div>
         </form>
 
-        <Link to="/forgot" className="forgot-link">¿Olvidaste tu contraseña?</Link>
+        <Link to="/forgot" className="forgot-link">
+          ¿Olvidaste tu contraseña?
+        </Link>
+
+        {/* CTA de registro */}
+        <div style={{ marginTop: "1rem", textAlign: "center", fontSize: 14 }}>
+          <span>¿Eres nuevo?</span>{" "}
+          <Link to="/register" className="forgot-link" style={{ fontWeight: 700 }}>
+            Crea tu cuenta
+          </Link>
+        </div>
 
         {error && <p className="login-error">{errorMensaje}</p>}
       </div>

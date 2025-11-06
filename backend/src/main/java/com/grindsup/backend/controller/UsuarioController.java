@@ -12,39 +12,31 @@ import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.RolRepository;
 import com.grindsup.backend.repository.SesionRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private RolRepository rolRepository;
-
-    @Autowired
-    private EstadoRepository estadoRepository;
-
-    @Autowired
-    private SesionRepository sesionRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private RolRepository rolRepository;
+    @Autowired private EstadoRepository estadoRepository;
+    @Autowired private SesionRepository sesionRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     // ===== CRUD básico =====
     @GetMapping
-    public List<Usuario> getAll() {
-        return usuarioRepository.findAll();
-    }
+    public List<Usuario> getAll() { return usuarioRepository.findAll(); }
 
     @GetMapping("/{id}")
     public Usuario getById(@PathVariable Long id) {
@@ -116,7 +108,6 @@ public class UsuarioController {
     // ===== LOGIN con BCrypt =====
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        // Usamos ignore-case porque lo usa también el flujo de recuperación
         var opt = usuarioRepository.findByCorreoIgnoreCase(request.getCorreo());
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -125,14 +116,13 @@ public class UsuarioController {
 
         Usuario usuario = opt.get();
 
-        // <<<<<< CLAVE: comparar con BCrypt >>>>>>
         boolean ok = passwordEncoder.matches(request.getContrasena(), usuario.getContrasena());
         if (!ok) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("Contraseña incorrecta", false, null, null));
         }
 
-        // Crear sesión
+        // Crear sesión (tu manejo histórico de sesiones)
         Sesion sesion = new Sesion();
         sesion.setUsuario(usuario);
         sesion.setInicio(OffsetDateTime.now());
@@ -155,7 +145,7 @@ public class UsuarioController {
         return ResponseEntity.ok(respuesta);
     }
 
-    // ===== LOGOUT =====
+    // ===== LOGOUT (histórico por idSesion) =====
     @PutMapping("/logout/{idSesion}")
     public ResponseEntity<LogoutResponse> logout(@PathVariable Long idSesion) {
         return sesionRepository.findById(idSesion).map(sesion -> {
@@ -169,5 +159,33 @@ public class UsuarioController {
             return ResponseEntity.ok(new LogoutResponse("Sesión cerrada correctamente", true));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new LogoutResponse("Sesión no encontrada", false)));
+    }
+
+    // ===== QUIÉN SOY (para bootstrap con cookie JWT) =====
+    @GetMapping("/me")
+    public ResponseEntity<?> me(Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensaje", "No autenticado"));
+        }
+
+        String email = auth.getName(); // subject del JWT
+        var opt = usuarioRepository.findByCorreoIgnoreCase(email);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("mensaje", "Usuario no encontrado"));
+        }
+
+        Usuario u = opt.get();
+        return ResponseEntity.ok(Map.of(
+            "usuario", Map.of(
+                "id_usuario", u.getId_usuario(),
+                "nombre", u.getNombre(),
+                "apellido", u.getApellido(),
+                "correo", u.getCorreo(),
+                "rol", (u.getRol() != null ? u.getRol().getNombre() : null),
+                "foto_perfil", u.getFoto_perfil()
+            )
+        ));
     }
 }
