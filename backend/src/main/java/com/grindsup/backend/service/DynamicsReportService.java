@@ -9,57 +9,61 @@ import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
 import net.sf.dynamicreports.report.builder.DynamicReports;
 import net.sf.dynamicreports.report.builder.column.Columns;
 import net.sf.dynamicreports.report.builder.component.Components;
+import net.sf.dynamicreports.report.builder.datatype.DataTypes;
 import net.sf.dynamicreports.report.builder.style.Styles;
+import net.sf.dynamicreports.report.constant.HorizontalAlignment;
+import net.sf.dynamicreports.report.constant.HorizontalTextAlignment;
 import net.sf.dynamicreports.report.datasource.DRDataSource;
 import net.sf.dynamicreports.report.exception.DRException;
+import net.sf.jasperreports.engine.JRDataSource;
 
 import static net.sf.dynamicreports.report.builder.DynamicReports.*;
 public class DynamicsReportService {
 
     @Autowired
     private ReporteService reportService;
-    private void build(){
+
+    public byte[] buildReporteProgresoPlanesPdf(Long idAlumno) {
         try {
-            report()
-                .columns(
-                    col.column("Alumno", "Nombre", type.stringType()),
-                    col.column("Cantidad de Rutinas", "Total", type.stringType()),
-                    col.column("Completas", "completas", type.stringType()),
-                    col.column("Incompletas", "incompletas", type.stringType()))
+            // Obtener los datos del reporte
+            ReporteProgresoPlanesDTO datos = reportService.generarReporteProgresoPlanesDeAlumno(idAlumno);
+
+            // Crear el DataSource de DynamicReports
+            DRDataSource dataSource = new DRDataSource("alumno", "total", "completas", "incompletas", "enProceso", "porcentaje");
+            dataSource.add(
+                datos.getNombreAlumno(),
+                datos.getCompletadas() + datos.getEnProceso() + datos.getIncompletas(),
+                datos.getCompletadas(),
+                datos.getIncompletas(),
+                datos.getEnProceso(),
+                String.format("%.2f%%", datos.getPorcentajeCumplimiento())
+            );
+
+            // Crear el reporte
+            JasperReportBuilder report = DynamicReports.report()
+                    .columns(
+                        Columns.column("Alumno", "alumno", DataTypes.stringType()),
+                        Columns.column("Total Rutinas", "total", DataTypes.integerType()),
+                        Columns.column("Completas", "completas", DataTypes.integerType()),
+                        Columns.column("Incompletas", "incompletas", DataTypes.integerType()),
+                        Columns.column("En Proceso", "enProceso", DataTypes.integerType()),
+                        Columns.column("% Cumplimiento", "porcentaje", DataTypes.stringType())
+                    )
+                    .title(Components.text("REPORTE DE PROGRESO DE PLANES DEL ALUMNO")
+                            .setHorizontalTextAlignment(HorizontalTextAlignment.CENTER))
+                    .pageFooter(Components.pageXofY())
+                    .setDataSource(dataSource);
+
+            // Generar el PDF en memoria
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            report.toPdf(outputStream);
+
+            return outputStream.toByteArray();
+
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
+            throw new RuntimeException("Error generando el reporte PDF", e);
         }
     }
 
-    
 }
-// public byte[] generarReporteProgresoPlanesPDF(Long idAlumno) {
-//     ReporteProgresoPlanesDTO reporte = reportService.generarReporteProgresoPlanesDeAlumno(idAlumno);
-
-//     try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-//         JasperReportBuilder report = DynamicReports.report();
-
-//         report.columns(
-//                 Columns.column("Campo", String.class),
-//                 Columns.column("Valor", String.class)
-//         )
-//         .title(Components.text("Reporte de Rutinas del Alumno")
-//                 .setStyle(Styles.style().bold().setFontSize(14)))
-//         .setDataSource(new DRDataSource("Campo", "Valor",
-//                 new Object[][]{
-//                     {"Alumno", reporte.getNombreAlumno()},
-//                     {"Total de rutinas", String.valueOf(reporte.getTotalRutinas())},
-//                     {"Completadas", String.valueOf(reporte.getCompletadas())},
-//                     {"Incompletas", String.valueOf(reporte.getIncompletas())},
-//                     {"En proceso", String.valueOf(reporte.getEnProceso())},
-//                     {"% Cumplimiento", String.format("%.2f %%", reporte.getPorcentajeCumplimiento())},
-//                     {"Última completada", reporte.getUltimaRutinaCompletada()}
-//                 }
-//         ));
-
-//         report.toPdf(out);
-//         return out.toByteArray();
-//     } catch (Exception e) {
-//         throw new RuntimeException("Error al generar el reporte PDF", e);
-//     }
-//     }

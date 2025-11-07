@@ -1,6 +1,8 @@
 package com.grindsup.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,14 +28,14 @@ public class ReportesController {
         return ResponseEntity.ok(reporte);
     }
 
-    @GetMapping("/rutinas/alumno/{idAlumno}/pdf")
-    public ResponseEntity<byte[]> exportarReporteRutinasPDF(@PathVariable Long idAlumno) {
-    byte[] pdfBytes = dynamicsReportService.generarReporteProgresoPlanesPDF(idAlumno);
+    @GetMapping("/planes/alumno/{idAlumno}/pdf")
+    public ResponseEntity<byte[]> exportarReporteProgresoPlanesPDF(@PathVariable Long idAlumno) {
+        byte[] pdfBytes = dynamicsReportService.buildReporteProgresoPlanesPdf(idAlumno);
 
-    return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte_rutinas_" + idAlumno + ".pdf")
-            .contentType(MediaType.APPLICATION_PDF)
-            .body(pdfBytes);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte_planes_" + idAlumno + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
     }
 
 }
