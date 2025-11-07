@@ -49,7 +49,7 @@ public class Ejercicio {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
-    // Getters y Setters 
+    // Getters y Setters
     public Long getId_ejercicio() {
         return id_ejercicio;
     }

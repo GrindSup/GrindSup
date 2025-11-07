@@ -139,7 +139,7 @@ public class PlanEntrenamientoController {
         // estado por defecto (o usar request si viene)
         Estado estadoRutina = estadoRepository.findById(
                 request.getIdEstado() != null ? request.getIdEstado() : 1L)
-            .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
         rutina.setEstado(estadoRutina);
 
         rutina.setCreated_at(OffsetDateTime.now());
@@ -183,12 +183,13 @@ public class PlanEntrenamientoController {
 
         return ResponseEntity.ok(nuevaRutina);
     }
+
     @PutMapping("/{id}/estado")
     public ResponseEntity<?> actualizarEstadoRutina(
-        @PathVariable Long id,
-        @RequestParam Long idEstado) {
-    planService.actualizarEstado(id, idEstado);
-    return ResponseEntity.ok("Estado actualizado correctamente");
+            @PathVariable Long id,
+            @RequestParam Long idEstado) {
+        planService.actualizarEstado(id, idEstado);
+        return ResponseEntity.ok("Estado actualizado correctamente");
     }
 
     @GetMapping("/alumno/{idAlumno}/estado/{idEstado}")
@@ -199,7 +200,7 @@ public class PlanEntrenamientoController {
         List<PlanEntrenamiento> planes = planService.listarPlanesPorAlumnoYEstado(idAlumno, idEstado);
         return ResponseEntity.ok(planes);
     }
-    
+
     @GetMapping("/estado/{idEstado}")
     public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorEstado(
             @PathVariable Long idEstado) {

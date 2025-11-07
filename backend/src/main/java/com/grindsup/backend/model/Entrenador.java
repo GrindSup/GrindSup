@@ -9,9 +9,9 @@ public class Entrenador {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_entrenador")
-    private Long idEntrenador;    
+    private Long idEntrenador;
 
+    // 1:1 con usuarios (id_usuario único)
     @OneToOne
     @JoinColumn(name = "id_usuario", nullable = false, unique = true)
     private Usuario usuario;
@@ -35,8 +35,7 @@ public class Entrenador {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
-    // --- Getters y Setters ---
-
+    // Getters y Setters
     public Long getIdEntrenador() {
         return idEntrenador;
     }

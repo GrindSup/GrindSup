@@ -24,7 +24,7 @@ public class PlanEntrenamientoService {
 
     @Autowired
     private PlanEntrenamientoRepository planRepository;
-    //deberia ser final?
+    // deberia ser final?
     @Autowired
     private EstadoRepository estadoRepository;
 
@@ -42,9 +42,9 @@ public class PlanEntrenamientoService {
         plan.setFecha_fin(request.getFechaFin());
         plan.setCreated_at(OffsetDateTime.now());
         plan.setUpdated_at(OffsetDateTime.now());
-        //probar sino findByName
+        // probar sino findByName
         Estado estadoInicial = estadoRepository.findById((long) 3)
-            .orElseThrow(() -> new EntityNotFoundException("Estado 'En proceso' no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Estado 'En proceso' no encontrado"));
         plan.setEstado(estadoInicial);
         return planRepository.save(plan);
     }
@@ -61,7 +61,7 @@ public class PlanEntrenamientoService {
     public void actualizarEstado(Long idPlan, Long idEstado) {
         // deberiamos asignar un valor por defecto en caso de no encontrar?
         Estado estado = estadoRepository.findById(idEstado)
-        .orElseThrow(() -> new EntityNotFoundException("Estado no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Estado no encontrado"));
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new EntityNotFoundException("Plan de entrenamiento no encontrado"));
         plan.setEstado(estado);

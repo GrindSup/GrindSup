@@ -11,7 +11,7 @@ import com.grindsup.backend.repository.PlanEntrenamientoRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.EjercicioRepository; // <-- 2. IMPORTAR
 import com.grindsup.backend.service.RutinaService;
-import com.grindsup.backend.DTO.RutinaUpdateRequestDTO; 
+import com.grindsup.backend.DTO.RutinaUpdateRequestDTO;
 import com.grindsup.backend.DTO.CrearRutinarequestDTO; // <-- 3. IMPORTAR
 import com.grindsup.backend.DTO.EjercicioRutinaDTO; // <-- 4. IMPORTAR
 
@@ -49,14 +49,13 @@ public class RutinaController {
     private EstadoRepository estadoRepository;
     @Autowired
     private RutinaService rutinaService;
-    
+
     @Autowired // <-- 9. AÑADIR INYECCIÓN
     private EjercicioRepository ejercicioRepository;
 
     RutinaController(GrupoMuscularController grupoMuscularController) {
         this.grupoMuscularController = grupoMuscularController;
     }
-
 
     @GetMapping
     public List<Rutina> getAll() {
@@ -65,17 +64,15 @@ public class RutinaController {
                 .filter(r -> r.getDeleted_at() == null) // Filtro de borrado lógico (¡Correcto!)
                 .toList();
     }
-    
+
     @GetMapping("/{id}")
     public Rutina getById(@PathVariable Long id) {
         return rutinaRepository.findById(id).orElse(null);
     }
-    
 
     @PostMapping
-    @Transactional 
+    @Transactional
     public ResponseEntity<Rutina> create(@RequestBody CrearRutinarequestDTO request) {// <-- 11. CAMBIAR SIGNATURA
-        
 
         Rutina rutina = new Rutina();
         rutina.setNombre(request.getNombre());
@@ -86,14 +83,13 @@ public class RutinaController {
                     .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + request.getPlanId()));
             rutina.setPlan(plan);
         } else {
-            rutina.setPlan(null); 
+            rutina.setPlan(null);
         }
 
         Long estadoId = (request.getIdEstado() != null) ? request.getIdEstado() : 1L; // 1L = Activo
         Estado estadoRutina = estadoRepository.findById(estadoId)
-            .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
         rutina.setEstado(estadoRutina);
-        
 
         Rutina nuevaRutina = rutinaRepository.save(rutina);
 
@@ -112,7 +108,7 @@ public class RutinaController {
                 re.setDescanso_segundos(dto.getDescansoSegundos());
                 re.setObservaciones(dto.getObservaciones());
                 re.setGrupo_muscular(dto.getGrupoMuscular());
-                re.setEstado(estadoRutina); 
+                re.setEstado(estadoRutina);
 
                 lista.add(re);
             }
@@ -126,13 +122,13 @@ public class RutinaController {
     public Rutina update(@PathVariable Long id, @RequestBody RutinaUpdateRequestDTO dto) {
         return rutinaService.update(id, dto);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         rutinaService.softDelete(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     @PostMapping("/{id}/delete")
     public ResponseEntity<Void> deleteAlias(@PathVariable Long id) {
         rutinaService.softDelete(id);
@@ -146,7 +142,7 @@ public class RutinaController {
                     List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findActivosByRutinaId(id);
                     Map<String, Object> resultado = new HashMap<>();
                     resultado.put("rutina", rutina);
-                    resultado.put("ejercicios", ejercicios); 
+                    resultado.put("ejercicios", ejercicios);
                     return ResponseEntity.ok(resultado);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -170,14 +166,14 @@ public class RutinaController {
         Color colorPrincipal = new Color(40, 167, 69);
         Color colorSecundario = new Color(230, 247, 237);
         Color blanco = Color.WHITE;
-        String rutaFuente = "C:/Windows/Fonts/times.ttf"; 
+        String rutaFuente = "C:/Windows/Fonts/times.ttf";
         BaseFont baseFont = BaseFont.createFont(rutaFuente, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
         Font fontTitulo = new Font(baseFont, 22, Font.BOLD, colorPrincipal);
         Font fontNormal = new Font(baseFont, 12, Font.NORMAL, Color.BLACK);
         Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, blanco);
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[] { 1f, 3f }); 
+        headerTable.setWidths(new float[] { 1f, 3f });
         headerTable.getDefaultCell().setBorder(Rectangle.NO_BORDER);
         try {
             String rutaLogo = "C:/Users/Blue Oyola/GrindSupBackend/backend/src/main/resources/static/logo-grindsup.png";
@@ -254,9 +250,11 @@ public class RutinaController {
         cell.setBorderColor(new Color(230, 230, 230));
         return cell;
     }
+
     private String str(Object o) {
         return o != null ? o.toString() : "";
     }
+
     private long calcDurationSecs(List<RutinaEjercicio> ejercicios) {
         if (ejercicios == null)
             return 0;
@@ -269,6 +267,7 @@ public class RutinaController {
         }
         return total;
     }
+
     private String humanizeSecs(long totalSecs) {
         if (totalSecs <= 0)
             return "—";

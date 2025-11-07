@@ -23,6 +23,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import {
   obtenerTurno,
+  alumnosDeTurno,          // 👈 usamos este
   actualizarFechaTurno,
   quitarAlumnoDeTurno,
   asignarAlumnos,
@@ -30,33 +31,24 @@ import {
 } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
 
-function toYMD(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-function toHM(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}`;
-}
+function toYMD(d) { const p=(n)=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function toHM(d) { const p=(n)=>String(n).padStart(2,"0"); return `${p(d.getHours())}:${p(d.getMinutes())}`; }
 
-// Normalizador de campos para soportar ambas formas del backend
-const getTipoStr = (t) =>
-  (t?.tipoTurno ?? t?.tipo_turno ?? t ?? "").toString().trim();
+const getTipoStr = (t) => (t?.tipoTurno ?? t?.tipo_turno ?? t ?? "").toString().trim();
 const getEntrenadorNombre = (t) =>
-  // puede venir como string ("Juan") o como objeto/alias
   t?.entrenador?.nombre ??
   t?.entrenadorNombre ??
-  (typeof t?.entrenador === "string" ? t.entrenador : "") ??
-  "";
+  (typeof t?.entrenador === "string" ? t.entrenador : "") ?? "";
 
 export default function DetalleTurno() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [turno, setTurno] = useState(null);
-  const [alumnos, setAlumnos] = useState([]);
-  const [sel, setSel] = useState(""); // id alumno a agregar (string)
+  const [turno, setTurno] = useState(null);             // datos base del turno
+  const [turnoAlumnos, setTurnoAlumnos] = useState([]); // [{id_alumno,nombre,apellido}]
+  const [poolAlumnos, setPoolAlumnos] = useState([]);   // alumnos del entrenador
+  const [sel, setSel] = useState("");                   // id alumno a agregar
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
   const [savingFecha, setSavingFecha] = useState(false);
@@ -64,57 +56,56 @@ export default function DetalleTurno() {
   const [msg, setMsg] = useState("");
 
   const load = async () => {
+    if (!id) return; // 👈 evita /turnos/undefined
+
     const entrenadorId = await ensureEntrenadorId();
 
-    // Cargo el turno siempre
-    const [{ data: t }, alumnosResp] = await Promise.all([
+    // turno + alumnos del turno (con id)
+    const [{ data: t }, { data: tAlumnos }] = await Promise.all([
       obtenerTurno(id),
-      // Si no hay entrenadorId, no intento filtrar alumnos
-      entrenadorId ? listarAlumnos(entrenadorId) : Promise.resolve({ data: [] }),
+      alumnosDeTurno(id),
     ]);
-
     setTurno(t);
-    setAlumnos(alumnosResp?.data || []);
+    setTurnoAlumnos(Array.isArray(tAlumnos) ? tAlumnos : []);
 
-    const d = new Date(t.fecha);
-    setFecha(toYMD(d));
-    setHora(toHM(d));
+    if (entrenadorId) {
+      const { data: pool } = await listarAlumnos(entrenadorId);
+      setPoolAlumnos(Array.isArray(pool) ? pool : []);
+    } else {
+      setPoolAlumnos([]);
+    }
+
+    if (t?.fecha) {
+      const d = new Date(t.fecha);
+      setFecha(toYMD(d));
+      setHora(toHM(d));
+    }
   };
 
   useEffect(() => {
     (async () => {
-      try {
-        await load();
-      } catch (e) {
-        console.error(e);
-        setError("No se pudo cargar el turno");
-      }
+      try { await load(); }
+      catch (e) { console.error(e); setError("No se pudo cargar el turno"); }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleAgregar = async () => {
-    setError("");
-    setMsg("");
-
+    setError(""); setMsg("");
     const aid = Number(sel);
     if (!aid) return;
 
-    // ya existe?
-    const yaEsta = (turno.alumnos || []).some((x) => x.id_alumno === aid);
-    if (yaEsta) {
-      setError("Ese alumno ya está agregado a este turno");
-      return;
-    }
+    const yaEsta = turnoAlumnos.some(x => Number(x.id_alumno) === aid);
+    if (yaEsta) { setError("Ese alumno ya está agregado a este turno"); return; }
 
-    // si es individual, máximo 1 (validación de UX, el backend también valida)
     const esIndividual = getTipoStr(turno).toLowerCase() === "individual";
-    if (esIndividual && (turno.alumnos?.length ?? 0) >= 1) {
+    if (esIndividual && turnoAlumnos.length >= 1) {
       setError("Los turnos individuales solo admiten un alumno");
       return;
     }
 
     try {
-      await asignarAlumnos(id, [aid]);
+      await asignarAlumnos(id, [aid]);   // POST /turnos/{id}/alumnos  [ids]
       await load();
       setSel("");
       setMsg("Alumno agregado");
@@ -125,10 +116,9 @@ export default function DetalleTurno() {
   };
 
   const handleQuitar = async (aid) => {
-    setError("");
-    setMsg("");
+    setError(""); setMsg("");
     try {
-      await quitarAlumnoDeTurno(id, aid);
+      await quitarAlumnoDeTurno(id, aid); // DELETE /turnos/{id}/alumnos/{alumnoId}
       await load();
       setMsg("Alumno quitado");
     } catch (e) {
@@ -138,27 +128,13 @@ export default function DetalleTurno() {
   };
 
   const handleGuardarFecha = async () => {
-    setError("");
-    setMsg("");
-
+    setError(""); setMsg("");
     try {
-      if (!fecha || !hora) {
-        setError("Fecha y hora son obligatorias");
-        return;
-      }
-
-      // Construyo un Date con la hora local seleccionada
+      if (!fecha || !hora) { setError("Fecha y hora son obligatorias"); return; }
       const local = new Date(`${fecha}T${hora}:00`);
-      if (Number.isNaN(local.getTime())) {
-        setError("Fecha u hora inválida");
-        return;
-      }
-
-      // Envío al backend en ISO UTC (Z). OffsetDateTime lo acepta perfecto.
-      const isoUTC = local.toISOString();
-
+      if (Number.isNaN(local.getTime())) { setError("Fecha u hora inválida"); return; }
       setSavingFecha(true);
-      await actualizarFechaTurno(id, isoUTC); // backend espera un ISO string
+      await actualizarFechaTurno(id, local.toISOString());
       await load();
       toast({ title: "Fecha actualizada", status: "success", duration: 2000 });
     } catch (e) {
@@ -178,50 +154,25 @@ export default function DetalleTurno() {
   return (
     <Container maxW="3xl" py={8}>
       <HStack justify="space-between" mb={4}>
-        <Heading size="lg" color="white">
-          Detalle del turno
-        </Heading>
-        <Button
-          variant="solid"
-          onClick={() => navigate("/turnos")}
-          bg="#258d19"
-          color="white"
-        >
-          Volver
-        </Button>
+        <Heading size="lg" color="white">Detalle del turno</Heading>
+        <Button onClick={() => navigate("/turnos")} bg="#258d19" color="white">Volver</Button>
       </HStack>
 
       <Box p={5} borderWidth="1px" borderRadius="lg" bg="white" mb={5}>
         <VStack align="start" spacing={2} mb={4}>
-          <Text>
-            <b>Tipo:</b> {tipoStr || "—"}
-          </Text>
-          <Text>
-            <b>Entrenador:</b> {entrenadorNombre || "—"}
-          </Text>
-          <Text>
-            <b>Fecha actual:</b>{" "}
-            {d.toLocaleDateString()}{" "}
-            {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </Text>
+          <Text><b>Tipo:</b> {tipoStr || "—"}</Text>
+          <Text><b>Entrenador:</b> {entrenadorNombre || "—"}</Text>
+          <Text><b>Fecha actual:</b> {d.toLocaleDateString()} {d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</Text>
         </VStack>
 
         <Stack direction={{ base: "column", md: "row" }} spacing={4} mb={4}>
           <FormControl>
             <FormLabel>Nueva fecha</FormLabel>
-            <Input
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-            />
+            <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
           </FormControl>
           <FormControl>
             <FormLabel>Nueva hora</FormLabel>
-            <Input
-              type="time"
-              value={hora}
-              onChange={(e) => setHora(e.target.value)}
-            />
+            <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
           </FormControl>
           <FormControl alignSelf="end">
             <Button onClick={handleGuardarFecha} isLoading={savingFecha} bg="#258d19" color="white">
@@ -232,15 +183,11 @@ export default function DetalleTurno() {
 
         <Divider my={4} />
 
-        <Text fontWeight="semibold" mb={2}>
-          Alumnos
-        </Text>
+        <Text fontWeight="semibold" mb={2}>Alumnos</Text>
         <HStack spacing={2} wrap="wrap" mb={3}>
-          {(turno.alumnos || []).map((a) => (
+          {turnoAlumnos.map((a) => (
             <Tag key={a.id_alumno} size="md" borderRadius="full" colorScheme="teal">
-              <TagLabel>
-                {`${a.nombre ?? ""}${a.apellido ? " " + a.apellido : ""}`}
-              </TagLabel>
+              <TagLabel>{`${a.nombre ?? ""}${a.apellido ? " " + a.apellido : ""}`}</TagLabel>
               <TagCloseButton onClick={() => handleQuitar(a.id_alumno)} />
             </Tag>
           ))}
@@ -253,7 +200,7 @@ export default function DetalleTurno() {
             onChange={(e) => setSel(e.target.value)}
             w="280px"
           >
-            {alumnos.map((a) => (
+            {poolAlumnos.map((a) => (
               <option key={a.id_alumno} value={a.id_alumno}>
                 {`${a.nombre ?? ""} ${a.apellido ?? ""}`.trim()}
               </option>
@@ -262,18 +209,8 @@ export default function DetalleTurno() {
           <Button onClick={handleAgregar} bg="#258d19" color="white">Agregar</Button>
         </HStack>
 
-        {error && (
-          <Alert status="error" mt={4}>
-            <AlertIcon />
-            {error}
-          </Alert>
-        )}
-        {msg && (
-          <Alert status="success" mt={4}>
-            <AlertIcon />
-            {msg}
-          </Alert>
-        )}
+        {error && <Alert status="error" mt={4}><AlertIcon />{error}</Alert>}
+        {msg && <Alert status="success" mt={4}><AlertIcon />{msg}</Alert>}
       </Box>
     </Container>
   );

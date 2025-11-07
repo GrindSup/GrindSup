@@ -9,18 +9,18 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "rutina_ejercicios")
-@IdClass(RutinaEjercicioId.class) 
-@EntityListeners(AuditingEntityListener.class) 
+@IdClass(RutinaEjercicioId.class)
+@EntityListeners(AuditingEntityListener.class)
 public class RutinaEjercicio {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "id_ejercicio") 
+    @JoinColumn(name = "id_ejercicio")
     private Ejercicio ejercicio;
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "id_rutina") 
+    @JoinColumn(name = "id_rutina")
     private Rutina rutina;
 
     private Integer repeticiones;
@@ -31,14 +31,14 @@ public class RutinaEjercicio {
     @JoinColumn(name = "id_estado")
     private Estado estado;
 
-    @CreationTimestamp 
-    @Column(name = "created_at", nullable = false, updatable = false) 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime created_at;
 
-    @UpdateTimestamp 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updated_at;
-    
+
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
@@ -120,9 +120,19 @@ public class RutinaEjercicio {
         this.deleted_at = deleted_at;
     }
 
-    public String getObservaciones() { return observaciones; }
-    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+    public String getObservaciones() {
+        return observaciones;
+    }
 
-    public String getGrupo_muscular() { return grupo_muscular; }
-    public void setGrupo_muscular(String grupo_muscular) { this.grupo_muscular = grupo_muscular; }
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public String getGrupo_muscular() {
+        return grupo_muscular;
+    }
+
+    public void setGrupo_muscular(String grupo_muscular) {
+        this.grupo_muscular = grupo_muscular;
+    }
 }

@@ -33,7 +33,7 @@ export default function RegistrarTurno() {
         const [alRes, ttRes] = await Promise.all([listarAlumnos(id), listarTiposTurno()]);
         setAlumnos(alRes.data || []);
         setTipos(ttRes.data || []);
-      } catch (e) {
+      } catch {
         setError("No se pudieron cargar alumnos/tipos de turno");
       }
     })();
@@ -78,15 +78,26 @@ export default function RegistrarTurno() {
     if (esIndividual && seleccionados.length !== 1) return setError("En turno individual seleccioná 1 alumno");
     if (esGrupal && seleccionados.length < 2) return setError("En turno grupal agregá al menos 2 alumnos");
 
-    const payload = { entrenadorId, tipoTurnoId: Number(tipo), fecha: fechaHora.toISOString(), estadoId: 3 };
+    const payload = {
+      entrenadorId,
+      tipoTurnoId: Number(tipo),
+      fecha: fechaHora.toISOString(),
+      estadoId: 3,
+    };
 
     try {
       setLoading(true);
-      const { data: turnoCreado } = await crearTurno(payload);
+
+      // userId requerido por el backend (para Google Calendar)
+      const userId = localStorage.getItem("userId") || "primary";
+
+      const { data: turnoCreado } = await crearTurno(payload, { userId });
       const turnoId = turnoCreado?.id_turno;
       if (!turnoId) throw new Error("El backend no devolvió id_turno");
 
-      if (seleccionados.length) await asignarAlumnos(turnoId, seleccionados);
+      if (seleccionados.length) {
+        await asignarAlumnos(turnoId, seleccionados);
+      }
 
       setMsg("Turno registrado con éxito ✅");
       setAlumnoAAgregar(""); setSeleccionados([]); setFecha(""); setHora(""); setTipo("");
@@ -98,11 +109,8 @@ export default function RegistrarTurno() {
   };
 
   const goBack = () => {
-    if (window.history.state?.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate("/turnos"); // fallback si no hay historial
-    }
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate("/turnos");
   };
 
   return (
@@ -110,11 +118,13 @@ export default function RegistrarTurno() {
       {!entrenadorId && (
         <Alert status="warning" mb={6}>
           <AlertIcon />
-          Tu usuario no está vinculado a un entrenador. Guardalo en localStorage: <code>localStorage.setItem("entrenadorId","1")</code>
+          Tu usuario no está vinculado a un entrenador. Guardalo en localStorage:{" "}
+          <code>localStorage.setItem("entrenadorId","1")</code>
         </Alert>
       )}
 
-      <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white" opacity={entrenadorId ? 1 : 0.6} pointerEvents={entrenadorId ? "auto" : "none"}>
+      <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white"
+           opacity={entrenadorId ? 1 : 0.6} pointerEvents={entrenadorId ? "auto" : "none"}>
         <Heading size="lg" textAlign="center" mb={6} color="gray.900">Registrar Turno</Heading>
 
         <form onSubmit={handleSubmit}>
@@ -140,23 +150,35 @@ export default function RegistrarTurno() {
               <Box>
                 <Text fontWeight="semibold" mb={2}>{esIndividual ? "Alumno" : "Alumnos suscriptos al turno"}</Text>
                 <HStack spacing={3} mb={3}>
-                  <Select placeholder={esIndividual ? "Seleccione un alumno" : "Buscar/seleccionar alumno"} value={alumnoAAgregar} onChange={(e)=>setAlumnoAAgregar(e.target.value)}>
-                    {alumnos.map(a => <option key={a.id_alumno} value={a.id_alumno}>{nombreCompleto(a)}</option>)}
+                  <Select
+                    placeholder={esIndividual ? "Seleccione un alumno" : "Buscar/seleccionar alumno"}
+                    value={alumnoAAgregar}
+                    onChange={(e)=>setAlumnoAAgregar(e.target.value)}
+                  >
+                    {alumnos.map(a => (
+                      <option key={a.id_alumno} value={a.id_alumno}>
+                        {nombreCompleto(a)}
+                      </option>
+                    ))}
                   </Select>
                   <Button onClick={handleAgregarAlumno} variant="solid" bg="#258d19" color="white">+ Agregar</Button>
                 </HStack>
 
                 {seleccionados.length
-                  ? <HStack spacing={2} wrap="wrap">{seleccionados.map(id => {
-                      const a = findAlumno(id);
-                      return (
-                        <Tag key={id} size="md" borderRadius="full" variant="subtle" colorScheme="teal">
-                          <TagLabel>{a ? nombreCompleto(a) : `ID ${id}`}</TagLabel>
-                          <TagCloseButton onClick={() => handleQuitarAlumno(id)} />
-                        </Tag>
-                      );
-                    })}</HStack>
-                  : <Text fontSize="sm" color="gray.500">{esIndividual ? "Seleccioná 1 alumno." : "Agregá al menos 2."}</Text>}
+                  ? <HStack spacing={2} wrap="wrap">
+                      {seleccionados.map(id => {
+                        const a = findAlumno(id);
+                        return (
+                          <Tag key={id} size="md" borderRadius="full" variant="subtle" colorScheme="teal">
+                            <TagLabel>{a ? nombreCompleto(a) : `ID ${id}`}</TagLabel>
+                            <TagCloseButton onClick={() => handleQuitarAlumno(id)} />
+                          </Tag>
+                        );
+                      })}
+                    </HStack>
+                  : <Text fontSize="sm" color="gray.500">
+                      {esIndividual ? "Seleccioná 1 alumno." : "Agregá al menos 2."}
+                    </Text>}
                 {esGrupal && (<><Divider my={4} /><Text fontSize="sm" color="gray.600">Podés sumar más luego desde el detalle.</Text></>)}
               </Box>
             )}
@@ -164,7 +186,6 @@ export default function RegistrarTurno() {
             {error && <Alert status="error"><AlertIcon/>{error}</Alert>}
             {msg && <Alert status="success"><AlertIcon/>{msg}</Alert>}
 
-            {/* Botones Guardar / Cancelar alineados */}
             <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={4} justify="center">
               <Button type="submit" isLoading={loading} loadingText="Guardando..." px={10} bg="#258d19" color="white">
                 Guardar turno
