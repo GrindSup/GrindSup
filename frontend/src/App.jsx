@@ -24,6 +24,8 @@ import ResetPassword from "./pages/Usuarios/ResetPassword";
 
 import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
 
+import Contacto from "./components/Contacto.jsx";
+
 // ✅ Planes
 import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
 import RegistrarPlan from "./pages/Planes/RegistrarPlan.jsx";
@@ -144,6 +146,9 @@ export default function App() {
                 <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
                 <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
                 <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
+
+                {/* Contacto */}
+                <Route path="/contacto" element={<Contacto/>}/>
 
                 {/* Alias dashboard */}
                 <Route path="/dashboard" element={guard(<InicioDashboard />)} />
