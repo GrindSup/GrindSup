@@ -1,3 +1,4 @@
+//src\services\entrenadores.servicio.js
 import axiosInstance from "../config/axios.config";
 
 /* =================================================================================
@@ -6,7 +7,7 @@ import axiosInstance from "../config/axios.config";
 function adaptEntrenador(raw) {
   if (!raw || typeof raw !== "object") return null;
 
-  const id = raw.id_entrenador ?? raw.id ?? null;
+  const id = raw.idEntrenador ?? raw.id ?? null;
 
   const usuario = raw.usuario
     ? {
@@ -26,7 +27,7 @@ function adaptEntrenador(raw) {
 
   return {
     id,
-    id_entrenador: id,
+    idEntrenador: id,
     experiencia: raw.experiencia ?? "",
     telefono: raw.telefono ?? "",
     usuario,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem, Heading, Input, Stack, Text, FormControl, FormLabel, FormErrorMessage, useToast } from "@chakra-ui/react";
+import { Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem, Heading, Input, Stack, Text, FormControl, FormLabel, FormErrorMessage, useToast, Select } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -14,6 +14,7 @@ export default function RegistrarEntrenadores() {
   const [entrenador, setEntrenador] = useState({
     nombre: "",
     apellido: "",
+    codigoArea: "+54",   // <- código de área por defecto
     telefono: "",
     experiencia: "",
     correo: "",
@@ -24,7 +25,7 @@ export default function RegistrarEntrenadores() {
     if (!entrenador.nombre.trim()) e.nombre = "El nombre es obligatorio";
     if (!entrenador.apellido.trim()) e.apellido = "El apellido es obligatorio";
     if (!entrenador.telefono.trim()) e.telefono = "El teléfono es obligatorio";
-    else if (!/^\+?\d+$/.test(entrenador.telefono)) e.telefono = "El teléfono debe ser numérico (puede incluir +)";
+    else if (!/^[0-9]+$/.test(entrenador.telefono)) e.telefono = "El teléfono debe contener solo números";
     if (!entrenador.correo.trim()) e.correo = "El correo es obligatorio";
     return e;
   }, [entrenador]);
@@ -44,7 +45,7 @@ export default function RegistrarEntrenadores() {
     setSubmitting(true);
     try {
       const payload = {
-        telefono: entrenador.telefono.trim(),
+        telefono: entrenador.codigoArea + entrenador.telefono, // <- concatenamos código + número
         experiencia: entrenador.experiencia.trim(),
         usuario: {
           nombre: entrenador.nombre.trim(),
@@ -89,14 +90,29 @@ export default function RegistrarEntrenadores() {
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
                     <FormLabel>Teléfono</FormLabel>
-                    <Input name="telefono" value={entrenador.telefono} onChange={handleChange} placeholder="+541112345678" />
+                    <Stack direction="row" spacing={2}>
+                      <Select
+                        name="codigoArea"
+                        value={entrenador.codigoArea}
+                        onChange={handleChange}
+                        maxW="100px"
+                      >
+                        <option value="+54">+54</option>
+                      </Select>
+                      <Input
+                        name="telefono"
+                        value={entrenador.telefono}
+                        onChange={handleChange}
+                        placeholder="1112345678"
+                      />
+                    </Stack>
                     {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <FormControl isRequired isInvalid={submitted && !!errors.correo}>
                     <FormLabel>Correo</FormLabel>
-                    <Input name="correo" value={entrenador.correo} onChange={handleChange} placeholder="correo@ejemplo.com" />
+                    <Input name="correo" value={entrenador.correo} onChange={handleChange} placeholder="*****@gmail.com" />
                     {submitted && <FormErrorMessage>{errors.correo}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>

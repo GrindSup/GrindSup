@@ -1,3 +1,4 @@
+//src\pages\Entrenadores\PerfilEntrenador.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Button, Card, CardHeader, CardBody, Heading, Text, Stack, Badge, Spinner, Flex } from "@chakra-ui/react";
@@ -54,7 +55,7 @@ export default function PerfilEntrenador() {
             <Text><strong>Teléfono:</strong> {entrenador.telefono || "—"}</Text>
             <Text><strong>Experiencia:</strong> {entrenador.experiencia || "Sin especificar"}</Text>
           </Stack>
-          <Button mt={6} leftIcon={<EditIcon />} bg="#258d19" color="white" _hover={{ bg: "green.500" }} onClick={() => navigate(`/entrenadores/editar/${entrenador.id_entrenador}`)}>Editar</Button>
+          <Button mt={6} leftIcon={<EditIcon />} bg="#258d19" color="white" _hover={{ bg: "green.500" }} onClick={() => navigate(`/entrenadores/editar/${entrenador.idEntrenador}`)}>Editar</Button>
         </CardBody>
       </Card>
     </Box>

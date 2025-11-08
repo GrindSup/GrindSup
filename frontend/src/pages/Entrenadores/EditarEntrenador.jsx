@@ -1,3 +1,4 @@
+// src/pages/Entrenadores/EditarEntrenador.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container,
@@ -20,11 +21,12 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
   const [entrenador, setEntrenador] = useState({
     nombre: "",
     apellido: "",
-    telefono: "",
-    experiencia: "",
     correo: "",
+    telefono: "",
+    experiencia: ""
   });
 
+  // Cargar entrenador
   useEffect(() => {
     const fetchEntrenador = async () => {
       try {
@@ -33,11 +35,9 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
           idEntrenador: data.idEntrenador,
           nombre: data.usuario?.nombre || "",
           apellido: data.usuario?.apellido || "",
-          telefono: data.telefono || "",
-          experiencia: data.experiencia || "",
           correo: data.usuario?.correo || "",
-          id_usuario: data.usuario?.id_usuario,
-          id_estado: data.estado?.id_estado,
+          telefono: data.telefono || "",
+          experiencia: data.experiencia || ""
         });
       } catch (err) {
         toast({
@@ -48,13 +48,16 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
         });
       }
     };
+
     fetchEntrenador();
   }, [idEntrenador, apiBaseUrl, toast]);
 
+  // Validaciones
   const errors = useMemo(() => {
     const e = {};
     if (!entrenador.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!entrenador.apellido?.trim()) e.apellido = "El apellido es obligatorio";
+    if (!entrenador.correo?.trim()) e.correo = "El correo es obligatorio";
     if (entrenador.telefono && !/^\+?\d+$/.test(entrenador.telefono))
       e.telefono = "El teléfono debe ser numérico (puede incluir +)";
     return e;
@@ -64,12 +67,13 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEntrenador((prev) => ({ ...prev, [name]: value }));
+    setEntrenador(prev => ({ ...prev, [name]: value }));
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
+
     if (!isValid) {
       toast({
         status: "warning",
@@ -81,17 +85,15 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
     setSubmitting(true);
     try {
+      // Payload que coincide con el backend, sin estado
       const payload = {
-        idEntrenador,
-        telefono: entrenador.telefono.trim(),
-        experiencia: entrenador.experiencia.trim(),
+        experiencia: entrenador.experiencia,
+        telefono: entrenador.telefono,
         usuario: {
-          id_usuario: entrenador.id_usuario,
-          nombre: entrenador.nombre.trim(),
-          apellido: entrenador.apellido.trim(),
-          correo: entrenador.correo.trim(),
-        },
-        estado: { id_estado: entrenador.id_estado },
+          nombre: entrenador.nombre,
+          apellido: entrenador.apellido,
+          correo: entrenador.correo
+        }
       };
 
       await axios.put(`${apiBaseUrl}/entrenadores/${idEntrenador}`, payload);
@@ -106,7 +108,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
       toast({
         status: "error",
         title: "Error al actualizar",
-        description: err.message,
+        description: err.response?.data || err.message,
         position: "top",
       });
     } finally {
@@ -131,11 +133,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
                     <FormLabel>Nombre</FormLabel>
-                    <Input
-                      name="nombre"
-                      value={entrenador.nombre}
-                      onChange={handleChange}
-                    />
+                    <Input name="nombre" value={entrenador.nombre} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.nombre}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
@@ -143,76 +141,40 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
                     <FormLabel>Apellido</FormLabel>
-                    <Input
-                      name="apellido"
-                      value={entrenador.apellido}
-                      onChange={handleChange}
-                    />
+                    <Input name="apellido" value={entrenador.apellido} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.apellido}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
 
-                <GridItem>
-                  <FormControl>
+                <GridItem colSpan={2}>
+                  <FormControl isRequired isInvalid={submitted && !!errors.correo}>
                     <FormLabel>Correo</FormLabel>
-                    <Input
-                      name="correo"
-                      value={entrenador.correo}
-                      placeholder="******@gmail.com"
-                    />
+                    <Input name="correo" value={entrenador.correo} onChange={handleChange} />
+                    {submitted && <FormErrorMessage>{errors.correo}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
 
-                <GridItem colSpan={{ base: 1, md: 2 }}>
+                <GridItem colSpan={2}>
                   <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
                     <FormLabel>Teléfono</FormLabel>
-                    <Input
-                      name="telefono"
-                      placeholder="+541112345678"
-                      value={entrenador.telefono}
-                      onChange={handleChange}
-                    />
-                    {submitted && (
-                      <FormErrorMessage>{errors.telefono}</FormErrorMessage>
-                    )}
+                    <Input name="telefono" value={entrenador.telefono} onChange={handleChange} />
+                    {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
 
-                <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl isInvalid={submitted && !!errors.experiencia}>
+                <GridItem colSpan={2}>
+                  <FormControl>
                     <FormLabel>Experiencia</FormLabel>
-                    <Input
-                      name="experiencia"
-                      placeholder="Ej: 5 años entrenando equipos juveniles"
-                      value={entrenador.experiencia}
-                      onChange={handleChange}
-                    />
-                    {submitted && (
-                      <FormErrorMessage>{errors.experiencia}</FormErrorMessage>
-                    )}
+                    <Input name="experiencia" value={entrenador.experiencia} onChange={handleChange} />
                   </FormControl>
                 </GridItem>
               </Grid>
 
-              <Stack
-                direction={{ base: "column", md: "row" }}
-                spacing={4}
-                mt={8}
-                justify="center"
-              >
-                <Button
-                  type="submit"
-                  isLoading={submitting}
-                  loadingText="Guardando"
-                  px={10}
-                  bg="#258d19"
-                  color="white"
-                >
+              <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
+                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#258d19" color="white">
                   Guardar cambios
                 </Button>
-                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>
-                  Cancelar
-                </Button>
+                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>Cancelar</Button>
               </Stack>
             </Box>
           </CardBody>

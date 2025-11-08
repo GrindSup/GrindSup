@@ -1,3 +1,4 @@
+//src\pages\Entrenadores\ListaEntrenadores.jsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -83,7 +84,7 @@ export default function ListaEntrenadores() {
       ) : (
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={5}>
           {filtered.map((e) => (
-            <Card key={e.id_entrenador} borderRadius="2xl" boxShadow="lg" bgGradient="linear(to-b, teal.50, white)" _hover={{ transform: "scale(1.02)", transition: "0.2s" }}>
+            <Card key={e.idEntrenador} borderRadius="2xl" boxShadow="lg" bgGradient="linear(to-b, teal.50, white)" _hover={{ transform: "scale(1.02)", transition: "0.2s" }}>
               <CardHeader pb={2}>
                 <Flex align="center" gap={3}>
                   <Box>
@@ -96,13 +97,13 @@ export default function ListaEntrenadores() {
               <CardBody pt={1}>
                 <Stack spacing={2} fontSize="sm" color="gray.700">
                   <Text><strong>Teléfono:</strong> {e.telefono || "—"}</Text>
-                  <Text><strong>Email:</strong> {e.usuario?.correo || e.usuario?.email || "—"}</Text>
+                  <Text><strong>Correo Electrónico:</strong> {e.usuario?.correo || e.usuario?.email || "—"}</Text>
                   <Text><strong>Experiencia:</strong> {e.experiencia || "Sin especificar"}</Text>
                 </Stack>
               </CardBody>
               <CardFooter pt={0}>
                 <HStack spacing={3} w="full" justify="flex-end">
-                  <Button size="sm" bg="#258d19" color="white" leftIcon={<EditIcon />} _hover={{ bg: "green.500" }} onClick={() => navigate(`/entrenadores/editar/${e.id_entrenador}`)}>Editar</Button>
+                  <Button size="sm" bg="#258d19" color="white" leftIcon={<EditIcon />} _hover={{ bg: "green.500" }} onClick={() => navigate(`/entrenadores/editar/${e.idEntrenador}`)}>Editar</Button>
                   <Button size="sm" bg="red.600" color="white" _hover={{ bg: "red.700" }} leftIcon={<DeleteIcon />} onClick={() => openDeleteDialog(e)}>Eliminar</Button>
                 </HStack>
               </CardFooter>

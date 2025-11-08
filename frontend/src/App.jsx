@@ -74,7 +74,7 @@ export default function App() {
           bgImage="url('/img/gym.png')"  // tu imagen en public/img/gym.png
           bgSize="cover"
           bgPos="center"
-          filter="bulr(30px)"
+          filter="blur(0.5px)"
           transform="scale(0.999)"
           opacity={0.55}
           borderRadius="2xl"
@@ -143,7 +143,7 @@ export default function App() {
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
                 <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
                 <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
-                <Route path="/entrenadores/perfil/:id" element={guard(<PerfilEntrenador />)} />
+                <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
 
                 {/* Alias dashboard */}
                 <Route path="/dashboard" element={guard(<InicioDashboard />)} />

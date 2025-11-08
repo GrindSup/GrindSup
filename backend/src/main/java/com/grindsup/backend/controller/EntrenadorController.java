@@ -79,36 +79,43 @@ public class EntrenadorController {
     }
 
     // -----------------------------
-    // Actualizar entrenador
+    // Actualizar entrenador y su usuario
     // -----------------------------
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
-        return entrenadorRepository.findById(id)
-                .filter(e -> e.getDeleted_at() == null)
-                .map(existing -> {
-                    existing.setExperiencia(entrenadorDetails.getExperiencia());
-                    existing.setTelefono(entrenadorDetails.getTelefono());
+    public ResponseEntity<Entrenador> updateEntrenador(
+            @PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
 
-                    // Usuario
-                    if (entrenadorDetails.getUsuario() != null) {
-                        Usuario usuario = usuarioRepository.findById(entrenadorDetails.getUsuario().getId_usuario())
-                                .orElse(null);
-                        if (usuario != null)
-                            existing.setUsuario(usuario);
-                    }
+        Entrenador entrenador = entrenadorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
 
-                    // Estado
-                    if (entrenadorDetails.getEstado() != null) {
-                        Estado estado = estadoRepository.findById(entrenadorDetails.getEstado().getIdEstado())
-                                .orElse(null);
-                        if (estado != null)
-                            existing.setEstado(estado);
-                    }
+        // Actualizar campos del entrenador
+        entrenador.setExperiencia(entrenadorDetails.getExperiencia());
+        entrenador.setTelefono(entrenadorDetails.getTelefono());
 
-                    existing.setUpdated_at(OffsetDateTime.now());
-                    return ResponseEntity.ok(entrenadorRepository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        // Actualizar estado si se envía
+        if (entrenadorDetails.getEstado() != null) {
+            Estado estadoExistente = estadoRepository.findById(entrenadorDetails.getEstado().getIdEstado())
+                    .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+            entrenador.setEstado(estadoExistente);
+        }
+
+        // Actualizar datos del usuario asociado
+        if (entrenadorDetails.getUsuario() != null) {
+            Usuario usuario = entrenador.getUsuario();
+            Usuario usuarioDetalles = entrenadorDetails.getUsuario();
+
+            if (usuarioDetalles.getNombre() != null)
+                usuario.setNombre(usuarioDetalles.getNombre());
+            if (usuarioDetalles.getApellido() != null)
+                usuario.setApellido(usuarioDetalles.getApellido());
+            if (usuarioDetalles.getCorreo() != null)
+                usuario.setCorreo(usuarioDetalles.getCorreo());
+
+            usuarioRepository.save(usuario); // guardar cambios en usuario
+        }
+
+        entrenadorRepository.save(entrenador);
+        return ResponseEntity.ok(entrenador);
     }
 
     // -----------------------------

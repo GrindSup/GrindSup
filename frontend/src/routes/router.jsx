@@ -1,3 +1,4 @@
+//src\routes\router.jsx
 import { Routes, Route } from "react-router-dom";
 
 // Tablero
@@ -23,9 +24,9 @@ import DetalleCliente from "../pages/Clientes/DetalleCliente";
 
 // Entrenadores
 import ListaEntrenadores from "../pages/Entrenadores/ListaEntrenadores";
-import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
-import EditarEntrenador from "./pages/Entrenadores/EditarEntrenador.jsx";
-import PerfilEntrenador from "./pages/Entrenadores/PerfilEntrenador.jsx";
+import RegistrarEntrenadores from "../components/RegistrarEntrenadores";
+import EditarEntrenador from "../pages/Entrenadores/EditarEntrenador";
+import PerfilEntrenador from "../pages/Entrenadores/PerfilEntrenador";
 
 // Ejercicios
 import ListaEjercicios from "../pages/Ejercicios/ListaEjercicios";
@@ -72,7 +73,7 @@ export default function AppRouter() {
       {/* Entrenadores */}
       <Route path="/entrenadores" element={<ListaEntrenadores />} />
       <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
-      <Route path="/entrenadores/perfil/:id" element={guard(<PerfilEntrenador />)} />
+      <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
       <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
       
 
