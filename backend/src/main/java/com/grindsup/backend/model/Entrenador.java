@@ -9,7 +9,8 @@ public class Entrenador {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id_entrenador;
+    @Column(name = "id_entrenador")
+    private Long idEntrenador;
 
     // 1:1 con usuarios (id_usuario único)
     @OneToOne
@@ -36,12 +37,12 @@ public class Entrenador {
     private OffsetDateTime deleted_at;
 
     // Getters y Setters
-    public Long getId_entrenador() {
-        return id_entrenador;
+    public Long getIdEntrenador() {
+        return idEntrenador;
     }
 
-    public void setId_entrenador(Long id_entrenador) {
-        this.id_entrenador = id_entrenador;
+    public void setIdEntrenador(Long id_entrenador) {
+        this.idEntrenador = id_entrenador;
     }
 
     public Usuario getUsuario() {

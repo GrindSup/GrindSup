@@ -3,6 +3,8 @@ package com.grindsup.backend.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.grindsup.backend.DTO.ReporteProgresoPlanesDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
@@ -18,6 +20,7 @@ import net.sf.dynamicreports.report.exception.DRException;
 import net.sf.jasperreports.engine.JRDataSource;
 
 import static net.sf.dynamicreports.report.builder.DynamicReports.*;
+@Service
 public class DynamicsReportService {
 
     @Autowired
@@ -32,10 +35,10 @@ public class DynamicsReportService {
             DRDataSource dataSource = new DRDataSource("alumno", "total", "completas", "incompletas", "enProceso", "porcentaje");
             dataSource.add(
                 datos.getNombreAlumno(),
-                datos.getCompletadas() + datos.getEnProceso() + datos.getIncompletas(),
-                datos.getCompletadas(),
-                datos.getIncompletas(),
-                datos.getEnProceso(),
+                (int) (datos.getCompletadas() + datos.getEnProceso() + datos.getIncompletas()),
+                (int) datos.getCompletadas(),
+                (int) datos.getIncompletas(),
+                (int) datos.getEnProceso(),
                 String.format("%.2f%%", datos.getPorcentajeCumplimiento())
             );
 
@@ -61,7 +64,12 @@ public class DynamicsReportService {
             return outputStream.toByteArray();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
+            Throwable cause = e.getCause();
+            while (cause != null) {
+                cause.printStackTrace(System.out);
+                cause = cause.getCause();
+            }
             throw new RuntimeException("Error generando el reporte PDF", e);
         }
     }

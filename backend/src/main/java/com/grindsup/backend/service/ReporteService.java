@@ -24,9 +24,9 @@ public class ReporteService {
 
         float total = planEntrenamientoRepository.findByAlumno_IdAlumno(idAlumno).size();
         //revisar nomrbes
-        float completadas = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_Nombre(idAlumno, "Completada").size();
-        float incompletas = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_Nombre(idAlumno, "Incompleta").size();
-        float enProceso = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_Nombre(idAlumno, "En Proceso").size();
+        float completadas = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_nombre(idAlumno, "Completada").size();
+        float incompletas = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_nombre(idAlumno, "Incompleta").size();
+        float enProceso = planEntrenamientoRepository.findByAlumno_IdAlumnoAndEstado_nombre(idAlumno, "En Proceso").size();
 
         float porcentaje = (total > 0) ? ((float) completadas / total) * 100 : 0;
 

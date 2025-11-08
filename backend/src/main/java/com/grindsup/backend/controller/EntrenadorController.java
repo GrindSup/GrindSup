@@ -41,7 +41,7 @@ public class EntrenadorController {
             entrenador.setUsuario(usuario);
         }
         if (entrenador.getEstado() != null) {
-            Estado estado = estadoRepository.findById(entrenador.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(entrenador.getEstado().getIdEstado()).orElse(null);
             entrenador.setEstado(estado);
         }
         return entrenadorRepository.save(entrenador);
@@ -58,7 +58,7 @@ public class EntrenadorController {
                 existing.setUsuario(usuario);
             }
             if (entrenador.getEstado() != null) {
-                Estado estado = estadoRepository.findById(entrenador.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(entrenador.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
             return entrenadorRepository.save(existing);

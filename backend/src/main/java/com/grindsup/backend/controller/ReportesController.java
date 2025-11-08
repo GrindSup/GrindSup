@@ -22,7 +22,7 @@ public class ReportesController {
     @Autowired
     private DynamicsReportService dynamicsReportService;
 
-    @GetMapping("/rutinas/alumno/{idAlumno}")
+    @GetMapping("/planes/alumno/{idAlumno}")
     public ResponseEntity<ReporteProgresoPlanesDTO> obtenerReporteProgresoPlanesAlumno(@PathVariable Long idAlumno) {
         ReporteProgresoPlanesDTO reporte = reporteService.generarReporteProgresoPlanesDeAlumno(idAlumno);
         return ResponseEntity.ok(reporte);

@@ -71,7 +71,7 @@ public class RutinaController {
             rutina.setPlan(plan);
         }
         if (rutina.getEstado() != null) {
-            Estado estado = estadoRepository.findById(rutina.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(rutina.getEstado().getIdEstado()).orElse(null);
             rutina.setEstado(estado);
         }
         return rutinaRepository.save(rutina);
@@ -87,7 +87,7 @@ public class RutinaController {
                 existing.setPlan(plan);
             }
             if (rutina.getEstado() != null) {
-                Estado estado = estadoRepository.findById(rutina.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(rutina.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
             return rutinaRepository.save(existing);

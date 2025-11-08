@@ -92,32 +92,53 @@
 		    <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
-		<dependency>
+		<!-- Mas abajo esta la dependencia mas actualizada de openpdf -->
+		<!-- <dependency>
 			<groupId>com.github.librepdf</groupId>
 			<artifactId>openpdf</artifactId>
 			<version>1.3.30</version>
-		</dependency>
+		</dependency> -->
+
 		<!-- DymanicReports -->
+<!-- DynamicReports principal -->
 		<dependency>
 			<groupId>net.sourceforge.dynamicreports</groupId>
 			<artifactId>dynamicreports-core</artifactId>
-			<version>5.0.0</version>
+			<version>6.20.1</version>
 		</dependency>
 
+		<!-- JasperReports motor -->
 		<dependency>
-			<groupId>net.sourceforge.dynamicreports</groupId>
-			<artifactId>dynamicreports-adhoc</artifactId>
-			<version>5.0.0</version>
-		</dependency>  
-
-		<dependency>
-			<groupId>net.sourceforge.dynamicreports</groupId>
-			<artifactId>dynamicreports-googlecharts</artifactId>
-			<version>5.0.0</version>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+			<version>6.21.3</version>
 		</dependency>
+
+		<!-- Soporte para PDF -->
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>1.3.39</version>
+		</dependency>
+
+		<!-- JAXB para Java 11+ -->
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+		<!-- <repositories>
+    		<repository>
+        		<id>jaspersoft-repo</id>
+        		<url>https://jaspersoft.jfrog.io/artifactory/third-party-ce-artifacts/</url>
+    		</repository>
+		</repositories> -->
 		<!-- DymanicReports -->
-
 	</dependencies>
 
 	<build>

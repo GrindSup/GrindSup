@@ -32,7 +32,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
       select a
       from Alumno a
       where a.deletedAt is null
-        and a.entrenador.id_entrenador = :entrenadorId
+        and a.entrenador.idEntrenador = :entrenadorId
       """)
   List<Alumno> findActivosByEntrenador(@Param("entrenadorId") Long entrenadorId);
 
@@ -43,7 +43,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
       SELECT DATE_FORMAT(a.created_at, '%Y-%m') AS month,
              COUNT(*) AS cnt
       FROM alumnos a
-      WHERE a.id_entrenador = :entrenadorId
+      WHERE a.idEntrenador = :entrenadorId
         AND a.created_at BETWEEN :from AND :to
       GROUP BY month
       ORDER BY month
@@ -60,7 +60,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
       SELECT DATE_FORMAT(COALESCE(a.deleted_at, a.updated_at), '%Y-%m') AS month,
              COUNT(*) AS cnt
       FROM alumnos a
-      WHERE a.id_entrenador = :entrenadorId
+      WHERE a.idEntrenador = :entrenadorId
         AND (
               (a.deleted_at IS NOT NULL AND a.deleted_at BETWEEN :from AND :to)
               OR (a.id_estado = 2 AND a.updated_at BETWEEN :from AND :to)
@@ -78,7 +78,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
   @Query(value = """
       SELECT COUNT(*)
       FROM alumnos a
-      WHERE a.id_entrenador = :entrenadorId
+      WHERE a.idEntrenador = :entrenadorId
         AND a.created_at < :corteExclusivo
         AND (a.deleted_at IS NULL OR a.deleted_at >= :corteExclusivo)
       """, nativeQuery = true)
@@ -91,7 +91,7 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
 @Query(value = """
     SELECT COUNT(*)
     FROM alumnos a
-    WHERE a.id_entrenador = :entrenadorId
+    WHERE a.idEntrenador = :entrenadorId
       AND a.created_at <= :fecha
       AND (a.deleted_at IS NULL OR a.deleted_at > :fecha)
     """, nativeQuery = true)

@@ -78,7 +78,7 @@ public class PlanEntrenamientoController {
                 existing.setAlumno(alumno);
             }
             if (plan.getEstado() != null) {
-                Estado estado = estadoRepository.findById(plan.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(plan.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
 
