@@ -7,30 +7,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import BotonVolver from "../../components/BotonVolver";
 import rutinasService from "../../services/rutinas.servicio"; 
 
-function calcDurationSecs(items) {
-  if (!Array.isArray(items)) return 0;
-  let total = 0;
-  for (const it of items) {
-    const series = Number(it.series ?? 0);
-    const reps = Number(it.repeticiones ?? 0);
-    const rest = Number(it.descanso_segundos ?? it.descansoSegundos ?? 0);
-    total += series * (reps * 2 + rest);
-  }
-  return total;
-}
-function humanizeSecs(s) {
-  if (!s || s <= 0) return "—";
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    const mm = m % 60;
-    return `≈ ${h}h ${mm}m`;
-  }
-  return `≈ ${m}m ${r}s`;
-}
-
-
 export default function DetalleRutina() {
   const params = useParams();
   const toast = useToast();
@@ -68,7 +44,7 @@ export default function DetalleRutina() {
 
         setRutina({
           id_rutina: r?.id_rutina ?? r?.id ?? Number(idRutina),
-          nombre: r?.nombre ?? `Rutina #${idRutina}`,
+          nombre: r?.nombre ?? `Rutina N°${idRutina}`,
           descripcion: r?.descripcion ?? "",
         });
         
@@ -86,8 +62,6 @@ export default function DetalleRutina() {
       }
     })();
   }, [idPlan, idRutina, toast]); 
-
-  const totalSecs = useMemo(() => calcDurationSecs(ejercicios), [ejercicios]);
 
   const goToEdit = () => {
     if (idPlan) {
@@ -115,7 +89,6 @@ return (
         </HStack>
 
         <HStack>
-          <Tag colorScheme="teal">Duración estimada: {humanizeSecs(totalSecs)}</Tag>
           <Button
             size="sm"
             onClick={goToEdit} 
@@ -139,7 +112,7 @@ return (
               <Th>Ejercicio</Th>
               <Th isNumeric>Series</Th>
               <Th isNumeric>Reps</Th>
-              <Th isNumeric>Descanso (seg)</Th>
+              <Th>Observaciones</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -160,7 +133,7 @@ return (
                   <Td>{(re?.ejercicio?.nombre ?? re?.nombre) || `#${re?.ejercicio?.id_ejercicio ?? re?.id_ejercicio ?? ""}`}</Td>
                   <Td isNumeric>{re.series ?? "-"}</Td>
                   <Td isNumeric>{re.repeticiones ?? "-"}</Td>
-                  <Td isNumeric>{re.descanso_segundos ?? re.descansoSegundos ?? "-"}</Td>
+                  <Td>{re.observaciones}</Td>
                 </Tr>
               );
             })}

@@ -170,7 +170,6 @@ public class PlanEntrenamientoController {
                 // ... (seteo de series, reps, etc. sin cambios) ...
                 re.setSeries(dto.getSeries());
                 re.setRepeticiones(dto.getRepeticiones());
-                re.setDescanso_segundos(dto.getDescansoSegundos());
                 re.setObservaciones(dto.getObservaciones());
                 re.setEstado(estadoRutina);
                 re.setCreated_at(OffsetDateTime.now());

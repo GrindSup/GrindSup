@@ -31,8 +31,8 @@ public class RutinaService {
     private EntityManager entityManager;
 
     public RutinaService(RutinaRepository rutinaRepository,
-                         RutinaEjercicioRepository rutinaEjercicioRepository,
-                         EjercicioRepository ejercicioRepository) {
+            RutinaEjercicioRepository rutinaEjercicioRepository,
+            EjercicioRepository ejercicioRepository) {
         this.rutinaRepository = rutinaRepository;
         this.rutinaEjercicioRepository = rutinaEjercicioRepository;
         this.ejercicioRepository = ejercicioRepository;
@@ -51,7 +51,7 @@ public class RutinaService {
 
         entityManager.flush();
         entityManager.clear();
-        
+
         Rutina rutinaRef = rutinaRepository.findById(idRutina)
                 .orElseThrow(() -> new EntityNotFoundException("Rutina no encontrada post-clear: " + idRutina));
 
@@ -61,7 +61,8 @@ public class RutinaService {
             for (RutinaEjercicioRequestDTO ejDto : dto.getEjercicios()) {
 
                 Ejercicio ejercicio = ejercicioRepository.findById(ejDto.getIdEjercicio())
-                        .orElseThrow(() -> new EntityNotFoundException("Ejercicio no encontrado con id: " + ejDto.getIdEjercicio()));
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Ejercicio no encontrado con id: " + ejDto.getIdEjercicio()));
 
                 RutinaEjercicio nuevoItem = new RutinaEjercicio();
 
@@ -69,7 +70,8 @@ public class RutinaService {
                 nuevoItem.setEjercicio(ejercicio);
                 nuevoItem.setSeries(ejDto.getSeries());
                 nuevoItem.setRepeticiones(ejDto.getRepeticiones());
-                nuevoItem.setDescanso_segundos(ejDto.getDescansoSegundos());
+                nuevoItem.setGrupo_muscular(ejDto.getGrupoMuscular());
+                nuevoItem.setObservaciones(ejDto.getGrupoMuscular());
 
                 nuevosEjercicios.add(nuevoItem);
             }
@@ -100,7 +102,7 @@ public class RutinaService {
     public void softDeleteFromPlan(Long idPlan, Long idRutina) {
         Rutina r = rutinaRepository.findById(idRutina)
                 .orElseThrow(() -> new IllegalArgumentException("Rutina no encontrada"));
-        
+
         if (r.getPlan() == null || !r.getPlan().getId_plan().equals(idPlan)) {
             throw new IllegalArgumentException("La rutina no pertenece al plan indicado");
         }

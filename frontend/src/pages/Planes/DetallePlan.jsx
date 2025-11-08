@@ -14,23 +14,6 @@ import axiosInstance from "../../config/axios.config";
 import BotonVolver from "../../components/BotonVolver";
 
 const fmtFecha = (d) => (d ? String(d).slice(0, 10) : "—");
-const calcRutinaDurationSecs = (detalle) => {
-  if (!detalle?.ejercicios || !Array.isArray(detalle.ejercicios)) return 0;
-  let total = 0;
-  for (const it of detalle.ejercicios) {
-    const series = Number(it.series ?? 0);
-    const reps = Number(it.repeticiones ?? 0);
-    const rest = Number(it.descanso_segundos ?? 0);
-    total += series * (reps * 2 + rest);
-  }
-  return total;
-};
-const humanizeSecs = (s) => {
-  if (!s || s <= 0) return "—";
-  const m = Math.floor(s / 60), r = s % 60;
-  if (m >= 60) return `≈ ${Math.floor(m / 60)}h ${m % 60}m`;
-  return `≈ ${m}m ${r}s`;
-};
 
 export default function DetallePlan() {
   const { idPlan } = useParams();
@@ -196,7 +179,6 @@ export default function DetallePlan() {
               {rutinas.map((r) => {
                 const idRutina = r.id_rutina ?? r.id;
                 const det = detalles[idRutina];
-                const secs = det ? calcRutinaDurationSecs(det) : 0;
                 return (
                   <AccordionItem key={idRutina} bg="white" borderRadius="xl" mb={3} boxShadow="sm" overflow="hidden">
                     <>
@@ -204,15 +186,6 @@ export default function DetallePlan() {
                         <AccordionButton px={5} onClick={() => onExpand(idRutina)}>
                           <Box as="span" flex="1" textAlign="left" py={2}>
                             <Heading size="sm" color="gray.900">{r.nombre || `Rutina #${idRutina}`}</Heading>
-                            <HStack mt={1} gap={3}>
-                              {r.dificultad && <Badge colorScheme="purple">{r.dificultad}</Badge>}
-                              {/* ✅ Duración SIEMPRE visible */}
-                              <HStack><Icon as={MdTimer} />
-                                <Text fontSize="sm">
-                                  {det ? humanizeSecs(secs) : (cargandoDetalles ? "calculando…" : "—")}
-                                </Text>
-                              </HStack>
-                            </HStack>
                           </Box>
                           <AccordionIcon />
                         </AccordionButton>
@@ -235,7 +208,7 @@ export default function DetallePlan() {
                               <Box key={idx} p={3} borderRadius="md" border="1px solid" borderColor="gray.200">
                                 <Text fontWeight="semibold">{it?.ejercicio?.nombre ?? it?.ejercicio?.id ?? "Ejercicio"}</Text>
                                 <Text fontSize="sm" color="gray.600">
-                                  Series: {it.series} · Reps: {it.repeticiones} · Descanso: {it.descanso_segundos}min
+                                  Series: {it.series} · Reps: {it.repeticiones}
                                 </Text>
                               </Box>
                             ))}

@@ -4,18 +4,47 @@ public class RutinaEjercicioRequestDTO {
     private Long idEjercicio;
     private Integer series;
     private Integer repeticiones;
-    private Integer descansoSegundos;
+    private String grupoMuscular;
+    private String observaciones;
 
     // Getters y Setters
-    public Long getIdEjercicio() { return idEjercicio; }
-    public void setIdEjercicio(Long idEjercicio) { this.idEjercicio = idEjercicio; }
+    public Long getIdEjercicio() {
+        return idEjercicio;
+    }
 
-    public Integer getSeries() { return series; }
-    public void setSeries(Integer series) { this.series = series; }
+    public void setIdEjercicio(Long idEjercicio) {
+        this.idEjercicio = idEjercicio;
+    }
 
-    public Integer getRepeticiones() { return repeticiones; }
-    public void setRepeticiones(Integer repeticiones) { this.repeticiones = repeticiones; }
+    public Integer getSeries() {
+        return series;
+    }
 
-    public Integer getDescansoSegundos() { return descansoSegundos; }
-    public void setDescansoSegundos(Integer descansoSegundos) { this.descansoSegundos = descansoSegundos; }
+    public void setSeries(Integer series) {
+        this.series = series;
+    }
+
+    public Integer getRepeticiones() {
+        return repeticiones;
+    }
+
+    public void setRepeticiones(Integer repeticiones) {
+        this.repeticiones = repeticiones;
+    }
+
+    public String getGrupoMuscular() {
+        return grupoMuscular;
+    }
+
+    public void setGrupoMuscular(String grupoMuscular) {
+        this.grupoMuscular = grupoMuscular;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
 }

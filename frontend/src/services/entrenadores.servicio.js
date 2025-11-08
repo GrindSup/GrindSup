@@ -1,4 +1,3 @@
-// frontend/src/services/entrenadores.service.js
 import axiosInstance from "../config/axios.config";
 
 /* =================================================================================
@@ -8,18 +7,19 @@ function adaptEntrenador(raw) {
   if (!raw || typeof raw !== "object") return null;
 
   const id = raw.id_entrenador ?? raw.id ?? null;
+
   const usuario = raw.usuario
     ? {
         id_usuario: raw.usuario.id_usuario ?? raw.usuario.id ?? null,
         nombre: raw.usuario.nombre ?? "",
         apellido: raw.usuario.apellido ?? "",
-        email: raw.usuario.email ?? "",
+        email: raw.usuario.email ?? raw.usuario.correo ?? "",
       }
     : null;
 
   const estado = raw.estado
     ? {
-        id_estado: raw.estado.id_estado ?? raw.estado.id ?? null,
+        id_estado: raw.estado.idEstado ?? raw.estado.id ?? null,
         nombre: raw.estado.nombre ?? "",
       }
     : null;
@@ -35,6 +35,9 @@ function adaptEntrenador(raw) {
   };
 }
 
+/* =================================================================================
+ * UTILS
+ * ================================================================================= */
 async function tryGet(url, config) {
   try {
     const r = await axiosInstance.get(url, config);
@@ -47,19 +50,15 @@ async function tryGet(url, config) {
 /* =================================================================================
  * LISTADOS
  * ================================================================================= */
-
-/** Lista todos los entrenadores (o por estado si se pasa estadoId) */
 async function listAll({ estadoId } = {}) {
   const params = {};
   if (estadoId) params.estadoId = estadoId;
 
-  // 1) GET /api/entrenadores?estadoId=...
   let res = await tryGet(`/api/entrenadores`, { params });
   if (res.ok && Array.isArray(res.data)) {
     return res.data.map(adaptEntrenador).filter(Boolean);
   }
 
-  // 2) Fallback: GET /api/usuarios?rol=ENTRENADOR
   res = await tryGet(`/api/usuarios`, { params: { rol: "ENTRENADOR" } });
   if (res.ok && Array.isArray(res.data)) {
     return res.data.map((u) => adaptEntrenador({ usuario: u })).filter(Boolean);
@@ -68,13 +67,10 @@ async function listAll({ estadoId } = {}) {
   return [];
 }
 
-/** Obtiene un entrenador por su ID */
 async function getById(idEntrenador) {
-  // 1) /api/entrenadores/:id
   let res = await tryGet(`/api/entrenadores/${idEntrenador}`);
   if (res.ok && res.data) return adaptEntrenador(res.data);
 
-  // 2) /api/entrenadores?id=...
   res = await tryGet(`/api/entrenadores`, { params: { id: idEntrenador } });
   if (res.ok && Array.isArray(res.data)) {
     const found = res.data.find(
@@ -89,26 +85,19 @@ async function getById(idEntrenador) {
 /* =================================================================================
  * CREAR / ACTUALIZAR / ELIMINAR
  * ================================================================================= */
-
-/** Crea un nuevo entrenador */
 async function create(payload) {
-  // payload: { experiencia, telefono, usuario:{id_usuario}, estado:{id_estado} }
   const r = await axiosInstance.post(`/api/entrenadores`, payload);
   const raw = r.data?.entrenador ?? r.data;
   return adaptEntrenador(raw);
 }
 
-/** Actualiza los datos de un entrenador */
 async function update(idEntrenador, payload) {
-  // payload puede incluir experiencia, telefono, estado, etc.
   const r = await axiosInstance.put(`/api/entrenadores/${idEntrenador}`, payload);
   const raw = r.data?.entrenador ?? r.data;
   return adaptEntrenador(raw);
 }
 
-/** Cambia solo el estado del entrenador */
 async function updateEstado(idEntrenador, estadoId) {
-  // Rutas posibles:
   const attempts = [
     { method: "put", url: `/api/entrenadores/${idEntrenador}/estado`, data: { id_estado: estadoId } },
     { method: "put", url: `/api/entrenadores/${idEntrenador}`, data: { estado: { id_estado: estadoId } } },
@@ -124,12 +113,11 @@ async function updateEstado(idEntrenador, estadoId) {
         const r = await axiosInstance.patch(att.url, att.data);
         return r.data ?? true;
       }
-    } catch (_) { /* fallback siguiente */ }
+    } catch (_) {}
   }
   return false;
 }
 
-/** Elimina un entrenador */
 async function remove(idEntrenador) {
   const attempts = [
     { method: "delete", url: `/api/entrenadores/${idEntrenador}` },
@@ -153,7 +141,6 @@ async function remove(idEntrenador) {
 /* =================================================================================
  * EXPORTS
  * ================================================================================= */
-
 export const entrenadoresService = {
   listAll,
   getById,

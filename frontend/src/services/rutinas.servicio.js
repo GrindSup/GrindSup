@@ -84,7 +84,7 @@ async function update(idPlan, idRutina, payload) {
       idEjercicio: e.idEjercicio ?? e.id ?? e.id_ejercicio,
       series: Number(e.series ?? 0),
       repeticiones: Number(e.repeticiones ?? 0),
-      descansoSegundos: Number(e.descansoSegundos ?? e.descanso_segundos ?? 0),
+      observaciones: e.observaciones?.trim() || null
     })),
   };
 

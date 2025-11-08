@@ -275,6 +275,8 @@ export default function ListaRutinas() {
 
                     <Button
                       size="sm"
+                      bg="#258d19" 
+                      color="white"
                       colorScheme="red"
                       borderRadius="full"
                       onClick={(e) => { 

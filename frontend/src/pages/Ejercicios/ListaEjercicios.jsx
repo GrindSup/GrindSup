@@ -16,7 +16,7 @@ import { planesService } from '../../services/planes.servicio.js';
 
 const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
-const allMuscleGroups = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+const allMuscleGroups = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps", "Espalda"];
 
 export default function ListaEjercicios() {
   const [ejercicios, setEjercicios] = useState([]);

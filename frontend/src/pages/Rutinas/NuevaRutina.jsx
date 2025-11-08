@@ -33,7 +33,7 @@ export default function NuevaRutina() {
   const [planInfo, setPlanInfo] = useState(null);
 
   const [items, setItems] = useState([
-    { idEjercicio: "", series: 3, repeticiones: 10, descansoSegundos: 60 },
+    { idEjercicio: "", series: 3, repeticiones: 10, observaciones: ""},
   ]);
 
   const [loadingInit, setLoadingInit] = useState(true);
@@ -83,7 +83,7 @@ export default function NuevaRutina() {
 
   // helpers UI
   const addItem = () =>
-    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10, descansoSegundos: 60 }]);
+    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10, observaciones: "" }]);
 
   const removeItem = (i) =>
     setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
@@ -111,7 +111,8 @@ export default function NuevaRutina() {
         idEjercicio: Number(x.idEjercicio),
         series: Number(x.series),
         repeticiones: Number(x.repeticiones),
-        descansoSegundos: Number(x.descansoSegundos),
+        grupoMuscular: x.grupoMuscular?.trim() || null,
+        observaciones: x.observaciones?.trim() || null
       }));
     // -----------------------
 
@@ -161,7 +162,7 @@ export default function NuevaRutina() {
           <Skeleton isLoaded={!loadingInit}>
             <HStack spacing={3} flexWrap="wrap" mb={1}>
               <Tag colorScheme="green" borderRadius="full">
-                <TagLabel>Plan #{idPlan}</TagLabel>
+                <TagLabel>Plan N°{idPlan}</TagLabel>
               </Tag>
               {planInfo?.alumno && (
                 <Tag colorScheme="gray" borderRadius="full">
@@ -261,10 +262,12 @@ export default function NuevaRutina() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Descanso (min)</FormLabel>
-              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", Number(v) || 0)}>
-                <NumberInputField />
-              </NumberInput>
+              <FormLabel>Observaciones</FormLabel>
+              <Textarea
+              value={it.observaciones || ""}
+              onChange={(e) => changeItem(i, "observaciones", e.target.value)}
+              placeholder="Ej: descanso corto, cuidar técnica, etc."
+              />
             </FormControl>
 
             <IconButton

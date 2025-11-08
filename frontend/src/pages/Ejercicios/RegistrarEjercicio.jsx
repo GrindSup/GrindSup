@@ -28,7 +28,7 @@ export default function RegistrarEjercicio() {
     equipamiento: "",
   });
 
-  const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+  const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps", "Espalda"];
   const todosLosEquipamientos = ["Banda elástica", "Banco inclinado", "Barra", "Camilla de Isquios", "Mancuernas", "Máquina hack", "Máquina Smith", "Polea", "Prensa", "Silla de Cuádriceps", "Silla de Isquios", "Step"];
 
   const crearEjercicio = async (payload) => {
@@ -128,7 +128,7 @@ export default function RegistrarEjercicio() {
   return (
     <Container maxW="lg" py={10}>
       <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white">
-        <Heading size="lg" textAlign="center" mb={6} color="white">Registrar Nuevo Ejercicio</Heading>
+        <Heading size="lg" textAlign="center" mb={6} color="black">Registrar Nuevo Ejercicio</Heading>
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={5} align="stretch">

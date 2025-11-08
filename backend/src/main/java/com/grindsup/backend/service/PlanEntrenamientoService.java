@@ -12,7 +12,6 @@ import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.PlanEntrenamiento;
-import com.grindsup.backend.model.Rutina;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.PlanEntrenamientoRepository;

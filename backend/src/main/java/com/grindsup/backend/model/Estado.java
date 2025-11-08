@@ -9,6 +9,7 @@ public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_estado")
     private Long idEstado;
 
     @Column(nullable = false, length = 50)
@@ -20,10 +21,10 @@ public class Estado {
     @Column(length = 50)
     private String ambito;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime created_at;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updated_at;
 
     @Column(name = "deleted_at")

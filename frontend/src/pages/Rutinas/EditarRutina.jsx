@@ -55,7 +55,8 @@ export default function EditarRutina() {
             idEjercicio: e?.ejercicio?.id_ejercicio ?? e?.ejercicio?.id ?? e?.id_ejercicio ?? e?.id ?? "",
             series: e.series ?? 3,
             repeticiones: e.repeticiones ?? 10,
-            descansoSegundos: e.descanso_segundos ?? e.descansoSegundos ?? 60,
+            grupoMuscular: e?.grupoMuscular ?? e?.grupo_muscular ?? e?.ejercicio?.grupoMuscular ?? e?.ejercicio?.grupo_muscular ?? "",
+            observaciones: e?.observaciones ?? e?.observaciones ?? e?.ejercicio?.observaciones ?? e?.ejercicio?.observacion ?? ""
           })));
         }
       } catch {
@@ -67,7 +68,7 @@ export default function EditarRutina() {
   }, [idPlan, idRutina, toast]); // El array de dependencias está bien
 
   const addItem = () =>
-    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10, descansoSegundos: 60 }]);
+    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10 }]);
 
   const removeItem = (i) =>
     setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
@@ -86,7 +87,6 @@ export default function EditarRutina() {
         idEjercicio: Number(x.idEjercicio),
         series: Number(x.series),
         repeticiones: Number(x.repeticiones),
-        descansoSegundos: Number(x.descansoSegundos),
       }));
 
     const payload = { nombre, descripcion, ejercicios };
@@ -165,10 +165,12 @@ export default function EditarRutina() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Descanso (min)</FormLabel>
-              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", v)}>
-                <NumberInputField />
-              </NumberInput>
+              <FormLabel>Observaciones</FormLabel>
+              <Textarea
+                value={it.observaciones || ""}
+                onChange={(e) => changeItem(i, "observaciones", e.target.value)}
+                placeholder="Ej: descanso corto, cuidar técnica, etc."
+                />
             </FormControl>
 
             <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem(i)} mt={1} bg="#258d19" color="white" />

@@ -40,12 +40,12 @@ public class PlanRutinaController {
     public List<Rutina> listarRutinasPorPlan(@PathVariable Long idPlan) {
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
-        
+
         return rutinaRepository.findAll()
                 .stream()
                 .filter(r -> r.getDeleted_at() == null && // <-- ¡FILTRO AÑADIDO!
-                             r.getPlan() != null && 
-                             r.getPlan().getId_plan().equals(plan.getId_plan()))
+                        r.getPlan() != null &&
+                        r.getPlan().getId_plan().equals(plan.getId_plan()))
                 .toList();
     }
 

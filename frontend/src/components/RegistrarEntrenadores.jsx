@@ -1,222 +1,120 @@
-import { useState, useEffect } from "react";
-import {
-  Box, Button, FormControl, FormLabel, Input, Stack, Heading,
-  Text, InputGroup, InputLeftAddon, Alert, AlertIcon, Spinner,
-  Grid, GridItem, FormErrorMessage
-} from "@chakra-ui/react";
+import React, { useState, useMemo } from "react";
+import { Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem, Heading, Input, Stack, Text, FormControl, FormLabel, FormErrorMessage, useToast } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../config/axios.config";
+import axios from "axios";
 
-export default function RegistroEntrenador() {
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
+export default function RegistrarEntrenadores() {
+  const toast = useToast();
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const [entrenador, setEntrenador] = useState({
     nombre: "",
     apellido: "",
-    email: "",
     telefono: "",
-    password: "",
+    experiencia: "",
+    correo: "",
   });
 
-  const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(null);
+  const errors = useMemo(() => {
+    const e = {};
+    if (!entrenador.nombre.trim()) e.nombre = "El nombre es obligatorio";
+    if (!entrenador.apellido.trim()) e.apellido = "El apellido es obligatorio";
+    if (!entrenador.telefono.trim()) e.telefono = "El teléfono es obligatorio";
+    else if (!/^\+?\d+$/.test(entrenador.telefono)) e.telefono = "El teléfono debe ser numérico (puede incluir +)";
+    if (!entrenador.correo.trim()) e.correo = "El correo es obligatorio";
+    return e;
+  }, [entrenador]);
+
+  const isValid = Object.keys(errors).length === 0;
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setEntrenador((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validate = () => {
-    const errs = {};
-    if (!form.nombre.trim()) errs.nombre = "El nombre es obligatorio.";
-    if (!form.apellido.trim()) errs.apellido = "El apellido es obligatorio.";
-    if (!form.email.trim()) errs.email = "El correo es obligatorio.";
-    if (!form.telefono.trim()) errs.telefono = "El teléfono es obligatorio.";
-    if (!form.password.trim()) errs.password = "La contraseña es obligatoria.";
-    return errs;
-  };
-
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
-    const errs = validate();
-    setErrors(errs);
+    if (!isValid) return;
 
+    setSubmitting(true);
     try {
-      await axiosInstance.post("/api/entrenadores/registro", form);
-      setSuccess(true);
-      setTimeout(() => navigate("/login"), 2000);
-    } catch (e) {
-      console.error(e);
-      setError("Ocurrió un error al registrar el entrenador.");
-    }
+      const payload = {
+        telefono: entrenador.telefono.trim(),
+        experiencia: entrenador.experiencia.trim(),
+        usuario: {
+          nombre: entrenador.nombre.trim(),
+          apellido: entrenador.apellido.trim(),
+          correo: entrenador.correo.trim(),
+        },
+      };
+
+      await axios.post(`${API}/entrenadores`, payload);
+      toast({ status: "success", title: "Entrenador registrado correctamente", position: "top" });
+      navigate("/entrenadores");
+    } catch (err) {
+      toast({ status: "error", title: "Error al registrar", description: err.message, position: "top" });
+    } finally { setSubmitting(false); }
   };
 
   return (
-    <Box
-      minH="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      p={6}
-    >
-      <Box
-        bg="white"
-        p={8}
-        rounded="2xl"
-        boxShadow="xl"
-        w="100%"
-        maxW="700px"
-      >
-        <Heading textAlign="center" mb={6}>
-          Registro de Entrenador
-        </Heading>
-
-        <form onSubmit={handleSubmit}>
-          <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
-            <GridItem>
-              <FormControl
-                isRequired
-                isInvalid={submitted && !!errors.nombre}
-              >
-                <FormLabel>Nombre</FormLabel>
-                <Input
-                  name="nombre"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  placeholder="Ej: Marcos"
-                />
-                {submitted && errors.nombre && (
-                  <FormErrorMessage>{errors.nombre}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-
-            <GridItem>
-              <FormControl
-                isRequired
-                isInvalid={submitted && !!errors.apellido}
-              >
-                <FormLabel>Apellido</FormLabel>
-                <Input
-                  name="apellido"
-                  value={form.apellido}
-                  onChange={handleChange}
-                  placeholder="Ej: Gómez"
-                />
-                {submitted && errors.apellido && (
-                  <FormErrorMessage>{errors.apellido}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-
-            <GridItem>
-              <FormControl
-                isRequired
-                isInvalid={submitted && !!errors.email}
-              >
-                <FormLabel>Email</FormLabel>
-                <Input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="Ej: entrenador@gmail.com"
-                />
-                {submitted && errors.email && (
-                  <FormErrorMessage>{errors.email}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-
-            <GridItem>
-              <FormControl
-                isRequired
-                isInvalid={submitted && !!errors.telefono}
-              >
-                <FormLabel>Teléfono</FormLabel>
-                <InputGroup>
-                  <InputLeftAddon children="+54" />
-                  <Input
-                    type="tel"
-                    name="telefono"
-                    value={form.telefono}
-                    onChange={handleChange}
-                    placeholder="1123456789"
-                  />
-                </InputGroup>
-                {submitted && errors.telefono && (
-                  <FormErrorMessage>{errors.telefono}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-
-            <GridItem colSpan={{ base: 1, md: 2 }}>
-              <FormControl
-                isRequired
-                isInvalid={submitted && !!errors.password}
-              >
-                <FormLabel>Contraseña</FormLabel>
-                <Input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                />
-                {submitted && errors.password && (
-                  <FormErrorMessage>{errors.password}</FormErrorMessage>
-                )}
-              </FormControl>
-            </GridItem>
-          </Grid>
-
-          {error && (
-            <Alert status="error" rounded="md" mt={4}>
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert status="success" rounded="md" mt={4}>
-              <AlertIcon />
-              Registro exitoso. Redirigiendo al login...
-            </Alert>
-          )}
-
-          <Stack
-            direction={{ base: "column", md: "row" }}
-            spacing={4}
-            mt={8}
-            justify="center"
-          >
-            <Button
-              type="submit"
-              size="lg"
-              px={10}
-              bg="#258d19"
-              color="white"
-              _hover={{ bg: "green.500" }}
-              loadingText="Guardando"
-              isDisabled={checkingDni || !dniDisponible}
-            >
-              Crear cuenta
-            </Button>
-
-            <Button
-              variant="outline"
-              colorScheme="gray"
-              size="lg"
-              px={10}
-              onClick={() => navigate(-1)}
-              _hover={{ bg: "gray.100" }}
-            >
-              Cancelar
-            </Button>
-          </Stack>
-
-        </form>
-      </Box>
+    <Box py={8}>
+      <Container maxW="container.md">
+        <Card>
+          <CardHeader textAlign="center">
+            <Heading size="lg">Registrar Nuevo Entrenador</Heading>
+            <Text color="gray.600" mt={2}>Complete los datos del entrenador</Text>
+          </CardHeader>
+          <CardBody pt={6}>
+            <Box as="form" onSubmit={onSubmit}>
+              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
+                <GridItem>
+                  <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
+                    <FormLabel>Nombre</FormLabel>
+                    <Input name="nombre" value={entrenador.nombre} onChange={handleChange} />
+                    {submitted && <FormErrorMessage>{errors.nombre}</FormErrorMessage>}
+                  </FormControl>
+                </GridItem>
+                <GridItem>
+                  <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
+                    <FormLabel>Apellido</FormLabel>
+                    <Input name="apellido" value={entrenador.apellido} onChange={handleChange} />
+                    {submitted && <FormErrorMessage>{errors.apellido}</FormErrorMessage>}
+                  </FormControl>
+                </GridItem>
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
+                    <FormLabel>Teléfono</FormLabel>
+                    <Input name="telefono" value={entrenador.telefono} onChange={handleChange} placeholder="+541112345678" />
+                    {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
+                  </FormControl>
+                </GridItem>
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <FormControl isRequired isInvalid={submitted && !!errors.correo}>
+                    <FormLabel>Correo</FormLabel>
+                    <Input name="correo" value={entrenador.correo} onChange={handleChange} placeholder="correo@ejemplo.com" />
+                    {submitted && <FormErrorMessage>{errors.correo}</FormErrorMessage>}
+                  </FormControl>
+                </GridItem>
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <FormControl>
+                    <FormLabel>Experiencia</FormLabel>
+                    <Input name="experiencia" value={entrenador.experiencia} onChange={handleChange} placeholder="Ej: 5 años entrenando equipos juveniles" />
+                  </FormControl>
+                </GridItem>
+              </Grid>
+              <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
+                <Button type="submit" isLoading={submitting} loadingText="Registrando" px={10} bg="#258d19" color="white">Registrar</Button>
+                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>Cancelar</Button>
+              </Stack>
+            </Box>
+          </CardBody>
+        </Card>
+      </Container>
     </Box>
   );
 }

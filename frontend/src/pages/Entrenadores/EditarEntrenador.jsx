@@ -158,8 +158,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                     <Input
                       name="correo"
                       value={entrenador.correo}
-                      isDisabled
-                      placeholder="No editable"
+                      placeholder="******@gmail.com"
                     />
                   </FormControl>
                 </GridItem>

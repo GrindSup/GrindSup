@@ -25,7 +25,6 @@ public class RutinaEjercicio {
 
     private Integer repeticiones;
     private Integer series;
-    private Integer descanso_segundos;
 
     @ManyToOne
     @JoinColumn(name = "id_estado")
@@ -78,14 +77,6 @@ public class RutinaEjercicio {
 
     public void setSeries(Integer series) {
         this.series = series;
-    }
-
-    public Integer getDescanso_segundos() {
-        return descanso_segundos;
-    }
-
-    public void setDescanso_segundos(Integer descanso_segundos) {
-        this.descanso_segundos = descanso_segundos;
     }
 
     public Estado getEstado() {
