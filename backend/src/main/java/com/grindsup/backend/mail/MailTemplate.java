@@ -17,7 +17,7 @@ public class MailTemplate {
 
               <tr>
                 <td style="padding:24px; color:#111827; font-size:15px;">
-                  <p>Hola,</p>
+                  <p>Hola!</p>
                   <p>Recibimos una solicitud para restablecer tu contraseña.</p>
                   <p>Hacé clic en el siguiente botón para continuar. Este enlace vence en 
                      <strong>%d minutos</strong>.</p>

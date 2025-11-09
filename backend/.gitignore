@@ -41,3 +41,8 @@ backend/package-lock.json
 
 # Google API credentials
 src/main/resources/credentials.json
+
+#Credenciales personales de cada dev
+.env
+*.env
+!.env.example
