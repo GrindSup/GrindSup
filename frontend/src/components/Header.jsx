@@ -43,13 +43,14 @@ export default function Header({ usuario, setUsuario }) {
   const items = [
     { label: "Inicio", path: "/" },
     { label: "Alumnos", path: "/alumnos" },
-    { label: "Entrenadores", path: "/entrenadores" },
     { label: "Turnos", path: "/turnos" },
     { label: "Planes", path: "/planes" },
+    { label: "Entrenador", path: "/entrenadores"},
     { label: "Contacto", path: "/contacto" },
   ];
 
-  const hideMenu = location.pathname === "/login" || location.pathname === "/registro";
+  // Solo ocultar el menú en login/register
+  const hideMenu = location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
@@ -63,7 +64,7 @@ export default function Header({ usuario, setUsuario }) {
 
           <Spacer />
 
-          {/* Menú hamburguesa centrado */}
+          {/* Menú hamburguesa */}
           {!hideMenu && isLoggedIn && (
             <Flex flex="1" justify="center">
               <Menu>
@@ -86,22 +87,20 @@ export default function Header({ usuario, setUsuario }) {
 
           <Spacer />
 
-          {/* Sesión */}
-          {!hideMenu && (
-            isLoggedIn ? (
-              <Button size="sm" onClick={onOpen} bg="#258d19" color="white">
-                Cerrar sesión
-              </Button>
-            ) : (
-              <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#258d19">
-                Iniciar sesión
-              </Button>
-            )
+          {/* Botones de sesión siempre visibles */}
+          {isLoggedIn ? (
+            <Button size="sm" onClick={onOpen} bg="#258d19" color="white">
+              Cerrar sesión
+            </Button>
+          ) : (
+            <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#258d19">
+              Iniciar sesión
+            </Button>
           )}
         </Flex>
       </Container>
 
-       {/* Modal de confirmación estilo GrindSup */}
+      {/* Modal de confirmación */}
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay bg="blackAlpha.600" />
         <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="0 8px 30px rgba(0,0,0,0.2)">
@@ -121,7 +120,7 @@ export default function Header({ usuario, setUsuario }) {
               isLoading={logoutPending}
               borderRadius="lg"
               px={6}
-              bg="#258d19" 
+              bg="#258d19"
               color="white"
             >
               Cerrar sesión

@@ -5,8 +5,8 @@ import {
   chakra, Tooltip
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { AddIcon, ViewIcon, CalendarIcon, SettingsIcon, InfoOutlineIcon } from "@chakra-ui/icons";
-import { FiActivity, FiMap } from "react-icons/fi";
+import { AddIcon, ViewIcon, CalendarIcon } from "@chakra-ui/icons";
+import { FiActivity, FiMap, FiCopy } from "react-icons/fi";
 import { FaRunning } from "react-icons/fa";
 import { motion } from "framer-motion";
 const MotionBox = motion(chakra.div);
@@ -20,10 +20,6 @@ export default function InicioDashboard() {
 
   const acciones = useMemo(
     () => [
-      // 🔹 NUEVOS accesos a reportes
-      { label: "Reportes", to: "/reportes",        icon: InfoOutlineIcon, desc: "Reportes y estadisticas.", available: true },
-    
-
       // Existentes
       { label: "Registrar Alumno", to: "/alumno/registrar", icon: AddIcon,      desc: "Cargá nuevos alumnos.", available: true },
       { label: "Ver Alumnos",      to: "/alumnos",          icon: ViewIcon,     desc: "Listado y edición.", available: true },
@@ -32,7 +28,8 @@ export default function InicioDashboard() {
       { label: "Ejercicios",       to: "/ejercicios",       icon: FiActivity,   desc: "Catálogo.", available: true },
       { label: "Rutinas",          to: "/rutinas",          icon: FaRunning,    desc: "Planes de entrenamiento.", available: true },
       { label: "Planes",           to: "/planes",           icon: FiMap,        desc: "Planes por alumno.", available: true },
-      { label: "Configuración",    to: "/config",           icon: SettingsIcon, desc: "Preferencias.", available: false, comingSoon: true },
+      // 🔹 NUEVOS accesos a reportes
+      { label: "Reportes",         to: "/reportes",         icon: FiCopy,       desc: "Reportes y estadisticas.", available: true },
     ],
     []
   );

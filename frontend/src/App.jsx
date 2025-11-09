@@ -25,8 +25,6 @@ import Register from "./pages/Usuarios/Register.jsx";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 
-import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
-
 import Contacto from "./components/Contacto.jsx";
 
 // ✅ Planes
@@ -184,7 +182,6 @@ export default function App() {
 
                 {/* ✅ Entrenadores */}
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
-                <Route path="/entrenadores/registrar" element={<RegistrarEntrenadores />} />
                 <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
                 <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
 
