@@ -115,9 +115,9 @@ public class AlumnoController {
                 existing.setEntrenador(alumno.getEntrenador());
             }
 
-            if (alumno.getEstado() != null && alumno.getEstado().getId_estado() != null) {
+            if (alumno.getEstado() != null && alumno.getEstado().getIdEstado() != null) {
                 Estado nuevoEstado = estadoRepository
-                        .findById(alumno.getEstado().getId_estado())
+                        .findById(alumno.getEstado().getIdEstado())
                         .orElse(existing.getEstado());
                 existing.setEstado(nuevoEstado);
             }
@@ -186,7 +186,7 @@ public class AlumnoController {
         if (a.getEntrenador() == null) {
             a.setEntrenador(e);
         } else {
-            Long actual = a.getEntrenador().getId_entrenador();
+            Long actual = a.getEntrenador().getIdEntrenador();
             if (actual != null && !actual.equals(entrenadorId)) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,

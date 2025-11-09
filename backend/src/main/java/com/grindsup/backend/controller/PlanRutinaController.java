@@ -30,19 +30,22 @@ public class PlanRutinaController {
     @Autowired
     private RutinaEjercicioRepository rutinaEjercicioRepository;
 
+    @Autowired
+    private com.grindsup.backend.service.RutinaService rutinaService;
+
     // ==========================
     // Listar rutinas de un plan
     // ==========================
     @GetMapping
     public List<Rutina> listarRutinasPorPlan(@PathVariable Long idPlan) {
-        // Si tenés el método en el repository, usalo:
-        // return rutinaRepository.findByPlan_Id_plan(idPlan);
-
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
+
         return rutinaRepository.findAll()
                 .stream()
-                .filter(r -> r.getPlan() != null && r.getPlan().getId_plan().equals(plan.getId_plan()))
+                .filter(r -> r.getDeleted_at() == null && // <-- ¡FILTRO AÑADIDO!
+                        r.getPlan() != null &&
+                        r.getPlan().getId_plan().equals(plan.getId_plan()))
                 .toList();
     }
 
@@ -76,24 +79,14 @@ public class PlanRutinaController {
     // ==========================
     @DeleteMapping("/{idRutina}")
     public ResponseEntity<Void> deleteFromPlan(@PathVariable Long idPlan, @PathVariable Long idRutina) {
-        Rutina rutina = rutinaRepository.findById(idRutina)
-                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
-
-        if (rutina.getPlan() == null || !rutina.getPlan().getId_plan().equals(idPlan)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        // Primero borro las asociaciones rutina-ejercicio
-        rutinaEjercicioRepository.deleteAllByRutinaId(idRutina);
-        // Luego la rutina
-        rutinaRepository.deleteById(idRutina);
-
+        rutinaService.softDeleteFromPlan(idPlan, idRutina);
         return ResponseEntity.noContent().build();
     }
 
     // Alias opcional si querés aceptar POST .../delete
     @PostMapping("/{idRutina}/delete")
     public ResponseEntity<Void> deleteFromPlanAlias(@PathVariable Long idPlan, @PathVariable Long idRutina) {
-        return deleteFromPlan(idPlan, idRutina);
+        rutinaService.softDeleteFromPlan(idPlan, idRutina);
+        return ResponseEntity.noContent().build();
     }
 }

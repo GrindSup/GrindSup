@@ -9,7 +9,8 @@ public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id_estado;
+    @Column(name = "id_estado")
+    private Long idEstado;
 
     @Column(nullable = false, length = 50)
     private String nombre;
@@ -20,22 +21,22 @@ public class Estado {
     @Column(length = 50)
     private String ambito;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime created_at;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updated_at;
 
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
     // Getters y Setters
-    public Long getId_estado() {
-        return id_estado;
+    public Long getIdEstado() {
+        return idEstado;
     }
 
-    public void setId_estado(Long id_estado) {
-        this.id_estado = id_estado;
+    public void setIdEstado(Long idEstado) {
+        this.idEstado = idEstado;
     }
 
     public String getNombre() {

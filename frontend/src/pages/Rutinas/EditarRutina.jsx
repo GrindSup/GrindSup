@@ -8,13 +8,19 @@ import {
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { ejerciciosService } from "../../services/ejercicios.servicio";
-import rutinasService, { obtenerDetalleRutina } from "../../services/rutinas.servicio";
 import BotonVolver from "../../components/BotonVolver";
+import rutinasService from "../../services/rutinas.servicio";
 
 export default function EditarRutina() {
-  const { idPlan, idRutina } = useParams();
+  // const { idPlan, idRutina } = useParams(); // <-- LÍNEA ANTIGUA
+  const params = useParams(); // <-- CAMBIO 1: Obtener TODOS los parámetros
   const toast = useToast();
   const navigate = useNavigate();
+
+  // ----- ¡SOLUCIÓN 1: Leer bien los params! -----
+  const idPlan = params.idPlan; // (Será 'undefined' en la ruta corta)
+  const idRutina = params.idRutina ?? params.id; // (Acepta 'idRutina' O 'id')
+  // ---------------------------------------------
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -32,17 +38,25 @@ export default function EditarRutina() {
         const ex = await ejerciciosService.getAll();
         setCatalogo(Array.isArray(ex) ? ex : []);
 
-        const det = await obtenerDetalleRutina(idPlan, idRutina);
-        if (det?.rutina) {
-          setNombre(det.rutina.nombre ?? "");
-          setDescripcion(det.rutina.descripcion ?? "");
+        // Ahora esto se llama como (undefined, "ID_RUTINA") para rutinas sin plan
+        const det = await rutinasService.obtenerDetalleRutina(idPlan, idRutina);
+        
+        // Esta lógica de abajo ya soporta 'det' como la rutina o anidado
+        const r = det?.rutina ?? (typeof det === "object" ? det : null);
+        const ejs = det?.ejercicios ?? (Array.isArray(det) ? det : []);
+
+        if (r) {
+          setNombre(r.nombre ?? "");
+          setDescripcion(r.descripcion ?? "");
         }
-        if (Array.isArray(det?.ejercicios)) {
-          setItems(det.ejercicios.map(e => ({
-            idEjercicio: e?.ejercicio?.id_ejercicio ?? e?.ejercicio?.id ?? "",
+        if (Array.isArray(ejs) && ejs.length > 0) {
+          setItems(ejs.map(e => ({
+            // Soporta datos planos (e.id_ejercicio) y anidados (e.ejercicio.id_ejercicio)
+            idEjercicio: e?.ejercicio?.id_ejercicio ?? e?.ejercicio?.id ?? e?.id_ejercicio ?? e?.id ?? "",
             series: e.series ?? 3,
             repeticiones: e.repeticiones ?? 10,
-            descansoSegundos: e.descanso_segundos ?? 60,
+            grupoMuscular: e?.grupoMuscular ?? e?.grupo_muscular ?? e?.ejercicio?.grupoMuscular ?? e?.ejercicio?.grupo_muscular ?? "",
+            observaciones: e?.observaciones ?? e?.observaciones ?? e?.ejercicio?.observaciones ?? e?.ejercicio?.observacion ?? ""
           })));
         }
       } catch {
@@ -51,10 +65,10 @@ export default function EditarRutina() {
         setLoading(false);
       }
     })();
-  }, [idPlan, idRutina, toast]);
+  }, [idPlan, idRutina, toast]); // El array de dependencias está bien
 
   const addItem = () =>
-    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10, descansoSegundos: 60 }]);
+    setItems((prev) => [...prev, { idEjercicio: "", series: 3, repeticiones: 10 }]);
 
   const removeItem = (i) =>
     setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, idx) => idx !== i)));
@@ -73,16 +87,24 @@ export default function EditarRutina() {
         idEjercicio: Number(x.idEjercicio),
         series: Number(x.series),
         repeticiones: Number(x.repeticiones),
-        descansoSegundos: Number(x.descansoSegundos),
       }));
 
     const payload = { nombre, descripcion, ejercicios };
 
     try {
       setSaving(true);
+      // La función 'update' del servicio ya maneja bien el idPlan (lo ignora)
       await rutinasService.update(idPlan, idRutina, payload);
       toast({ title: "Rutina actualizada", status: "success" });
-      navigate(`/planes/${idPlan}`);
+
+      // ----- ¡SOLUCIÓN 2: Navegación condicional! -----
+      if (idPlan) {
+        navigate(`/planes/${idPlan}`); // Ir al plan si existe
+      } else {
+        navigate('/rutinas'); // Ir a la lista de rutinas si no hay plan
+      }
+      // ------------------------------------------------
+
     } catch (e) {
       const msg = e?.response?.data?.message || "No se pudo actualizar la rutina.";
       toast({ title: "Error", description: msg, status: "error" });
@@ -92,6 +114,7 @@ export default function EditarRutina() {
   };
 
   return (
+    // ... (Todo el JSX de 'return' es idéntico y no necesita cambios)
     <Box opacity={loading ? .6 : 1}>
       <HStack mb={4}><BotonVolver /><Heading size="lg" color="white">Editar rutina</Heading></HStack>
 
@@ -142,10 +165,12 @@ export default function EditarRutina() {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Descanso (min)</FormLabel>
-              <NumberInput min={0} value={it.descansoSegundos} onChange={(_, v) => changeItem(i, "descansoSegundos", v)}>
-                <NumberInputField />
-              </NumberInput>
+              <FormLabel>Observaciones</FormLabel>
+              <Textarea
+                value={it.observaciones || ""}
+                onChange={(e) => changeItem(i, "observaciones", e.target.value)}
+                placeholder="Ej: descanso corto, cuidar técnica, etc."
+                />
             </FormControl>
 
             <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem(i)} mt={1} bg="#258d19" color="white" />
@@ -158,7 +183,7 @@ export default function EditarRutina() {
         </HStack>
 
         <HStack justify="flex-end" pt={2}>
-          <Button variant="ghost" onClick={() => history.back()}>Cancelar</Button>
+          <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button> {/* Corregido: history.back() no existe en react-router-dom v6 */}
           <Button colorScheme="green" onClick={handleSave} isLoading={saving} bg="#258d19">
             Guardar cambios
           </Button>

@@ -100,10 +100,13 @@ public class TurnoController {
             return d.atStartOfDay().atOffset(ZoneOffset.UTC);
         }
     }
+
     private OffsetDateTime parseEnd(String s) {
-        if (s == null || s.isBlank()) return null;
-        try { return OffsetDateTime.parse(s); }
-        catch (DateTimeParseException ignore) {
+        if (s == null || s.isBlank())
+            return null;
+        try {
+            return OffsetDateTime.parse(s);
+        } catch (DateTimeParseException ignore) {
             LocalDate d = LocalDate.parse(s);
             return d.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC).minusNanos(1);
         }

@@ -63,7 +63,7 @@ public class UsuarioController {
             usuario.setRol(rol);
         }
         if (usuario.getEstado() != null) {
-            Estado estado = estadoRepository.findById(usuario.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(usuario.getEstado().getIdEstado()).orElse(null);
             usuario.setEstado(estado);
         }
 
@@ -96,7 +96,7 @@ public class UsuarioController {
                 existing.setRol(rol);
             }
             if (usuario.getEstado() != null) {
-                Estado estado = estadoRepository.findById(usuario.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(usuario.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
 

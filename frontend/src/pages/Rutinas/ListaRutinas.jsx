@@ -1,4 +1,3 @@
-// frontend/src/pages/Rutinas/ListaRutinas.jsx
 import { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Container, Heading, HStack, Input, InputGroup, InputLeftElement,
@@ -10,7 +9,7 @@ import { MdFitnessCenter } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../config/axios.config";
 import { planesService } from "../../services/planes.servicio";
-import { rutinasService } from "../../services/rutinas.servicio";
+import rutinasService from "../../services/rutinas.servicio";
 import BotonVolver from "../../components/BotonVolver.jsx";
 
 export default function ListaRutinas() {
@@ -20,7 +19,7 @@ export default function ListaRutinas() {
 
   const [rutinas, setRutinas] = useState([]);
   const [planes, setPlanes] = useState([]);
-  const [planSel, setPlanSel] = useState("");        // ← vacío = TODOS
+  const [planSel, setPlanSel] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -30,30 +29,26 @@ export default function ListaRutinas() {
       try {
         setLoading(true);
 
-        // 1) planes para enriquecer etiquetas
+        // 1️⃣ Obtener todos los planes (si existen)
         const ps = await planesService.listAll();
         setPlanes(ps);
 
-        // 2) rutinas (global o por plan si viene por URL)
+        // 2️⃣ Obtener rutinas (todas o por plan)
         let data = [];
-        try {
-          if (idPlanFromUrl) {
-            const r = await axiosInstance.get(`/api/planes/${idPlanFromUrl}/rutinas`);
+        if (idPlanFromUrl) {
+          const r = await axiosInstance.get(`/api/planes/${idPlanFromUrl}/rutinas`);
+          data = Array.isArray(r.data) ? r.data : [];
+        } else {
+          try {
+            const r = await axiosInstance.get("/api/rutinas");
             data = Array.isArray(r.data) ? r.data : [];
-          } else {
-            try {
-              const r = await axiosInstance.get("/api/rutinas");
-              data = Array.isArray(r.data) ? r.data : [];
-            } catch {
-              const r = await axiosInstance.get("/api/rutinas?all=1");
-              data = Array.isArray(r.data) ? r.data : [];
-            }
+          } catch {
+            const r = await axiosInstance.get("/api/rutinas?all=1");
+            data = Array.isArray(r.data) ? r.data : [];
           }
-        } catch {
-          data = [];
         }
 
-        // 3) enriquecer con planId y nombre alumno
+        // 3️⃣ Enriquecer con datos del plan y alumno
         const enrich = data.map((r) => {
           const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null;
           const plan = (ps || []).find((p) => String(p.id_plan ?? p.id) === String(planId));
@@ -64,17 +59,10 @@ export default function ListaRutinas() {
         });
 
         setRutinas(enrich);
-
-        // 4) planSel por URL únicamente (no auto-filtrar por “último plan”)
-        if (idPlanFromUrl) {
-          setPlanSel(String(idPlanFromUrl));
-          localStorage.setItem("lastPlanId", String(idPlanFromUrl));
-        } else {
-          setPlanSel(""); // ← mostrar TODAS
-        }
-
+        setPlanSel(idPlanFromUrl ? String(idPlanFromUrl) : "");
         setError("");
-      } catch {
+      } catch (err) {
+        console.error(err);
         setError("No pude cargar las rutinas.");
         setRutinas([]);
       } finally {
@@ -83,14 +71,15 @@ export default function ListaRutinas() {
     })();
   }, [idPlanFromUrl]);
 
-  // Filtro combinado: por plan seleccionado + texto de búsqueda
+  /* ---------- FILTROS ---------- */
   const filtradas = useMemo(() => {
     const term = q.trim().toLowerCase();
     const wantPlan = String(planSel || "").trim();
 
     return rutinas.filter((r) => {
-      const planIdDeLaRutina = String(r.__planId ?? r.plan?.id_plan ?? r.id_plan ?? "");
-      if (wantPlan && planIdDeLaRutina !== wantPlan) return false;
+      const planId = String(r.__planId ?? "");
+      if (wantPlan && wantPlan !== "SIN_PLAN" && planId !== wantPlan) return false;
+      if (wantPlan === "SIN_PLAN" && planId) return false;
 
       if (!term) return true;
       const nom = (r?.nombre ?? "").toLowerCase();
@@ -100,23 +89,32 @@ export default function ListaRutinas() {
     });
   }, [rutinas, q, planSel]);
 
+  /* ---------- ACCIONES ---------- */
   const handleNuevaRutina = () => {
-    // si hay un plan elegido, se asocia ahí; si no, pedimos que elijan uno
-    const destinoPlan = planSel || idPlanFromUrl;
-    if (!destinoPlan) {
-      setError("Seleccioná un plan en el selector para crear una rutina asociada.");
+    // Si el plan seleccionado es SIN_PLAN o ninguno, crear rutina independiente
+    if (!planSel || planSel === "SIN_PLAN") {
+      navigate("/rutinas/nueva");
       return;
     }
-    localStorage.setItem("lastPlanId", String(destinoPlan));
-    navigate(`/planes/${destinoPlan}/rutinas/nueva`);
+
+    // Si hay un plan seleccionado válido (numérico)
+    navigate(`/planes/${planSel}/rutinas/nueva`);
   };
 
-  // ---- Exportar PDF (GET /api/rutinas/{id}/exportar) ----
+  const goDetalle = (planId, idRutina) => {
+    // Si no hay plan o no es un número, ir a ruta sin plan
+    if (!planId || planId === "SIN_PLAN") navigate(`/rutinas/${idRutina}`);
+    else navigate(`/planes/${planId}/rutinas/${idRutina}`);
+  };
+
+  const goEditar = (planId, idRutina) => {
+    if (!planId || planId === "SIN_PLAN") navigate(`/rutinas/${idRutina}/editar`);
+    else navigate(`/planes/${planId}/rutinas/${idRutina}/editar`);
+  };
+
   const exportPdf = async (idRutina, nombre) => {
     try {
-      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, {
-        responseType: "blob",
-      });
+      const resp = await axiosInstance.get(`/api/rutinas/${idRutina}/exportar`, { responseType: "blob" });
       const blob = new Blob([resp.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -128,43 +126,33 @@ export default function ListaRutinas() {
       a.remove();
       URL.revokeObjectURL(url);
       toast({ title: "PDF exportado", status: "success" });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast({ title: "No se pudo exportar el PDF", status: "error" });
     }
   };
 
-  // ---- Editar / Eliminar ----
-  const goEditar = (planId, idRutina) => {
-    if (!planId) {
-      toast({ title: "No se puede editar: rutina sin plan asociado.", status: "warning" });
-      return;
-    }
-    navigate(`/planes/${planId}/rutinas/${idRutina}/editar`);
-  };
-
   const handleEliminar = async (planId, idRutina, nombre) => {
     if (!idRutina) return;
-    const ok = window.confirm(`¿Eliminar la rutina "${nombre || idRutina}"? Esta acción no se puede deshacer.`);
+    const ok = window.confirm(`¿Eliminar la rutina "${nombre || idRutina}"?`);
     if (!ok) return;
 
-    // Optimista
     const prev = rutinas;
     setRutinas((rs) => rs.filter((r) => String(r.id_rutina ?? r.id) !== String(idRutina)));
 
     try {
-      const removed = await rutinasService.remove(planId, idRutina);
-      if (!removed) throw new Error("El backend no confirmó la eliminación");
+      const removed = await rutinasService.remove(planId || null, idRutina);
+      if (!removed) throw new Error("No se confirmó la eliminación");
       toast({ title: "Rutina eliminada", status: "success" });
-    } catch (e) {
-      console.error(e);
-      setRutinas(prev); // revert
+    } catch {
+      setRutinas(prev);
       toast({ title: "No se pudo eliminar", status: "error" });
     }
   };
 
+  /* ---------- UI ---------- */
   return (
     <Container maxW="7xl" py={10}>
+      {/* Header */}
       <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={4}>
         <HStack spacing={3}>
           <BotonVolver />
@@ -180,7 +168,8 @@ export default function ListaRutinas() {
             borderRadius="full"
             placeholder={planes.length ? "Seleccioná plan…" : "No hay planes"}
           >
-            <option value="">Todos los planes</option>
+            <option value="">Todas las rutinas</option>
+            <option value="SIN_PLAN">Sin plan</option>
             {planes.map((p) => (
               <option key={p.id_plan ?? p.id} value={p.id_plan ?? p.id}>
                 #{p.id_plan ?? p.id} — {(p.objetivo ?? "Sin objetivo").slice(0, 60)}
@@ -205,12 +194,14 @@ export default function ListaRutinas() {
         </HStack>
       </HStack>
 
+      {/* Estado de carga / error */}
       {loading && <Center py={10}><Spinner size="xl" /></Center>}
 
       {!loading && error && (
         <Alert status="warning" borderRadius="lg"><AlertIcon />{error}</Alert>
       )}
 
+      {/* Sin resultados */}
       {!loading && !error && filtradas.length === 0 && (
         <Center py={10}>
           <Box textAlign="center" bg="white" p={10} borderRadius="2xl" boxShadow="lg" maxW="lg">
@@ -222,11 +213,12 @@ export default function ListaRutinas() {
         </Center>
       )}
 
+      {/* Listado */}
       {!loading && !error && filtradas.length > 0 && (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={7}>
           {filtradas.map((r) => {
             const idRutina = r.id_rutina ?? r.id;
-            const planId = r.__planId ?? idPlanFromUrl ?? (localStorage.getItem("lastPlanId") || "");
+            const planId = r.__planId ?? null;
 
             return (
               <Card
@@ -237,38 +229,34 @@ export default function ListaRutinas() {
                 boxShadow="md"
                 _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
                 transition="all .18s ease"
+                onClick={() => goDetalle(planId, idRutina)} 
+                cursor="pointer" 
               >
-                <CardHeader pb={2} borderTopRadius="2xl">
+                <CardHeader pb={2}>
                   <Heading size="md" noOfLines={1} color="gray.900">{r.nombre ?? "Sin título"}</Heading>
                 </CardHeader>
+
                 <CardBody pt={0}>
                   <HStack spacing={2} mb={3} wrap="wrap">
-                    {!!planId && <Tag colorScheme="gray" borderRadius="full">Plan N°{planId}</Tag>}
+                    <Tag colorScheme="gray" borderRadius="full">{planId ? `Plan N°${planId}` : "Sin plan"}</Tag>
                     {!!r.__alumno && <Tag colorScheme="green" borderRadius="full">{r.__alumno}</Tag>}
                     {!!r.dificultad && <Tag colorScheme="purple" borderRadius="full">{r.dificultad}</Tag>}
                   </HStack>
                   <Text noOfLines={3} color="gray.700">{r.descripcion ?? "Sin descripción."}</Text>
                 </CardBody>
+
                 <Spacer />
                 <CardFooter>
                   <HStack spacing={3} wrap="wrap">
-                    <Button
-                      size="sm"
-                      bg="#258d19"
-                      color="white"
-                      borderRadius="full"
-                      onClick={() => navigate(`/planes/${planId}/rutinas/${idRutina}`)}
-                      isDisabled={!planId}
-                    >
-                      Ver detalle
-                    </Button>
 
                     <Button
                       size="sm"
                       variant="outline"
                       borderRadius="full"
-                      onClick={() => goEditar(planId, idRutina)}
-                      isDisabled={!planId}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goEditar(planId, idRutina);
+                      }}
                     >
                       Editar
                     </Button>
@@ -277,31 +265,41 @@ export default function ListaRutinas() {
                       size="sm"
                       variant="outline"
                       borderRadius="full"
-                      onClick={() => exportPdf(idRutina, r.nombre)}
+                      onClick={(e) => { 
+                        e.stopPropagation();
+                        exportPdf(idRutina, r.nombre);
+                      }}
                     >
                       Exportar PDF
                     </Button>
 
                     <Button
                       size="sm"
+                      bg="#258d19" 
+                      color="white"
                       colorScheme="red"
                       borderRadius="full"
-                      onClick={() => handleEliminar(planId, idRutina, r.nombre)}
-                      bg="#258d19"
-                      color="white"
+                      onClick={(e) => { 
+                        e.stopPropagation();
+                        handleEliminar(planId, idRutina, r.nombre);
+                      }}
                     >
                       Eliminar
                     </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      borderRadius="full"
-                      onClick={() => navigate(`/planes/${planId}`)}
-                      isDisabled={!planId}
-                    >
-                      Ir al plan
-                    </Button>
+                    {planId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        borderRadius="full"
+                        onClick={(e) => { // <-- CAMBIO 7: Añadido (e) y stopPropagation
+                          e.stopPropagation();
+                          navigate(`/planes/${planId}`);
+                        }}
+                      >
+                        Ir al plan
+                      </Button>
+                    )}
                   </HStack>
                 </CardFooter>
               </Card>

@@ -253,6 +253,8 @@ export default function ListaTurnos() {
                         </Button>
                         <Button
                           size="sm"
+                          bg="#258d19"
+                          color="white"
                           colorScheme="red"
                           onClick={() => handleEliminar(t)}
                         >

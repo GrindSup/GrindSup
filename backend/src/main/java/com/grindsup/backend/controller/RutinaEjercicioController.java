@@ -51,7 +51,7 @@ public class RutinaEjercicioController {
             re.setEjercicio(ejercicio);
         }
         if (re.getEstado() != null) {
-            Estado estado = estadoRepository.findById(re.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(re.getEstado().getIdEstado()).orElse(null);
             re.setEstado(estado);
         }
         return repository.save(re);

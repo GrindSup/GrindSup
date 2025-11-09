@@ -41,7 +41,7 @@ public class AgendaController {
             agenda.setTurno(turno);
         }
         if (agenda.getEstado() != null) {
-            Estado estado = estadoRepository.findById(agenda.getEstado().getId_estado()).orElse(null);
+            Estado estado = estadoRepository.findById(agenda.getEstado().getIdEstado()).orElse(null);
             agenda.setEstado(estado);
         }
         return agendaRepository.save(agenda);
@@ -55,7 +55,7 @@ public class AgendaController {
                 existing.setTurno(turno);
             }
             if (agenda.getEstado() != null) {
-                Estado estado = estadoRepository.findById(agenda.getEstado().getId_estado()).orElse(null);
+                Estado estado = estadoRepository.findById(agenda.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
             return agendaRepository.save(existing);

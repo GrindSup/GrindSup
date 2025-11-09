@@ -22,6 +22,10 @@ import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
 
+import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
+
+import Contacto from "./components/Contacto.jsx";
+
 // ✅ Planes
 import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
 import RegistrarPlan from "./pages/Planes/RegistrarPlan.jsx";
@@ -36,18 +40,15 @@ import EditarRutina from "./pages/Rutinas/EditarRutina.jsx";
 
 // ✅ Ejercicios
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx";
+import EditarEjercicio from "./pages/Ejercicios/EditarEjercicio.jsx";
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
 
-// --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
-function Placeholder({ title }) {
-  return (
-    <Box bg="white" borderRadius="2xl" p={{ base: 6, md: 8 }}>
-      {title}
-    </Box>
-  );
-}
-const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — próximamente"} />;
-const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
-const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
+// ✅ Entrenadores
+import ListaEntrenadores from "./pages/Entrenadores/ListaEntrenadores.jsx";
+import EditarEntrenador from "./pages/Entrenadores/EditarEntrenador.jsx";
+import PerfilEntrenador from "./pages/Entrenadores/PerfilEntrenador.jsx";
+
 
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
@@ -75,7 +76,7 @@ export default function App() {
           bgImage="url('/img/gym.png')"  // tu imagen en public/img/gym.png
           bgSize="cover"
           bgPos="center"
-          filter="bulr(30px)"
+          filter="blur(0.5px)"
           transform="scale(0.999)"
           opacity={0.55}
           borderRadius="2xl"
@@ -123,19 +124,31 @@ export default function App() {
                 <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
                 <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
                 <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} />
-
+                
                 {/* ✅ Rutinas */}
                 <Route path="/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
+                <Route path="/rutinas/nueva" element={guard(<NuevaRutina />)} />
                 <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+                <Route path="/rutinas/:idRutina" element={guard(<DetalleRutina />)} /> 
                 <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
+                <Route path="/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> 
 
                 {/* ✅ Ejercicios */}
                 <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
-                <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
+                <Route path="/registrar" element={guard(<RegistrarEjercicio />)} />
                 <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
                 <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
+
+                {/* ✅ Entrenadores */}
+                <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
+                <Route path="/entrenadores/registrar" element={<RegistrarEntrenadores />} />
+                <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
+                <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
+
+                {/* Contacto */}
+                <Route path="/contacto" element={<Contacto/>}/>
 
                 {/* Alias dashboard */}
                 <Route path="/dashboard" element={guard(<InicioDashboard />)} />

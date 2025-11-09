@@ -50,7 +50,8 @@ public class TurnoService {
     public List<TurnoResponseDTO> listarPorEntrenador(Long entrenadorId,
                                                       OffsetDateTime desde,
                                                       OffsetDateTime hasta,
-                                                      String tipo) {
+                                                      String tipo)  {
+
         var turnos = turnoRepository.findByEntrenadorAndFilters(entrenadorId, desde, hasta, tipo);
         return turnos.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
     }
@@ -61,7 +62,8 @@ public class TurnoService {
         Turno turno = turnoRepository.findById(turnoId)
                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
 
-        if (turno.getAlumnos() == null) return List.of();
+        if (turno.getAlumnos() == null)
+            return List.of();
 
         return turno.getAlumnos().stream()
                 .map(a -> new AlumnoMinDTO(a.getId_alumno(), a.getNombre(), a.getApellido()))
@@ -95,7 +97,8 @@ public class TurnoService {
         var start = turnoGuardado.getFecha().toZonedDateTime();
         var end = turnoGuardado.getFecha().plusHours(1).toZonedDateTime();
 
-        String title = "Turno disponible - " + (turnoGuardado.getTipoTurno() != null ? turnoGuardado.getTipoTurno().getNombre() : "Turno");
+        String title = "Turno disponible - "
+                + (turnoGuardado.getTipoTurno() != null ? turnoGuardado.getTipoTurno().getNombre() : "Turno");
         String description = "Turno vacío, aún sin alumnos asignados.";
 
         try {
@@ -158,8 +161,7 @@ public class TurnoService {
                 entrenadorNombre,
                 tipoNombre,
                 turno.getFecha(),
-                alumnosNombres
-        );
+                alumnosNombres);
     }
     // ---------------------------------------------------------
 
@@ -193,7 +195,8 @@ public class TurnoService {
         var newEvent = googleCalendarNotificationService.createEvent(
                 userId,
                 "Turno con " + (turnoCreado.getEntrenador() != null && turnoCreado.getEntrenador().getUsuario() != null
-                        ? turnoCreado.getEntrenador().getUsuario().getNombre() : "Entrenador"),
+                        ? turnoCreado.getEntrenador().getUsuario().getNombre()
+                        : "Entrenador"),
                 turnoCreado.getTipoTurno() != null ? turnoCreado.getTipoTurno().getNombre() : "Turno",
                 start,
                 end);

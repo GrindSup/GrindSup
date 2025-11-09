@@ -1,40 +1,40 @@
 package com.grindsup.backend.model;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "rutina_ejercicios")
 @IdClass(RutinaEjercicioId.class)
+@EntityListeners(AuditingEntityListener.class)
 public class RutinaEjercicio {
 
     @Id
-    @Column(name = "id_ejercicio")
-    private Long id_ejercicio; // Debe coincidir con el nombre en RutinaEjercicioId
-
-    @Id
-    @Column(name = "id_rutina")
-    private Long id_rutina; // Debe coincidir con el nombre en RutinaEjercicioId
-
     @ManyToOne
-    @JoinColumn(name = "id_ejercicio", insertable = false, updatable = false)
+    @JoinColumn(name = "id_ejercicio")
     private Ejercicio ejercicio;
 
+    @Id
     @ManyToOne
-    @JoinColumn(name = "id_rutina", insertable = false, updatable = false)
+    @JoinColumn(name = "id_rutina")
     private Rutina rutina;
 
     private Integer repeticiones;
     private Integer series;
-    private Integer descanso_segundos;
 
     @ManyToOne
     @JoinColumn(name = "id_estado")
     private Estado estado;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime created_at;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updated_at;
 
@@ -47,7 +47,6 @@ public class RutinaEjercicio {
     @Column(length = 100)
     private String grupo_muscular;
 
-    // Getters y Setters
     public Ejercicio getEjercicio() {
         return ejercicio;
     }
@@ -78,14 +77,6 @@ public class RutinaEjercicio {
 
     public void setSeries(Integer series) {
         this.series = series;
-    }
-
-    public Integer getDescanso_segundos() {
-        return descanso_segundos;
-    }
-
-    public void setDescanso_segundos(Integer descanso_segundos) {
-        this.descanso_segundos = descanso_segundos;
     }
 
     public Estado getEstado() {
@@ -120,26 +111,19 @@ public class RutinaEjercicio {
         this.deleted_at = deleted_at;
     }
 
-    public String getObservaciones() { return observaciones; }
-    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
-
-    public String getGrupo_muscular() { return grupo_muscular; }
-    public void setGrupo_muscular(String grupo_muscular) { this.grupo_muscular = grupo_muscular; }
-
-    public Long getId_ejercicio() {
-    return id_ejercicio;
+    public String getObservaciones() {
+        return observaciones;
     }
 
-    public void setId_ejercicio(Long id_ejercicio) {
-        this.id_ejercicio = id_ejercicio;
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
     }
 
-    public Long getId_rutina() {
-        return id_rutina;
+    public String getGrupo_muscular() {
+        return grupo_muscular;
     }
 
-    public void setId_rutina(Long id_rutina) {
-        this.id_rutina = id_rutina;
+    public void setGrupo_muscular(String grupo_muscular) {
+        this.grupo_muscular = grupo_muscular;
     }
-
 }

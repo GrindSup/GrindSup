@@ -26,7 +26,7 @@ export default function EditarEjercicio() {
   const [error, setError] = useState("");
   const [inlineErrors, setInlineErrors] = useState({ principal: "", secundario: "", equipamiento: "" });
 
-  const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+  const todosLosMusculos = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps", "Espalda"];
   const todosLosEquipamientos = ["Banda elástica", "Banco inclinado", "Barra", "Camilla de Isquios", "Mancuernas", "Máquina hack", "Máquina Smith", "Polea", "Prensa", "Silla de Cuádriceps", "Silla de Isquios", "Step"];
 
 
@@ -137,7 +137,7 @@ export default function EditarEjercicio() {
   return (
     <Container maxW="lg" py={10}>
       <Box p={8} borderWidth="1px" borderRadius="2xl" boxShadow="lg" bg="white">
-        <Heading size="lg" textAlign="center" mb={6} color="white">Editar Ejercicio</Heading>
+        <Heading size="lg" textAlign="center" mb={6} color="black">Editar Ejercicio</Heading>
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={5} align="stretch">
