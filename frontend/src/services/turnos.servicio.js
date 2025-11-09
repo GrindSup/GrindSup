@@ -1,5 +1,5 @@
 // src/services/turnos.servicio.js
-import axios from "axios";
+import axios from '../config/axios.config'; // (Ajusta la ruta si es necesario)
 
 /** Base URL (env o fallback local) */
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";

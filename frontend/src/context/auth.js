@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
+/* ======================
+ * Utilidades de sesión
+ * ====================== */
+
 export function getUsuario() {
   try { return JSON.parse(localStorage.getItem("usuario") || "null"); }
   catch { return null; }
@@ -15,10 +19,39 @@ export function getEntrenadorId(user) {
     user?.entrenador?.id_entrenador ??
     user?.entrenador?.id ??
     user?.id_entrenador ??
-    user?.id_usuario ??        // a veces lo guardan así por error
+    user?.id_usuario ??       // a veces lo guardan así por error
     user?.id ??
     null
   );
+}
+
+// Obtiene un nombre legible del entrenador/usuario guardado
+export function getEntrenadorName(user) {
+  if (!user) return null;
+
+  // candidato “entrenador”
+  const ent = user?.entrenador || user?.usuario || user;
+
+  const nombre =
+    ent?.nombre ??
+    user?.nombre ??
+    ent?.firstName ??
+    user?.firstName ??
+    null;
+
+  const apellido =
+    ent?.apellido ??
+    user?.apellido ??
+    ent?.lastName ??
+    user?.lastName ??
+    null;
+
+  if (nombre || apellido) {
+    return [nombre, apellido].filter(Boolean).join(" ").trim() || null;
+  }
+  if (user?.username) return user.username;
+  if (user?.email) return user.email.split("@")[0];
+  return null;
 }
 
 /**
@@ -26,10 +59,9 @@ export function getEntrenadorId(user) {
  * 1) Usa localStorage.entrenadorId si existe.
  * 2) Intenta deducirlo del usuario guardado.
  * 3) Como último recurso consulta al backend por el entrenador del usuario.
- *    Se prueban endpoints comunes SIN cambiar backend:
+ *    Endpoints intentados (si existen):
  *      - GET /api/entrenadores?usuarioId=...
  *      - GET /api/entrenadores/by-usuario/{usuarioId}
- * Si lo encuentra, lo guarda en localStorage para cachear.
  */
 export async function ensureEntrenadorId() {
   // 1) cache explícito
@@ -82,10 +114,61 @@ export async function ensureEntrenadorId() {
   return null;
 }
 
-export function clearSessionCache() {
-  localStorage.removeItem("entrenadorId");
+/**
+ * Devuelve { id, displayName } del entrenador logueado.
+ * - Usa caches (entrenadorId, entrenadorName)
+ * - Intenta armar el nombre desde localStorage.usuario
+ * - Si no hay nombre y sabemos el id, intenta GET /api/entrenadores/{id}
+ */
+export async function ensureEntrenadorInfo() {
+  // cache de nombre si existe
+  const cachedName = localStorage.getItem("entrenadorName");
+
+  // obtenemos id primero (usará cache si lo tiene)
+  const id = await ensureEntrenadorId();
+
+  // 1) nombre a partir del usuario guardado
+  const userName = getEntrenadorName(getUsuario());
+  if (userName) {
+    if (cachedName !== userName) {
+      localStorage.setItem("entrenadorName", userName);
+    }
+    return { id, displayName: userName };
+  }
+
+  // 2) si hay cache y no pudimos del user, devolvelo
+  if (cachedName) return { id, displayName: cachedName };
+
+  // 3) intento opcional al backend si tenemos id
+  if (id) {
+    try {
+      const r = await fetch(`${API}/entrenadores/${id}`);
+      if (r.ok) {
+        const ent = await r.json();
+        const nombre = [ent?.nombre, ent?.apellido].filter(Boolean).join(" ").trim();
+        const displayName =
+          nombre || ent?.username || (ent?.email ? ent.email.split("@")[0] : null) || null;
+        if (displayName) {
+          localStorage.setItem("entrenadorName", displayName);
+          return { id, displayName };
+        }
+      }
+    } catch {
+      // silencioso
+    }
+  }
+
+  return { id, displayName: null };
 }
 
+export function clearSessionCache() {
+  localStorage.removeItem("entrenadorId");
+  localStorage.removeItem("entrenadorName");
+}
+
+/* ======================
+ * Hook mínimo de auth
+ * ====================== */
 export default function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
