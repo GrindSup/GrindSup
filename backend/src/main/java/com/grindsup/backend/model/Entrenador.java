@@ -27,10 +27,10 @@ public class Entrenador {
     @JoinColumn(name = "id_estado")
     private Estado estado;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime created_at;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updated_at;
 
     @Column(name = "deleted_at")
@@ -41,8 +41,8 @@ public class Entrenador {
         return idEntrenador;
     }
 
-    public void setIdEntrenador(Long id_entrenador) {
-        this.idEntrenador = id_entrenador;
+    public void setIdEntrenador(Long idEntrenador) {
+        this.idEntrenador = idEntrenador;
     }
 
     public Usuario getUsuario() {

@@ -11,95 +11,176 @@ import {
 import { AddIcon, EditIcon, DeleteIcon, SearchIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
+import rutinasService from '../../services/rutinas.servicio.js';
+import { planesService } from '../../services/planes.servicio.js'; 
 
 const capitalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
-//REVISAR CUANDO ESTÉN LAS HU DE RUTINAS
-const mockRutinas = [
-  { id: 1, nombre: "Rutina 1" },
-  { id: 2, nombre: "Rutina 2" },
-  { id: 3, nombre: "Rutina 3" },
-];
-
-const allMuscleGroups = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps"];
+const allMuscleGroups = ["Abductores", "Aductores", "Biceps", "Cuadriceps", "Dorsales", "Femorales", "Gemelos", "Gluteos", "Hombros", "Pectorales", "Triceps", "Espalda"];
 
 export default function ListaEjercicios() {
-    const [ejercicios, setEjercicios] = useState([]);
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [selectedMuscles, setSelectedMuscles] = useState([]);
+  const [ejercicios, setEjercicios] = useState([]);
+  const [rutinas, setRutinas] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selectedMuscles, setSelectedMuscles] = useState([]);
+
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = useRef();
+  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
+
+  const [ejercicioAEliminar, setEjercicioAEliminar] = useState(null);
+  const [ejercicioParaAgregar, setEjercicioParaAgregar] = useState(null);
+  const [rutinaSeleccionada, setRutinaSeleccionada] = useState(null);
+
+  useEffect(() => {
+    fetchEjercicios();
+    fetchRutinas();
+  }, []);
+
+  const fetchEjercicios = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/api/ejercicios');
+      setEjercicios(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los ejercicios: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRutinas = async () => {
+    try {
+      const ps = await planesService.listAll();
+
+      let data = [];
+      try {
+        const r = await axiosInstance.get("/api/rutinas");
+        data = Array.isArray(r.data) ? r.data : [];
+      } catch {
+        const r = await axiosInstance.get("/api/rutinas?all=1");
+        data = Array.isArray(r.data) ? r.data : [];
+      }
+
+      const enrich = data.map((r) => {
+        const planId = r.planId ?? r.plan?.id_plan ?? r.id_plan ?? null;
+        const plan = (ps || []).find((p) => String(p.id_plan ?? p.id) === String(planId));
+        const alumno = plan?.alumno
+          ? [plan.alumno?.nombre, plan.alumno?.apellido].filter(Boolean).join(" ")
+          : null;
+        return { ...r, planId: planId, __alumno: alumno };
+      });
+
+      setRutinas(enrich);
+    } catch (err) {
+      console.error("Error al cargar rutinas:", err);
+      setRutinas([]);
+      toast({ title: "Error al cargar la lista de rutinas", status: "error", duration: 3000 });
+    }
+  };
+
+  const abrirDialogoEliminar = (ejercicio) => {
+    setEjercicioAEliminar(ejercicio);
+    onOpen();
+  };
+
+  const handleEliminar = async () => {
+    if (!ejercicioAEliminar) return;
+
+    try {
+      await axiosInstance.delete(`/api/ejercicios/${ejercicioAEliminar.id_ejercicio}`);
+      toast({
+        title: "Ejercicio eliminado",
+        description: `El ejercicio "${ejercicioAEliminar.nombre}" ha sido eliminado.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      onClose();
+      fetchEjercicios();
+    } catch (err) {
+      toast({
+        title: "Error al eliminar",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const abrirModalAgregar = (ejercicio) => {
+    setEjercicioParaAgregar(ejercicio);
+    setRutinaSeleccionada(null);
+    onAddOpen();
+  };
+
+  const handleAgregarARutina = async () => {
+    if (!rutinaSeleccionada || !ejercicioParaAgregar) return;
+
+    const rutina = rutinas.find(r => (r.id_rutina ?? r.id).toString() === rutinaSeleccionada);
+    if (!rutina) {
+        toast({ title: "Error", description: "Rutina seleccionada no encontrada.", status: "error" });
+        return;
+    }
     
-    const navigate = useNavigate();
-    const toast = useToast();
+    const planId = rutina.planId;
+    const rutinaId = rutina.id_rutina ?? rutina.id;
 
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [ejercicioAEliminar, setEjercicioAEliminar] = useState(null);
-    const cancelRef = useRef();
-    const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
-    const [ejercicioParaAgregar, setEjercicioParaAgregar] = useState(null);
-    const [rutinaSeleccionada, setRutinaSeleccionada] = useState(null);
+    try {
+      const detalle = await rutinasService.obtenerDetalleRutina(planId, rutinaId);
+      if (!detalle) throw new Error("No se pudo obtener el detalle de la rutina.");
 
-    useEffect(() => {
-        fetchEjercicios();
-    }, []);
+      const infoRutina = detalle.rutina ?? {};
+      const ejerciciosExistentes = detalle.ejercicios ?? [];
 
-    const fetchEjercicios = async () => {
-        try {
-            setLoading(true);
-            const response = await axiosInstance.get('/api/ejercicios'); 
-            setEjercicios(response.data);
-            setError(null);
-        } catch (err) {
-            setError('Error al cargar los ejercicios: ' + (err.response?.data?.message || err.message));
-        } finally {
-            setLoading(false);
-        }
-    };
+      const yaExiste = ejerciciosExistentes.some(
+        (e) => (e.ejercicio?.id_ejercicio ?? e.id_ejercicio) == ejercicioParaAgregar.id_ejercicio
+      );
+      if (yaExiste) {
+        toast({
+          title: "Ejercicio ya existente",
+          description: `"${ejercicioParaAgregar.nombre}" ya está en la rutina "${rutina.nombre}".`,
+          status: "warning",
+          duration: 4000,
+          isClosable: true,
+        });
+        onAddClose();
+        return;
+      }
 
-    const abrirDialogoEliminar = (ejercicio) => {
-        setEjercicioAEliminar(ejercicio);
-        onOpen();
-    };
+      const ejerciciosDtoExistentes = ejerciciosExistentes.map(e => ({
+          idEjercicio: e.ejercicio?.id_ejercicio ?? e.id_ejercicio,
+          series: e.series,
+          repeticiones: e.repeticiones,
+          descansoSegundos: e.descanso_segundos ?? e.descansoSegundos ?? 60,
+      }));
 
-    const handleEliminar = async () => {
-        if (!ejercicioAEliminar) return;
+      const nuevoEjercicioDto = {
+        idEjercicio: ejercicioParaAgregar.id_ejercicio,
+        series: 3,
+        repeticiones: 10,
+        descansoSegundos: 60,
+      };
 
-        try {
-            await axiosInstance.delete(`/api/ejercicios/${ejercicioAEliminar.id_ejercicio}`);
-            toast({
-                title: "Ejercicio eliminado",
-                description: `El ejercicio "${ejercicioAEliminar.nombre}" ha sido eliminado.`,
-                status: "success",
-                duration: 3000,
-                isClosable: true,
-            });
-            onClose(); 
-            fetchEjercicios();
-        } catch (err) {
-            toast({
-                title: "Error al eliminar",
-                description: err.response?.data?.message || err.message,
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        }
-    };
+      const payloadEjercicios = [...ejerciciosDtoExistentes, nuevoEjercicioDto];
 
-    const abrirModalAgregar = (ejercicio) => {
-      setEjercicioParaAgregar(ejercicio);
-      setRutinaSeleccionada(null); 
-      onAddOpen();
-    };
+      const payload = {
+        nombre: infoRutina.nombre,
+        descripcion: infoRutina.descripcion,
+        ejercicios: payloadEjercicios,
+      };
 
-    const handleAgregarARutina = () => {
-      if (!rutinaSeleccionada || !ejercicioParaAgregar) return;
-
-      const rutina = mockRutinas.find(r => r.id.toString() === rutinaSeleccionada);
+      await rutinasService.update(planId, rutinaId, payload);
 
       toast({
-        title: "Ejercicio Agregado",
+        title: "Ejercicio agregado",
         description: `"${ejercicioParaAgregar.nombre}" se agregó a la rutina "${rutina.nombre}".`,
         status: "success",
         duration: 4000,
@@ -107,210 +188,226 @@ export default function ListaEjercicios() {
       });
 
       onAddClose();
-    };
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error al agregar ejercicio",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  };
 
-    const filteredEjercicios = useMemo(() => {
-            let ejerciciosFiltrados = ejercicios;
-            if (search) {
-                ejerciciosFiltrados = ejerciciosFiltrados.filter(ej => 
-                    ej.nombre.toLowerCase().includes(search.toLowerCase())
-                );
-            }
-            if (selectedMuscles.length > 0) {
-                ejerciciosFiltrados = ejerciciosFiltrados.filter(ej => {
-                    const musculosDelEjercicio = [
-                        ...(ej.grupoMuscularPrincipal || []),
-                        ...(ej.grupoMuscularSecundario || [])
-                    ];
-                    return selectedMuscles.some(selected => musculosDelEjercicio.includes(selected));
-                });
-            }
+  const filteredEjercicios = useMemo(() => {
+    let ejerciciosFiltrados = ejercicios;
+    if (search) {
+      ejerciciosFiltrados = ejerciciosFiltrados.filter(ej =>
+        ej.nombre.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (selectedMuscles.length > 0) {
+      ejerciciosFiltrados = ejerciciosFiltrados.filter(ej => {
+        const musculosDelEjercicio = [
+          ...(ej.grupoMuscularPrincipal || []),
+          ...(ej.grupoMuscularSecundario || [])
+        ];
+        return selectedMuscles.some(selected => musculosDelEjercicio.includes(selected));
+      });
+    }
 
-            return ejerciciosFiltrados;
-        }, [ejercicios, search, selectedMuscles]);
-    
-    return (
-        <Container maxW="7xl" py={10}>
-            <Flex justifyContent="space-between" alignItems="center" mb={6} wrap="wrap" gap={4}>
-                <HStack spacing={4} alignItems="center">
-                    <BotonVolver />
-                    <Heading as="h1" size="xl" color="white">
-                        Lista de Ejercicios
-                    </Heading>
-                </HStack>
-                <Spacer />
-                <HStack spacing={4}>
-                    <Menu closeOnSelect={false}>
-                    <MenuButton 
-                    as={Button} 
-                    rightIcon={<ChevronDownIcon />} 
-                    minW="200px"
-                    bg="#258d19"      
-                    color="white"      
-                    _hover={{ bg: "#0b3a0c" }} 
-                    _active={{ bg: "#082b09" }}
-                    >
-                        {selectedMuscles.length > 0 ? `Músculos (${selectedMuscles.length})` : "Filtrar por Músculo"}
-                    </MenuButton>
-                        <MenuList minWidth="240px">
-                            <MenuOptionGroup
-                                title="Grupos Musculares"
-                                type="checkbox"
-                                value={selectedMuscles}
-                                onChange={setSelectedMuscles}
-                            >
-                                {allMuscleGroups.map(muscle => (
-                                    <MenuItemOption key={muscle} value={muscle}>
-                                        {muscle}
-                                    </MenuItemOption>
-                                ))}
-                            </MenuOptionGroup>
-                        </MenuList>
-                    </Menu>
-                    <InputGroup w={{ base: "100%", md: "300px" }}>
-                        <InputLeftElement pointerEvents="none">
-                            <SearchIcon color="gray.500" />
-                        </InputLeftElement>
-                        <Input
-                            placeholder="Buscar por nombre..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            borderRadius="full"
-                            bg="white"
-                        />
-                    </InputGroup>
-                    <Button
-                        leftIcon={<AddIcon />}
-                        colorScheme="brand"
-                        variant="solid"
-                        onClick={() => navigate('/ejercicio/registrar')}
+    return ejerciciosFiltrados;
+  }, [ejercicios, search, selectedMuscles]);
+
+  return (
+    <Container maxW="7xl" py={10}>
+      <Flex justifyContent="space-between" alignItems="center" mb={6} wrap="wrap" gap={4}>
+        <HStack spacing={4} alignItems="center">
+          <BotonVolver />
+          <Heading as="h1" size="xl" color="white">
+            Lista de Ejercicios
+          </Heading>
+        </HStack>
+        <Spacer />
+        <HStack spacing={4}>
+          <Menu closeOnSelect={false}>
+            <MenuButton
+              as={Button}
+              rightIcon={<ChevronDownIcon />}
+              minW="200px"
+              bg="#258d19"
+              color="white"
+              _hover={{ bg: "#0b3a0c" }}
+              _active={{ bg: "#082b09" }}
+            >
+              {selectedMuscles.length > 0 ? `Músculos (${selectedMuscles.length})` : "Filtrar por Músculo"}
+            </MenuButton>
+            <MenuList minWidth="240px">
+              <MenuOptionGroup
+                title="Grupos Musculares"
+                type="checkbox"
+                value={selectedMuscles}
+                onChange={setSelectedMuscles}
+              >
+                {allMuscleGroups.map(muscle => (
+                  <MenuItemOption key={muscle} value={muscle}>
+                    {muscle}
+                  </MenuItemOption>
+                ))}
+              </MenuOptionGroup>
+            </MenuList>
+          </Menu>
+          <InputGroup w={{ base: "100%", md: "300px" }}>
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.500" />
+            </InputLeftElement>
+            <Input
+              placeholder="Buscar por nombre..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              borderRadius="full"
+              bg="white"
+            />
+          </InputGroup>
+          <Button
+            leftIcon={<AddIcon />}
+            onClick={() => navigate('/ejercicio/registrar')}
+            bg="#258d19"
+            color="white"
+          >
+            Nuevo Ejercicio
+          </Button>
+        </HStack>
+      </Flex>
+
+      {loading && <Center py={10}><Spinner size="xl" /></Center>}
+      {error && <Alert status="error"><AlertIcon />{error}</Alert>}
+
+      {!loading && !error && (
+        <>
+          {filteredEjercicios.length === 0 ? (
+            <Center py={10}>
+              <Text fontSize="lg" color="gray.500">
+                {search ? 'No se encontraron ejercicios con ese nombre.' : 'Aún no hay ejercicios registrados.'}
+              </Text>
+            </Center>
+          ) : (
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+              {filteredEjercicios.map((ej) => (
+                <Card key={ej.id_ejercicio} direction="column" h="100%" display="flex">
+                  <Link as={RouterLink} to={`/ejercicio/detalle/${ej.id_ejercicio}`} flex="1" _hover={{ textDecoration: 'none' }}>
+                    <CardHeader>
+                      <Heading size='md'>{ej.nombre}</Heading>
+                    </CardHeader>
+                    <CardBody>
+                      <HStack spacing={2} wrap="wrap">
+                        <Tag colorScheme='teal'>{capitalize(ej.dificultad)}</Tag>
+                        {ej.grupoMuscularPrincipal?.map(musculo => (
+                          <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
+                        ))}
+                      </HStack>
+                      <Text mt={4} noOfLines={3}>{ej.descripcion || "Sin descripción."}</Text>
+                    </CardBody>
+                  </Link>
+                  <Spacer />
+                  <CardFooter>
+                    <Flex justify="space-between" align="center" w="100%">
+                      <IconButton
+                        aria-label="Agregar a rutina"
+                        icon={<AddIcon />}
                         bg="#258d19"
                         color="white"
-                    >
-                        Nuevo Ejercicio
-                    </Button>
-                </HStack>
-            </Flex>
+                        isRound
+                        onClick={() => abrirModalAgregar(ej)}
+                      />
+                      <HStack>
+                        <Button variant='solid' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#258d19" color="white">
+                          Editar
+                        </Button>
+                        <Button size="sm" bg="red.600" color="white" _hover={{ bg: "red.600" }} onClick={() => abrirDialogoEliminar(ej)}>
+                          Eliminar
+                        </Button>
+                      </HStack>
+                    </Flex>
+                  </CardFooter>
+                </Card>
+              ))}
+            </SimpleGrid>
+          )}
+        </>
+      )}
 
-            {loading && ( <Center py={10}><Spinner size="xl" /></Center> )}
-            {error && ( <Alert status="error"><AlertIcon />{error}</Alert> )}
+      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Eliminar Ejercicio
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              ¿Estás seguro de que querés eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose} bg="#258d19" color="white">
+                Cancelar
+              </Button>
+              <Button
+                bg="red.600"
+                color="white"
+                _hover={{ bg: "red.700" }}
+                onClick={handleEliminar}
+                ml={3}
+              >
+                Eliminar
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
 
-            {!loading && !error && (
-                <>
-                    {filteredEjercicios.length === 0 ? (
-                        <Center py={10}>
-                            <Text fontSize="lg" color="gray.500">
-                                {search ? 'No se encontraron ejercicios con ese nombre.' : 'Aún no hay ejercicios registrados.'}
-                            </Text>
-                        </Center>
-                    ) : (
-                        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                            {filteredEjercicios.map((ej) => (
-                                <Card key={ej.id_ejercicio} direction="column" h="100%" display="flex">
-                                    <Link as={RouterLink} to={`/ejercicio/detalle/${ej.id_ejercicio}`} flex="1" _hover={{ textDecoration: 'none' }}>
-                                        <CardHeader>
-                                            <Heading size='md'>{ej.nombre}</Heading>
-                                        </CardHeader>
-                                        <CardBody>
-                                            <HStack spacing={2} wrap="wrap">
-                                                <Tag colorScheme='teal'>{capitalize(ej.dificultad)}</Tag>
-                                                {ej.grupoMuscularPrincipal?.map(musculo => (
-                                                    <Tag key={musculo} colorScheme='purple'>{musculo}</Tag>
-                                                ))}
-                                            </HStack>
-                                            <Text mt={4} noOfLines={3}>{ej.descripcion || "Sin descripción."}</Text>
-                                        </CardBody>
-                                    </Link>
-                                    <Spacer />
-                                    <CardFooter>
-                                      <Flex justify="space-between" align="center" w="100%">
-                                        <IconButton
-                                          aria-label="Agregar a rutina"
-                                          icon={<AddIcon />}
-                                          bg="#258d19"
-                                          color="white"
-                                          isRound
-                                          onClick={() => abrirModalAgregar(ej)}
-                                        />
-                                        <HStack>
-                                            <Button variant='solid' size="sm" onClick={() => navigate(`/ejercicio/editar/${ej.id_ejercicio}`)} bg="#258d19" color="white">
-                                                Editar
-                                            </Button>
-                                            <Button size="sm" bg="red.600" color="white" _hover={{ bg: "red.600" }} onClick={() => abrirDialogoEliminar(ej)}>
-                                                Eliminar
-                                            </Button>
-                                        </HStack>
-                                      </Flex>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
-                    )}
-                </>
-            )}
-            <AlertDialog
-                isOpen={isOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
+      <Modal isOpen={isAddOpen} onClose={onAddClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Agregar "{ejercicioParaAgregar?.nombre}" a Rutina</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text mb={4}>Seleccioná la rutina a la que querés agregar este ejercicio:</Text>
+            <RadioGroup onChange={setRutinaSeleccionada} value={rutinaSeleccionada}>
+              <Stack>
+                {rutinas.length > 0 ? (
+                  rutinas.map((r) => {
+                    const id = r.id_rutina ?? r.id;
+                    const planInfo = r.planId ? `(Plan #${r.planId})` : "(Sin Plan)";
+                    const alumnoInfo = r.__alumno ? `- ${r.__alumno}` : "";
+
+                    return (
+                      <Radio key={id} value={id.toString()}>
+                        {r.nombre} <Text as="span" fontSize="sm" color="gray.500">{planInfo} {alumnoInfo}</Text>
+                      </Radio>
+                    )
+                  })
+                ) : (
+                  <Text color="gray.500">No hay rutinas disponibles.</Text>
+                )}
+              </Stack>
+            </RadioGroup>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onAddClose}>
+              Cancelar
+            </Button>
+            <Button
+              bg="#258d19"
+              color="white"
+              onClick={handleAgregarARutina}
+              isDisabled={!rutinaSeleccionada}
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                            Eliminar Ejercicio
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            ¿Estás seguro de que quieres eliminar el ejercicio <strong>"{ejercicioAEliminar?.nombre}"</strong>? Esta acción no se puede deshacer.
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose} bg="#258d19" color="white">
-                            Cancelar
-                            </Button>
-                            <Button
-                            bg="red.600"
-                            color="white"
-                            _hover={{ bg: "red.600" }}
-                            onClick={handleEliminar}
-                            ml={3}
-                            >
-                            Eliminar
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
-            <Modal isOpen={isAddOpen} onClose={onAddClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>Agregar "{ejercicioParaAgregar?.nombre}" a Rutina</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  <Text mb={4}>Seleccioná la rutina a la que querés agregar este ejercicio:</Text>
-                  <RadioGroup onChange={setRutinaSeleccionada} value={rutinaSeleccionada}>
-                    <Stack>
-                      {mockRutinas.map(r => (
-                        <Radio key={r.id} value={r.id.toString()}>
-                          {r.nombre}
-                        </Radio>
-                      ))}
-                    </Stack>
-                  </RadioGroup>
-                </ModalBody>
-
-                <ModalFooter>
-                  <Button variant="ghost" mr={3} onClick={onAddClose}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    bg="#258d19"
-                    color="white"
-                    onClick={handleAgregarARutina}
-                    isDisabled={!rutinaSeleccionada}
-                  >
-                    Agregar
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-        </Container>
-    );
+              Agregar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Container>
+  );
 }

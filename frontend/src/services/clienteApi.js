@@ -1,16 +1,10 @@
 // src/services/clienteApi.js
-import axios from "axios";
 
-const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080",
-  withCredentials: false,
-  headers: { "Content-Type": "application/json" },
-});
+// 1. Importa la ÚNICA instancia de Axios que tiene la configuración correcta
+//    (la que tiene el interceptor de 'Authorization: Bearer')
+import axiosInstance from '../config/axios.config.js';
 
-// helper: siempre devolver data (y dejar pasar errores al catch)
-api.interceptors.response.use(
-  (res) => res,
-  (err) => Promise.reject(err)
-);
-
-export default api;
+// 2. Exporta esa misma instancia bajo el nombre 'api'
+//    para que el resto de tus servicios (usuarios.servicio.js, etc.)
+//    puedan importarla y usarla.
+export default axiosInstance;

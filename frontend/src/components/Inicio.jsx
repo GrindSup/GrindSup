@@ -114,7 +114,7 @@ function InicioPublico() {
             <Stack direction={{ base: "column", sm: "row" }} spacing={4} pt={2}>
               <Button
                 as={RouterLink}
-                to="/registro"
+                to="/entrenadores/registrar"
                 size="lg"
                 bg="white"
                 color="#258d19"
@@ -277,7 +277,7 @@ function InicioPublico() {
           <Stack direction={{ base: "column", sm: "row" }} spacing={4} justify="center">
             <Button
               as={RouterLink}
-              to="/registro"
+              to="/entrenadores/registrar"
               bg="white"
               color="#007b00"
               borderRadius="xl"

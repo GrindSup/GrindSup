@@ -2,6 +2,7 @@
 import { Box, Container } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import api from "./config/axios.config";
 
 // Páginas/Componentes
 import InicioDashboard from "./pages/InicioDashboard";
@@ -9,6 +10,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import PantallaInicio from "./components/Inicio";
+import OAuthSuccess from "./pages/OAuthSuccess.jsx";
 
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
@@ -18,9 +20,14 @@ import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
 import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
 import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
+import Register from "./pages/Usuarios/Register.jsx";
 
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
+
+import RegistrarEntrenadores from "./components/RegistrarEntrenadores.jsx";
+
+import Contacto from "./components/Contacto.jsx";
 
 // ✅ Planes
 import ListaPlanes from "./pages/Planes/ListaPlanes.jsx";
@@ -36,11 +43,19 @@ import EditarRutina from "./pages/Rutinas/EditarRutina.jsx";
 
 // ✅ Ejercicios
 import ListaEjercicios from "./pages/Ejercicios/ListaEjercicios.jsx";
+import RegistrarEjercicio from "./pages/Ejercicios/RegistrarEjercicio.jsx";
+import EditarEjercicio from "./pages/Ejercicios/EditarEjercicio.jsx";
+import DetalleEjercicio from "./pages/Ejercicios/DetalleEjercicio.jsx";
+
+// ✅ Entrenadores
+import ListaEntrenadores from "./pages/Entrenadores/ListaEntrenadores.jsx";
+import EditarEntrenador from "./pages/Entrenadores/EditarEntrenador.jsx";
+import PerfilEntrenador from "./pages/Entrenadores/PerfilEntrenador.jsx";
 
 // ✅ Reportes y Estadísticas
 import ReportesHome from "./pages/Reportes/ReportesHome.jsx";
-import ReportesPage from "./pages/Reportes/ReportesPage";       // alumnos (altas/bajas + activos)
-import ReportesPlanes from "./pages/Reportes/ReportesPlanes.jsx"; // ratings de planes
+import ReportesPage from "./pages/Reportes/ReportesPage";
+import ReportesPlanes from "./pages/Reportes/ReportesPlanes.jsx";
 
 // --- Placeholders mínimos para registrar/editar/detalle de ejercicio ---
 function Placeholder({ title }) {
@@ -50,22 +65,39 @@ function Placeholder({ title }) {
     </Box>
   );
 }
-const RegistrarEjercicio = () => <Placeholder title={"Registrar Ejercicio — próximamente"} />;
-const EditarEjercicio = () => <Placeholder title={"Editar Ejercicio — próximamente"} />;
-const DetalleEjercicio = () => <Placeholder title={"Detalle de Ejercicio — próximamente"} />;
-
 export default function App() {
   const [usuario, setUsuario] = useState(() => {
     const saved = localStorage.getItem("usuario");
     return saved ? JSON.parse(saved) : null;
   });
 
+  // Guarda/limpia storage cuando cambia el usuario
   useEffect(() => {
     if (usuario) localStorage.setItem("usuario", JSON.stringify(usuario));
     else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
     }
+  }, [usuario]);
+
+  // Bootstrap de sesión: al cargar la app, si hay cookie gs_jwt,
+  // trae /api/usuarios/me y setea usuario (sirve al volver del login Google)
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        if (usuario) return; // ya hay sesión por login manual
+        const { data } = await api.get("/api/usuarios/me"); // ajusta si tu endpoint es otro
+        if (!cancel && data) {
+          const user = data.usuario ?? data; // depende de tu payload
+          setUsuario(user);
+          localStorage.setItem("usuario", JSON.stringify(user));
+        }
+      } catch {
+        // sin cookie/401: ignorar
+      }
+    })();
+    return () => { cancel = true; };
   }, [usuario]);
 
   const guard = (el) => (usuario ? el : <Navigate to="/login" replace />);
@@ -77,10 +109,10 @@ export default function App() {
         <Box
           position="absolute"
           inset="0"
-          bgImage="url('/img/gym.png')"  // tu imagen en public/img/gym.png
+          bgImage="url('/img/gym.png')"
           bgSize="cover"
           bgPos="center"
-          filter="blur(30px)"
+          filter="blur(0.5px)"
           transform="scale(0.999)"
           opacity={0.55}
           borderRadius="2xl"
@@ -106,6 +138,10 @@ export default function App() {
                 {/* Home → Dashboard si hay sesión; Landing si no */}
                 <Route path="/" element={usuario ? <InicioDashboard /> : <PantallaInicio />} />
 
+                {/* Ruta puente al volver de Google */}
+                <Route path="/oauth/success" element={<OAuthSuccess setUsuario={setUsuario} />} />
+
+
                 {/* Públicas */}
                 <Route path="/login" element={<Login setUsuario={setUsuario} />} />
                 <Route path="/forgot" element={<ForgotPassword />} />
@@ -127,22 +163,34 @@ export default function App() {
                 <Route path="/planes" element={guard(<ListaPlanes />)} />
                 <Route path="/planes/nuevo" element={guard(<RegistrarPlan />)} />
                 <Route path="/planes/:idPlan" element={guard(<DetallePlan />)} />
+                <Route path="/register" element={<Register />} />
                 <Route path="/planes/:idPlan/editar" element={guard(<EditarPlan />)} />
-
+                
                 {/* ✅ Rutinas */}
                 <Route path="/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas" element={guard(<ListaRutinas />)} />
                 <Route path="/planes/:idPlan/rutinas/nueva" element={guard(<NuevaRutina />)} />
+                <Route path="/rutinas/nueva" element={guard(<NuevaRutina />)} />
                 <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
+                <Route path="/rutinas/:idRutina" element={guard(<DetalleRutina />)} /> 
                 <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
+                <Route path="/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} /> 
 
                 {/* ✅ Ejercicios */}
                 <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
-                <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
+                <Route path="/registrar" element={guard(<RegistrarEjercicio />)} />
                 <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
                 <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
 
-                                
+                {/* ✅ Entrenadores */}
+                <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
+                <Route path="/entrenadores/registrar" element={<RegistrarEntrenadores />} />
+                <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
+                <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
+
+                {/* Contacto */}
+                <Route path="/contacto" element={<Contacto/>}/>
+
                 
                 {/* ✅ Reportes y Estadísticas */}
                 <Route path="/reportes" element={guard(<ReportesHome />)} />

@@ -1,4 +1,5 @@
 package com.grindsup.backend.repository;
+
 import com.grindsup.backend.model.PlanEntrenamiento;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,5 +9,9 @@ public interface PlanEntrenamientoRepository extends JpaRepository<PlanEntrenami
     List<PlanEntrenamiento> findByEntrenador_idEntrenador(Long idEntrenador);
     List<PlanEntrenamiento> findByAlumno_IdAlumnoAndEstado_IdEstado(Long idAlumno, Long idEstado);
     List<PlanEntrenamiento> findByAlumno_IdAlumnoAndEstado_nombre(Long idAlumno, String nombreEstado);
+
+    //revisar para dejar uno
+    List<PlanEntrenamiento> findByEntrenador_IdEntrenador(Long idEntrenador);
+
     List<PlanEntrenamiento> findByEstado_IdEstado(Long idEstado);
 }

@@ -21,10 +21,10 @@ public class Estado {
     @Column(name = "ambito", length = 50)
     private String ambito;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime created_at;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updated_at;
 
     @Column(name = "deleted_at")
@@ -35,8 +35,8 @@ public class Estado {
         return idEstado;
     }
 
-    public void setIdEstado(Long id_estado) {
-        this.idEstado = id_estado;
+    public void setIdEstado(Long idEstado) {
+        this.idEstado = idEstado;
     }
 
     public String getNombre() {

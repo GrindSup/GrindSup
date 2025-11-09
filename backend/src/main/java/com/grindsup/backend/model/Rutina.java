@@ -12,7 +12,7 @@ public class Rutina {
     private Long id_rutina;
 
     @ManyToOne
-    @JoinColumn(name = "id_plan", nullable = false)
+    @JoinColumn(name = "id_plan", nullable = true)
     private PlanEntrenamiento plan;
 
     @Column(length = 100)
@@ -25,7 +25,7 @@ public class Rutina {
     @JoinColumn(name = "id_estado")
     private Estado estado;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime created_at;
 
     @Column(name = "updated_at", nullable = false)
@@ -34,7 +34,22 @@ public class Rutina {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
-    // Getters y Setters
+    /* ---------- Métodos automáticos de tiempo ---------- */
+
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime ahora = OffsetDateTime.now();
+        this.created_at = ahora;
+        this.updated_at = ahora;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updated_at = OffsetDateTime.now();
+    }
+
+    /* ---------- Getters y Setters ---------- */
+
     public Long getId_rutina() {
         return id_rutina;
     }

@@ -139,7 +139,7 @@ public class PlanEntrenamientoController {
         // estado por defecto (o usar request si viene)
         Estado estadoRutina = estadoRepository.findById(
                 request.getIdEstado() != null ? request.getIdEstado() : 1L)
-            .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
         rutina.setEstado(estadoRutina);
 
         rutina.setCreated_at(OffsetDateTime.now());
@@ -158,23 +158,20 @@ public class PlanEntrenamientoController {
 
                 RutinaEjercicio re = new RutinaEjercicio();
 
-                // --- Muy importante: setear LOS IDS de la PK compuesta ---
-                re.setId_rutina(nuevaRutina.getId_rutina());      // campo primario en la entidad
-                re.setId_ejercicio(ejercicio.getId_ejercicio()); // campo primario en la entidad
-
-                // y además mantener las referencias para JPA/Hibernate
+                // --- CORRECCIÓN ---
+                // AHORA solo seteamos los OBJETOS.
                 re.setRutina(nuevaRutina);
                 re.setEjercicio(ejercicio);
 
-                // campos del DTO
+                // --- (ELIMINAMOS ESTAS LÍNEAS) ---
+                // re.setId_rutina(nuevaRutina.getId_rutina());
+                // re.setId_ejercicio(ejercicio.getId_ejercicio());
+
+                // ... (seteo de series, reps, etc. sin cambios) ...
                 re.setSeries(dto.getSeries());
                 re.setRepeticiones(dto.getRepeticiones());
-                re.setDescanso_segundos(dto.getDescansoSegundos());
                 re.setObservaciones(dto.getObservaciones());
-                // si tenés campo grupo_muscular en la entidad:
-                // re.setGrupo_muscular(dto.getGrupoMuscular());
-
-                re.setEstado(estadoRutina); // o buscá otro estado si corresponde
+                re.setEstado(estadoRutina);
                 re.setCreated_at(OffsetDateTime.now());
                 re.setUpdated_at(OffsetDateTime.now());
 
@@ -184,5 +181,30 @@ public class PlanEntrenamientoController {
         }
 
         return ResponseEntity.ok(nuevaRutina);
+    }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<?> actualizarEstadoRutina(
+            @PathVariable Long id,
+            @RequestParam Long idEstado) {
+        planService.actualizarEstado(id, idEstado);
+        return ResponseEntity.ok("Estado actualizado correctamente");
+    }
+
+    @GetMapping("/alumno/{idAlumno}/estado/{idEstado}")
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumnoYEstado(
+            @PathVariable Long idAlumno,
+            @PathVariable Long idEstado) {
+
+        List<PlanEntrenamiento> planes = planService.listarPlanesPorAlumnoYEstado(idAlumno, idEstado);
+        return ResponseEntity.ok(planes);
+    }
+
+    @GetMapping("/estado/{idEstado}")
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorEstado(
+            @PathVariable Long idEstado) {
+
+        List<PlanEntrenamiento> planes = planService.listarPlanesPorEstado(idEstado);
+        return ResponseEntity.ok(planes);
     }
 }

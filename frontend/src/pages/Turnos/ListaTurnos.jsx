@@ -23,19 +23,23 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { SearchIcon, CalendarIcon, AddIcon } from "@chakra-ui/icons";
-import { listarTurnos } from "../../services/turnos.servicio.js";
+import { listarTurnos, eliminarTurno } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
 
-function getTurnoEntrenadorId(t) {
-  return (
-    t?.entrenador?.id_entrenador ??
-    t?.entrenador?.id ??
-    t?.id_entrenador ??
-    t?.idEntrenador ??
-    t?.entrenadorId ??
-    t?.entrenador_id ??
-    null
-  );
+function alumnosToString(alumnos, fallback = "—") {
+  if (!alumnos) return fallback;
+  if (Array.isArray(alumnos)) {
+    if (alumnos.length === 0) return fallback;
+    if (typeof alumnos[0] === "string") return alumnos.join(", "); // DTO actual: List<String>
+    // soporta [{nombre, apellido}]
+    const s = alumnos
+      .map((a) => `${a?.nombre ?? ""} ${a?.apellido ?? ""}`.trim())
+      .filter(Boolean)
+      .join(", ");
+    return s || fallback;
+  }
+  if (typeof alumnos === "string") return alumnos || fallback; // alumnosNombres
+  return fallback;
 }
 
 export default function ListaTurnos() {
@@ -45,7 +49,7 @@ export default function ListaTurnos() {
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Inicializamos vacío para ver todos (pasados y futuros)
+  // filtros
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [tipo, setTipo] = useState("");
@@ -64,15 +68,12 @@ export default function ListaTurnos() {
       }
 
       try {
-        // usa /api/turnos/entrenador/{id}
         const { data } = await listarTurnos(id, {
           desde: desde || undefined,
           hasta: hasta || undefined,
           tipo: tipo || undefined,
         });
-
-        const rows = Array.isArray(data) ? data : [];
-        setTurnos(rows);
+        setTurnos(Array.isArray(data) ? data : []);
       } catch {
         setTurnos([]);
       } finally {
@@ -89,17 +90,12 @@ export default function ListaTurnos() {
     return turnos.filter((t) => {
       if (!needle) return true;
 
-      const alumnos = Array.isArray(t.alumnos)
-        ? t.alumnos.map((a) => `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim()).join(" ")
-        : t.alumnosNombres ?? "";
-
-      // t.entrenador llega como string desde el backend
+      const alumnosStr = alumnosToString(t.alumnos ?? t.alumnosNombres, "");
       const entrenadorNombre = t?.entrenador ?? "";
-
       const tipoStr = normalizarTipo(t.tipoTurno ?? t.tipo_turno);
 
       const hay = [
-        alumnos,
+        alumnosStr,
         entrenadorNombre,
         tipoStr,
         new Date(t.fecha).toLocaleDateString(),
@@ -115,6 +111,20 @@ export default function ListaTurnos() {
   const fmtFecha = (iso) => new Date(iso).toLocaleDateString();
   const fmtHora = (iso) =>
     new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  async function handleEliminar(t) {
+    const fechaTxt = new Date(t.fecha).toLocaleString();
+    const ok = window.confirm(
+      `¿Eliminar el turno #${t.id_turno} (${t.tipo_turno || t.tipoTurno}) del ${fechaTxt}?`
+    );
+    if (!ok) return;
+    try {
+      await eliminarTurno(t.id_turno);
+      setTurnos((prev) => prev.filter((x) => x.id_turno !== t.id_turno));
+    } catch (e) {
+      alert("No se pudo eliminar el turno: " + (e?.response?.data || e.message));
+    }
+  }
 
   return (
     <Container maxW="7xl" py={8}>
@@ -155,7 +165,7 @@ export default function ListaTurnos() {
           <Text fontSize="xm" mb={1} fontWeight="bold" color="white">
             Desde
           </Text>
-          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} bg="white"/>
+          <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} bg="white" />
         </Box>
 
         <Box>
@@ -220,34 +230,37 @@ export default function ListaTurnos() {
               view.map((t) => {
                 const tipoStr = normalizarTipo(t.tipoTurno ?? t.tipo_turno);
                 const color = tipoStr === "grupal" ? "purple" : "teal";
-
                 const entrenadorNombre = t?.entrenador || "—";
-
-                const alumnosNombres = Array.isArray(t.alumnos)
-                  ? t.alumnos
-                      .map((a) => `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim())
-                      .join(", ")
-                  : t.alumnosNombres ?? "—";
+                const alumnosNombres = alumnosToString(t.alumnos ?? t.alumnosNombres, "—");
 
                 return (
                   <Tr key={t.id_turno}>
                     <Td>{fmtFecha(t.fecha)}</Td>
                     <Td>{fmtHora(t.fecha)}</Td>
                     <Td>
-                      <Tag size="sm" colorScheme={color}>
-                        {tipoStr || "—"}
-                      </Tag>
+                      <Tag size="sm" colorScheme={color}>{tipoStr || "—"}</Tag>
                     </Td>
                     <Td>{entrenadorNombre}</Td>
-                    <Td>{alumnosNombres || "—"}</Td>
+                    <Td>{alumnosNombres}</Td>
                     <Td isNumeric>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate(`/turnos/editar/${t.id_turno}`)}
-                      >
-                        Editar
-                      </Button>
+                      <HStack justify="flex-end" spacing={2}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/turnos/editar/${t.id_turno}`)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          bg="#258d19"
+                          color="white"
+                          colorScheme="red"
+                          onClick={() => handleEliminar(t)}
+                        >
+                          Eliminar
+                        </Button>
+                      </HStack>
                     </Td>
                   </Tr>
                 );
