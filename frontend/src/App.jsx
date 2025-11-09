@@ -137,13 +137,13 @@ export default function App() {
 
                 {/* ✅ Ejercicios */}
                 <Route path="/ejercicios" element={guard(<ListaEjercicios />)} />
-                <Route path="/ejercicio/registrar" element={guard(<RegistrarEjercicio />)} />
+                <Route path="/registrar" element={guard(<RegistrarEjercicio />)} />
                 <Route path="/ejercicio/editar/:id" element={guard(<EditarEjercicio />)} />
                 <Route path="/ejercicio/detalle/:id" element={guard(<DetalleEjercicio />)} />
 
                 {/* ✅ Entrenadores */}
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
-                <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
+                <Route path="/entrenadores/registrar" element={<RegistrarEntrenadores />} />
                 <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
                 <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
 

@@ -1,136 +1,151 @@
-import React, { useState, useMemo } from "react";
-import { Box, Button, Card, CardBody, CardHeader, Container, Grid, GridItem, Heading, Input, Stack, Text, FormControl, FormLabel, FormErrorMessage, useToast, Select } from "@chakra-ui/react";
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  Text,
+  Stack,
+  Alert,
+  AlertIcon
+} from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+import api from "../config/axios.config";
 
 export default function RegistrarEntrenadores() {
-  const toast = useToast();
   const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const [entrenador, setEntrenador] = useState({
     nombre: "",
     apellido: "",
-    codigoArea: "+54",   // <- código de área por defecto
-    telefono: "",
-    experiencia: "",
     correo: "",
+    contrasena: "",
+    telefono: "",
+    experiencia: ""
   });
 
-  const errors = useMemo(() => {
-    const e = {};
-    if (!entrenador.nombre.trim()) e.nombre = "El nombre es obligatorio";
-    if (!entrenador.apellido.trim()) e.apellido = "El apellido es obligatorio";
-    if (!entrenador.telefono.trim()) e.telefono = "El teléfono es obligatorio";
-    else if (!/^[0-9]+$/.test(entrenador.telefono)) e.telefono = "El teléfono debe contener solo números";
-    if (!entrenador.correo.trim()) e.correo = "El correo es obligatorio";
-    return e;
-  }, [entrenador]);
+  const [errors, setErrors] = useState({ correo: "" });
 
-  const isValid = Object.keys(errors).length === 0;
+  const validarGmail = (correo) => correo.endsWith("@gmail.com");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // ✅ Para teléfono: solo números
+    if (name === "telefono") {
+      const soloNumeros = value.replace(/\D/g, "");
+      return setEntrenador((prev) => ({ ...prev, telefono: soloNumeros }));
+    }
+
     setEntrenador((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "correo") {
+      setErrors((prev) => ({
+        ...prev,
+        correo: validarGmail(value) ? "" : "El correo debe ser @gmail.com"
+      }));
+    }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    if (!isValid) return;
+    if (!entrenador.nombre || !entrenador.apellido || !entrenador.correo || !entrenador.contrasena) return;
+    if (!validarGmail(entrenador.correo)) return;
 
-    setSubmitting(true);
+    const payload = {
+      usuario: {
+        nombre: entrenador.nombre,
+        apellido: entrenador.apellido,
+        correo: entrenador.correo,
+        contrasena: entrenador.contrasena
+      },
+      telefono: "+54 " + entrenador.telefono,
+      experiencia: entrenador.experiencia
+    };
+
     try {
-      const payload = {
-        telefono: entrenador.codigoArea + entrenador.telefono, // <- concatenamos código + número
-        experiencia: entrenador.experiencia.trim(),
-        usuario: {
-          nombre: entrenador.nombre.trim(),
-          apellido: entrenador.apellido.trim(),
-          correo: entrenador.correo.trim(),
-        },
-      };
-
-      await axios.post(`${API}/entrenadores`, payload);
-      toast({ status: "success", title: "Entrenador registrado correctamente", position: "top" });
-      navigate("/entrenadores");
-    } catch (err) {
-      toast({ status: "error", title: "Error al registrar", description: err.message, position: "top" });
-    } finally { setSubmitting(false); }
+      await api.post("/api/entrenadores", payload);
+      navigate("/login");
+    } catch (error) {
+      console.log("Error:", error);
+    }
   };
 
+  const correoInvalido = !!errors.correo;
+
   return (
-    <Box py={8}>
-      <Container maxW="container.md">
-        <Card>
-          <CardHeader textAlign="center">
-            <Heading size="lg">Registrar Nuevo Entrenador</Heading>
-            <Text color="gray.600" mt={2}>Complete los datos del entrenador</Text>
-          </CardHeader>
-          <CardBody pt={6}>
-            <Box as="form" onSubmit={onSubmit}>
-              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
-                <GridItem>
-                  <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
-                    <FormLabel>Nombre</FormLabel>
-                    <Input name="nombre" value={entrenador.nombre} onChange={handleChange} />
-                    {submitted && <FormErrorMessage>{errors.nombre}</FormErrorMessage>}
-                  </FormControl>
-                </GridItem>
-                <GridItem>
-                  <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
-                    <FormLabel>Apellido</FormLabel>
-                    <Input name="apellido" value={entrenador.apellido} onChange={handleChange} />
-                    {submitted && <FormErrorMessage>{errors.apellido}</FormErrorMessage>}
-                  </FormControl>
-                </GridItem>
-                <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
-                    <FormLabel>Teléfono</FormLabel>
-                    <Stack direction="row" spacing={2}>
-                      <Select
-                        name="codigoArea"
-                        value={entrenador.codigoArea}
-                        onChange={handleChange}
-                        maxW="100px"
-                      >
-                        <option value="+54">+54</option>
-                      </Select>
-                      <Input
-                        name="telefono"
-                        value={entrenador.telefono}
-                        onChange={handleChange}
-                        placeholder="1112345678"
-                      />
-                    </Stack>
-                    {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
-                  </FormControl>
-                </GridItem>
-                <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl isRequired isInvalid={submitted && !!errors.correo}>
-                    <FormLabel>Correo</FormLabel>
-                    <Input name="correo" value={entrenador.correo} onChange={handleChange} placeholder="*****@gmail.com" />
-                    {submitted && <FormErrorMessage>{errors.correo}</FormErrorMessage>}
-                  </FormControl>
-                </GridItem>
-                <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <FormControl>
-                    <FormLabel>Experiencia</FormLabel>
-                    <Input name="experiencia" value={entrenador.experiencia} onChange={handleChange} placeholder="Ej: 5 años entrenando equipos juveniles" />
-                  </FormControl>
-                </GridItem>
-              </Grid>
-              <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Registrando" px={10} bg="#258d19" color="white">Registrar</Button>
-                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>Cancelar</Button>
-              </Stack>
-            </Box>
-          </CardBody>
-        </Card>
-      </Container>
+    <Box maxW="md" mx="auto" mt={10} p={8} borderWidth={1} borderRadius="lg" boxShadow="lg" bg="white">
+      <Text fontSize="2xl" fontWeight="bold" mb={6} textAlign="center" color="black">
+        Registrar Entrenador
+      </Text>
+
+      <form onSubmit={onSubmit}>
+
+        <FormControl isRequired mb={4}>
+          <FormLabel>Nombre</FormLabel>
+          <Input name="nombre" value={entrenador.nombre} onChange={handleChange} />
+        </FormControl>
+
+        <FormControl isRequired mb={4}>
+          <FormLabel>Apellido</FormLabel>
+          <Input name="apellido" value={entrenador.apellido} onChange={handleChange} />
+        </FormControl>
+
+        <FormControl isRequired isInvalid={correoInvalido} mb={correoInvalido ? 2 : 4}>
+          <FormLabel>Correo electrónico</FormLabel>
+          <Input type="email" name="correo" value={entrenador.correo} onChange={handleChange} placeholder="*****@gmail.com" />
+        </FormControl>
+
+        {correoInvalido && (
+          <Alert status="error" mb={4}>
+            <AlertIcon />
+            {errors.correo}
+          </Alert>
+        )}
+
+        <FormControl isRequired mb={4}>
+          <FormLabel>Contraseña</FormLabel>
+          <Input type="password" name="contrasena" value={entrenador.contrasena} onChange={handleChange} />
+        </FormControl>
+
+        <FormControl mb={4}>
+          <FormLabel>Teléfono</FormLabel>
+          <Stack direction="row" spacing={2} align="center">
+            <Text bg="gray.100" px={3} py={2} borderRadius="md" fontWeight="bold">
+              +54
+            </Text>
+
+            <Input
+              name="telefono"
+              value={entrenador.telefono}
+              onChange={handleChange}
+              placeholder="1112345678"
+            />
+          </Stack>
+        </FormControl>
+
+        <FormControl mb={6}>
+          <FormLabel>Experiencia</FormLabel>
+          <Textarea
+            name="experiencia"
+            value={entrenador.experiencia}
+            onChange={handleChange}
+            placeholder="Ej: 2 años como entrenador de musculación"
+          />
+        </FormControl>
+
+        <Stack direction="row" spacing={4} justify="center">
+          <Button bg="#258d19" color="white" type="submit" isDisabled={correoInvalido}>
+            Registrar
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/login")}>
+            Cancelar
+          </Button>
+        </Stack>
+
+      </form>
     </Box>
   );
 }

@@ -72,9 +72,9 @@ export default function AppRouter() {
 
       {/* Entrenadores */}
       <Route path="/entrenadores" element={<ListaEntrenadores />} />
-      <Route path="/entrenadores/registrar" element={guard(<RegistrarEntrenadores />)} />
-      <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
-      <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
+      <Route path="/entrenadores/registrar" element={<RegistrarEntrenadores />} />
+      <Route path="/entrenadores/perfil/:idEntrenador" element={<PerfilEntrenador />} />
+      <Route path="/entrenadores/editar/:idEntrenador" element={<EditarEntrenador />} />
       
 
       {/* Ejercicios */}
