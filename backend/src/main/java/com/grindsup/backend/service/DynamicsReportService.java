@@ -35,7 +35,8 @@ public class DynamicsReportService {
             DRDataSource dataSource = new DRDataSource("alumno", "total", "completas", "incompletas", "enProceso", "porcentaje");
             dataSource.add(
                 datos.getNombreAlumno(),
-                (int) (datos.getCompletadas() + datos.getEnProceso() + datos.getIncompletas()),
+                // (int) (datos.getCompletadas() + datos.getEnProceso() + datos.getIncompletas()),
+                (int) datos.getTotalRutinas(),
                 (int) datos.getCompletadas(),
                 (int) datos.getIncompletas(),
                 (int) datos.getEnProceso(),

@@ -122,11 +122,7 @@
       <scope>runtime</scope>
     </dependency>
 
-    <dependency>
-		   <groupId>org.springframework.security</groupId>
-           <artifactId>spring-security-crypto</artifactId>
-    </dependency>
-
+    <!-- Dynamic Reports -->
     <dependency>
 			<groupId>net.sourceforge.dynamicreports</groupId>
 			<artifactId>dynamicreports-core</artifactId>
@@ -151,44 +147,7 @@
 			<artifactId>jaxb-runtime</artifactId>
 			<version>4.0.2</version>
 		</dependency>
-
-
-
-    <!-- DynamicReports (sin iText)
-    <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-core</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-adhoc</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-googlecharts</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-  </dependencies> -->
+  </dependencies>
 
   <repositories>
     <repository>
