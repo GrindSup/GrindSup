@@ -140,7 +140,7 @@ export default function RegistrarEntrenadores() {
           <Button bg="#258d19" color="white" type="submit" isDisabled={correoInvalido}>
             Registrar
           </Button>
-          <Button variant="outline" onClick={() => navigate("/login")}>
+          <Button variant="outline" onClick={() => navigate("/")}>
             Cancelar
           </Button>
         </Stack>
