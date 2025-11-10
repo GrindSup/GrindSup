@@ -1,7 +1,7 @@
 //src\pages\Entrenadores\ListaEntrenadores.jsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../config/axios.config";
 import {
   Box, Button, Container, Flex, Heading, Input, InputGroup, InputLeftElement,
   SimpleGrid, Spacer, Spinner, Text, HStack, Card, CardHeader, CardBody, CardFooter,

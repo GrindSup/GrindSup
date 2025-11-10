@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.Rol;
 import com.grindsup.backend.model.Usuario;
+import com.grindsup.backend.model.Entrenador; // <--- 1. IMPORT AGREGADO
 import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.RolRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
+import com.grindsup.backend.repository.EntrenadorRepository; // <--- 1. IMPORT AGREGADO
 import com.grindsup.backend.security.CustomOAuth2User;
 import com.grindsup.backend.security.CustomOAuth2UserService;
 import com.grindsup.backend.security.JwtCookieAuthFilter;
@@ -17,7 +19,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order; // <-- IMPORTANTE
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -67,11 +69,10 @@ public class SecurityConfig {
             UsuarioRepository usuarioRepository,
             RolRepository rolRepository,
             EstadoRepository estadoRepository,
+            EntrenadorRepository entrenadorRepository, // <--- 2. PARÁMETRO AGREGADO
             @Value("${grindsup.oauth2.default-role:USUARIO}") String defaultRoleName,
             @Value("${grindsup.oauth2.default-estado-id:1}") Long defaultEstadoId
     ) {
-        // ... (Tu lógica de Success Handler va aquí, cópiala de tu archivo original)
-        // La he omitido por brevedad, pero ES NECESARIA
         ObjectMapper mapper = new ObjectMapper();
 
         return (HttpServletRequest request,
@@ -140,7 +141,40 @@ public class SecurityConfig {
             if (picture != null && !picture.isBlank()) usuario.setFoto_perfil(picture);
 
             usuario.setUpdated_at(now);
-            usuarioRepository.save(usuario);
+            usuarioRepository.save(usuario); // <-- El usuario se guarda aquí
+
+            
+            // =======================================================
+            // 🚀 <--- 3. LÓGICA DE AUTO-CREACIÓN DE ENTRENADOR
+            // =======================================================
+            String rolNombre = usuario.getRol().getNombre();
+
+            // ¡IMPORTANTE! Asumimos que tu rol se llama "ENTRENADOR"
+            // (Si no, esto se saltea)
+            if (rolNombre.equalsIgnoreCase("ENTRENADOR")) {
+                
+                // Esta línea asume que tu EntrenadorRepository tiene el método:
+                // Optional<Entrenador> findByUsuario(Usuario usuario);
+                // Si tu Entrenador solo tiene un `Long idUsuario`, usa:
+                // boolean yaExiste = entrenadorRepository.findByUsuarioIdUsuario(usuario.getId_usuario()).isPresent();
+                
+                boolean yaExiste = entrenadorRepository.findByUsuario(usuario).isPresent();
+                
+                if (!yaExiste) {
+                    // Si no existe, lo creamos
+                    Entrenador nuevoEntrenador = new Entrenador();
+                    
+                    nuevoEntrenador.setUsuario(usuario); // Vinculamos el usuario
+                    nuevoEntrenador.setEstado(estadoPorDefecto); // Re-usamos el estado "Activo"
+                    nuevoEntrenador.setCreated_at(now);
+                    nuevoEntrenador.setUpdated_at(now);
+                    nuevoEntrenador.setExperiencia("Pendiente (auto-generado)"); // Dato de relleno
+                    
+                    entrenadorRepository.save(nuevoEntrenador);
+                }
+            }
+            // =======================================================
+
 
             // ===== Generar token JWT =====
             String token = jwtService.generate(

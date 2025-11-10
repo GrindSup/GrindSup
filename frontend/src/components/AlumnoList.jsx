@@ -1,7 +1,7 @@
 // src/components/AlumnoList.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import axios from "axios";
+import axios from "../config/axios.config";
 import {
   AddIcon, ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon, SearchIcon, ArrowBackIcon,
 } from "@chakra-ui/icons";
