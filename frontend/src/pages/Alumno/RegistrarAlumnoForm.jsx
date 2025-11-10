@@ -9,21 +9,18 @@ import {
 import { ChevronDownIcon, AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { getUsuario, getEntrenadorId } from "../../context/auth.js";
 import { useNavigate } from "react-router-dom";
-
-const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
+// 🚀 Usamos el axios configurado
+import axios from "../../config/axios.config.js";
 
 /* helpers JSON */
 function stringifyNotes(items) {
   const list = (items || [])
-    .map(i => ({ text: String(i.text ?? "").trim(), important: !!i.important }))
-    .filter(i => i.text);
+    .map((i) => ({ text: String(i.text ?? "").trim(), important: !!i.important }))
+    .filter((i) => i.text);
   return JSON.stringify({ items: list });
 }
 
-export default function RegistrarAlumnoForm({
-  apiBaseUrl = API,
-  usarMock = false,
-}) {
+export default function RegistrarAlumnoForm({ usarMock = false }) {
   const navigate = useNavigate();
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -45,6 +42,7 @@ export default function RegistrarAlumnoForm({
   const [codigos, setCodigos] = useState([]);
   const [loadingCodigos, setLoadingCodigos] = useState(true);
 
+  // Códigos de área (fetch público)
   useEffect(() => {
     const fetchCodes = async () => {
       try {
@@ -59,6 +57,7 @@ export default function RegistrarAlumnoForm({
           })
           .filter((x) => x.code)
           .sort((a, b) => a.country.localeCompare(b.country, "es"));
+        // Argentina arriba
         parsed.sort((a, b) => (a.country === "Argentina" ? -1 : b.country === "Argentina" ? 1 : 0));
         setCodigos(parsed);
       } catch (err) {
@@ -87,6 +86,7 @@ export default function RegistrarAlumnoForm({
     return e;
   }, [form]);
 
+  // Verificación de DNI con axios
   useEffect(() => {
     if (!form.documento?.trim() || !/^[0-9]+$/.test(form.documento)) {
       setDniDisponible(true);
@@ -97,12 +97,14 @@ export default function RegistrarAlumnoForm({
     const timeout = setTimeout(async () => {
       try {
         setCheckingDni(true);
-        const res = await fetch(`${apiBaseUrl}/alumnos?documento=${encodeURIComponent(form.documento.trim())}`, {
-          signal: controller.signal,
-        });
-        const data = await res.json();
+        const res = await axios.get(
+          `/api/alumnos?documento=${encodeURIComponent(form.documento.trim())}`,
+          { signal: controller.signal }
+        );
+        const data = res.data;
         setDniDisponible(!(Array.isArray(data) && data.length > 0));
-      } catch {
+      } catch (_err) {
+        // si falla, asumimos disponible y se valida al submit
         setDniDisponible(true);
       } finally {
         setCheckingDni(false);
@@ -113,7 +115,7 @@ export default function RegistrarAlumnoForm({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [form.documento, apiBaseUrl]);
+  }, [form.documento]);
 
   const isValid = Object.keys(errors).length === 0;
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -159,10 +161,11 @@ export default function RegistrarAlumnoForm({
 
     setSubmitting(true);
     try {
-      const dupRes = await fetch(
-        `${apiBaseUrl}/alumnos?documento=${encodeURIComponent(form.documento.trim())}`
+      // Doble chequeo de DNI
+      const dupRes = await axios.get(
+        `/api/alumnos?documento=${encodeURIComponent(form.documento.trim())}`
       );
-      const posibles = await dupRes.json();
+      const posibles = dupRes.data;
       if (Array.isArray(posibles) && posibles.length > 0) {
         throw new Error("El documento ya está registrado.");
       }
@@ -172,20 +175,7 @@ export default function RegistrarAlumnoForm({
       if (usarMock) {
         await submitMock();
       } else {
-        const res = await fetch(`${apiBaseUrl}/alumnos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          let msg = "Error al registrar";
-          try {
-            const j = await res.json();
-            if (j?.message) msg = j.message;
-          } catch {}
-          throw new Error(msg);
-        }
-        await res.json();
+        await axios.post("/api/alumnos", payload);
       }
 
       toast({ status: "success", title: "Alumno registrado", position: "top" });
@@ -194,7 +184,7 @@ export default function RegistrarAlumnoForm({
       toast({
         status: "error",
         title: "No se pudo registrar",
-        description: err.message,
+        description: err?.response?.data?.message || err.message,
         position: "top",
       });
     } finally {
@@ -203,19 +193,25 @@ export default function RegistrarAlumnoForm({
   };
 
   const addItem = (which) => {
-    which === "les"
-      ? setLesiones((p) => [...p, { text: "", important: false }])
-      : setEnfermedades((p) => [...p, { text: "", important: false }]);
+    if (which === "les") {
+      setLesiones((p) => [...p, { text: "", important: false }]);
+    } else {
+      setEnfermedades((p) => [...p, { text: "", important: false }]);
+    }
   };
   const setItem = (which, idx, patch) => {
-    which === "les"
-      ? setLesiones((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
-      : setEnfermedades((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    if (which === "les") {
+      setLesiones((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    } else {
+      setEnfermedades((p) => p.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    }
   };
   const removeItem = (which, idx) => {
-    which === "les"
-      ? setLesiones((p) => p.filter((_, i) => i !== idx))
-      : setEnfermedades((p) => p.filter((_, i) => i !== idx));
+    if (which === "les") {
+      setLesiones((p) => p.filter((_, i) => i !== idx));
+    } else {
+      setEnfermedades((p) => p.filter((_, i) => i !== idx));
+    }
   };
 
   return (
@@ -256,12 +252,17 @@ export default function RegistrarAlumnoForm({
                 </GridItem>
 
                 <GridItem>
-                  <FormControl isRequired isInvalid={(submitted && !!errors.documento) || (!dniDisponible && form.documento.trim() !== "")}>
+                  <FormControl
+                    isRequired
+                    isInvalid={(submitted && !!errors.documento) || (!dniDisponible && form.documento.trim() !== "")}
+                  >
                     <FormLabel>Documento (DNI)</FormLabel>
                     <Input name="documento" placeholder="Ej: 40123456" value={form.documento} onChange={handleChange} />
                     {checkingDni && <Text fontSize="sm" color="gray.500">Verificando DNI...</Text>}
-                    {submitted && errors.documento &&(<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
-                    {!dniDisponible && form.documento.trim() !== "" && (<FormErrorMessage>El documento ya está registrado.</FormErrorMessage>)}
+                    {submitted && errors.documento && (<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
+                    {!dniDisponible && form.documento.trim() !== "" && (
+                      <FormErrorMessage>El documento ya está registrado.</FormErrorMessage>
+                    )}
                   </FormControl>
                 </GridItem>
 
@@ -301,7 +302,10 @@ export default function RegistrarAlumnoForm({
                           </MenuButton>
                           <MenuList maxH="280px" overflowY="auto">
                             {codigos.map((c) => (
-                              <MenuItem key={c.code + c.country} onClick={() => setForm((p) => ({ ...p, codigoArea: c.code }))}>
+                              <MenuItem
+                                key={c.code + c.country}
+                                onClick={() => setForm((p) => ({ ...p, codigoArea: c.code }))}
+                              >
                                 {c.code} ({c.country})
                               </MenuItem>
                             ))}
@@ -322,7 +326,7 @@ export default function RegistrarAlumnoForm({
                   <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
                   {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
                   {lesiones.map((it, idx) => (
-                    <HStack key={idx} mt={2}>
+                    <HStack key={`les-${idx}`} mt={2}>
                       <Input
                         placeholder="Detalle de la lesión…"
                         value={it.text}
@@ -334,7 +338,13 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("les", idx)} bg="#258d19" color="white"/>
+                      <IconButton
+                        aria-label="Eliminar"
+                        icon={<DeleteIcon />}
+                        onClick={() => removeItem("les", idx)}
+                        bg="#258d19"
+                        color="white"
+                      />
                     </HStack>
                   ))}
                 </GridItem>
@@ -347,7 +357,7 @@ export default function RegistrarAlumnoForm({
                   <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
                   {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
                   {enfermedades.map((it, idx) => (
-                    <HStack key={idx} mt={2}>
+                    <HStack key={`dis-${idx}`} mt={2}>
                       <Input
                         placeholder="Detalle de la enfermedad…"
                         value={it.text}
@@ -359,7 +369,13 @@ export default function RegistrarAlumnoForm({
                       >
                         Importante
                       </Checkbox>
-                      <IconButton aria-label="Eliminar" icon={<DeleteIcon />} onClick={() => removeItem("dis", idx)} bg="#258d19" color="white"/>
+                      <IconButton
+                        aria-label="Eliminar"
+                        icon={<DeleteIcon />}
+                        onClick={() => removeItem("dis", idx)}
+                        bg="#258d19"
+                        color="white"
+                      />
                     </HStack>
                   ))}
                 </GridItem>
@@ -376,7 +392,15 @@ export default function RegistrarAlumnoForm({
               </Grid>
 
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#258d19" color="white" isDisabled={!dniDisponible || checkingDni}>
+                <Button
+                  type="submit"
+                  isLoading={submitting}
+                  loadingText="Guardando"
+                  px={10}
+                  bg="#258d19"
+                  color="white"
+                  isDisabled={!dniDisponible || checkingDni}
+                >
                   Registrar
                 </Button>
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>

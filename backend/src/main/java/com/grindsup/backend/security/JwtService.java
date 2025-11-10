@@ -9,7 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.security.Key;
 import java.time.Instant;
@@ -27,10 +27,14 @@ public class JwtService {
         @Value("${grindsup.jwt.secret}") String secret,
         @Value("${grindsup.jwt.expiration-days:7}") int expirationDays
     ) {
+        // ¡¡¡AÑADE ESTAS 3 LÍNEAS DE DEBUG!!!
+    System.out.println("==================================================");
+    System.out.println("INICIANDO JwtService CON LA CLAVE: " + secret);
+    System.out.println("==================================================");
         if (secret == null || secret.length() < 32) {
             throw new IllegalStateException("JWT secret debe tener >= 32 chars");
         }
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationDays = expirationDays;
     }
 

@@ -1,7 +1,9 @@
+// src/main/java/com/grindsup/backend/repository/PlanEvaluacionRepository.java
 package com.grindsup.backend.repository;
 
 import com.grindsup.backend.model.PlanEvaluacion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -47,7 +49,18 @@ public interface PlanEvaluacionRepository extends JpaRepository<PlanEvaluacion, 
                                           @Param("from") Date from,
                                           @Param("to")   Date to);
 
-    // ---- NUEVO: contar evaluaciones por plan ----
     @Query(value = "SELECT COUNT(*) FROM plan_evaluacion WHERE id_plan = :planId", nativeQuery = true)
     Long countByPlan(@Param("planId") Long planId);
+
+    // ✅ NUEVO: insert nativo para crear la evaluación
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        INSERT INTO plan_evaluacion (id_plan, id_alumno, id_entrenador, score, comentario, created_at)
+        VALUES (:p, :a, :e, :s, :c, NOW())
+        """, nativeQuery = true)
+    int insertEval(@Param("p") Long planId,
+                   @Param("a") Long alumnoId,
+                   @Param("e") Long entrenadorId,
+                   @Param("s") Integer score,
+                   @Param("c") String comentario);
 }

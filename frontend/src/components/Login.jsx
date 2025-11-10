@@ -26,21 +26,71 @@ export default function Login({ setUsuario }) {
     }
 
     try {
-      const { data } = await api.post("/api/usuarios/login", {
+      const res = await api.post("/api/usuarios/login", {
         correo: correoLimpio,
         contrasena,
       });
-      console.log("Respuesta del login:", data);
-      if (data?.exito) {
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
-        localStorage.setItem("sesionId", data.idSesion);
-        localStorage.setItem("gs_token", data.token);
-        setUsuario?.(data.usuario);
-        navigate("/");
-      } else {
+      const data = res?.data || {};
+
+      // Intentos robustos para extraer token
+      let token =
+        data.token ||
+        data.jwt ||
+        data.access_token ||
+        data.accessToken ||
+        data.tokenJwt ||
+        data?.data?.token ||
+        null;
+
+      // Si vino en headers (Authorization: Bearer xxx / X-Auth-Token)
+      if (!token) {
+        const authHeader =
+          res.headers?.authorization || res.headers?.Authorization || "";
+        if (authHeader && /^Bearer\s+/i.test(authHeader)) {
+          token = authHeader.replace(/^Bearer\s+/i, "");
+        } else if (res.headers?.["x-auth-token"]) {
+          token = res.headers["x-auth-token"];
+        }
+      }
+
+      if (!data?.exito && !token) {
         setError(true);
         setErrorMensaje(data?.mensaje ?? "Credenciales inválidas");
+        return;
       }
+
+      if (!token) {
+        setError(true);
+        setErrorMensaje(
+          "Inicio de sesión exitoso pero el servidor no envió token. Verifica la clave (token/jwt/access_token) o el header Authorization."
+        );
+        return;
+      }
+
+      // Guardar token y configurar axios inmediatamente
+      localStorage.setItem("gs_token", token);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // Guardar usuario/sesión si vinieron
+      if (data.usuario) localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      if (data.idSesion) localStorage.setItem("sesionId", data.idSesion);
+
+      // Si no vino el usuario, lo obtenemos con /me usando el token recién seteado
+      let usuarioFinal = data.usuario;
+      if (!usuarioFinal) {
+        try {
+          const me = await api.get("/api/usuarios/me");
+          usuarioFinal = me.data?.usuario ?? me.data ?? null;
+          if (usuarioFinal) {
+            localStorage.setItem("usuario", JSON.stringify(usuarioFinal));
+          }
+        } catch {
+          // si /me falla, igual seguimos con el token guardado
+        }
+      }
+
+      setUsuario?.(usuarioFinal || null);
+      navigate("/");
     } catch (err) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.mensaje;

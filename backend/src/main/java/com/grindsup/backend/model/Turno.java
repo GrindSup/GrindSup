@@ -42,6 +42,7 @@ public class Turno {
 
     @ManyToMany
     @JoinTable(name = "turno_alumno", joinColumns = @JoinColumn(name = "id_turno"), inverseJoinColumns = @JoinColumn(name = "id_alumno"))
+    
     private List<Alumno> alumnos = new ArrayList<>();
 
     // Getters y Setters

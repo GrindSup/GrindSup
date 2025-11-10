@@ -2,31 +2,38 @@ package com.grindsup.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "alumnos", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "documento", "idEntrenador" })
-})
+@Table(
+    name = "alumnos",
+    uniqueConstraints = {
+        // 👇 en la DB la columna es id_entrenador (no idEntrenador)
+        @UniqueConstraint(columnNames = {"documento", "id_entrenador"})
+    }
+)
 public class Alumno {
 
-    // @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // private Long id_alumno;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_alumno")
     private Long idAlumno;
 
+
+    
     @ManyToOne
     @JoinColumn(name = "id_entrenador", nullable = true)
     private Entrenador entrenador;
 
+    
     @ManyToMany(mappedBy = "alumnos")
+    @JsonIgnore
     private List<Turno> turnos = new ArrayList<>();
 
     @Column(nullable = false, length = 100)
@@ -35,7 +42,6 @@ public class Alumno {
     @Column(length = 100)
     private String apellido;
 
-    // ⬇️ QUITAR unique = true
     @Column(nullable = false, length = 20)
     private String documento;
 
@@ -47,7 +53,7 @@ public class Alumno {
     private LocalDate fechaNacimiento;
 
     @Column
-    private Double peso;
+    private Double peso; // 👈 está en tu tabla
 
     @Column
     private Double altura;
@@ -77,144 +83,76 @@ public class Alumno {
     @Column(name = "motivo_baja", columnDefinition = "TEXT")
     private String motivoBaja;
 
-    // getters & setters ...
-
-    // ====== Getters y Setters ======
-    // public Long getId_alumno() { return id_alumno; }
-    // public void setId_alumno(Long id_alumno) { this.id_alumno = id_alumno; }
-    public Long getId_alumno() {
-        return idAlumno;
+    // ====== Lifecycles para timestamps ======
+    @PrePersist
+    public void prePersist() {
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        if (created_at == null) created_at = now;
+        if (updated_at == null) updated_at = now;
     }
 
-    public void setId_alumno(Long id_alumno) {
-        this.idAlumno = id_alumno;
+    @PreUpdate
+    public void preUpdate() {
+        updated_at = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
-    public Entrenador getEntrenador() {
-        return entrenador;
-    }
+    // ====== Getters / Setters ======
 
-    public void setEntrenador(Entrenador entrenador) {
-        this.entrenador = entrenador;
-    }
+    public Long getIdAlumno() { return idAlumno; }
+    public void setIdAlumno(Long idAlumno) { this.idAlumno = idAlumno; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    // 👇 Getters "puente" para no romper código existente (piden getId_alumno)
+    public Long getId_alumno() { return idAlumno; }
+    public void setId_alumno(Long id_alumno) { this.idAlumno = id_alumno; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public Entrenador getEntrenador() { return entrenador; }
+    public void setEntrenador(Entrenador entrenador) { this.entrenador = entrenador; }
 
-    public String getApellido() {
-        return apellido;
-    }
+    public List<Turno> getTurnos() { return turnos; }
+    public void setTurnos(List<Turno> turnos) { this.turnos = turnos; }
 
-    public void setApellido(String apellido) {
-        this.apellido = apellido;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getDocumento() {
-        return documento;
-    }
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
-    public void setDocumento(String documento) {
-        this.documento = documento;
-    }
+    public String getDocumento() { return documento; }
+    public void setDocumento(String documento) { this.documento = documento; }
 
-    public String getTelefono() {
-        return telefono;
-    }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
+    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
-    public LocalDate getFechaNacimiento() {
-        return fechaNacimiento;
-    }
+    public Double getPeso() { return peso; }
+    public void setPeso(Double peso) { this.peso = peso; }
 
-    public void setFechaNacimiento(LocalDate fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
-    }
+    public Double getAltura() { return altura; }
+    public void setAltura(Double altura) { this.altura = altura; }
 
-    public Double getPeso() {
-        return peso;
-    }
+    public String getLesiones() { return lesiones; }
+    public void setLesiones(String lesiones) { this.lesiones = lesiones; }
 
-    public void setPeso(Double peso) {
-        this.peso = peso;
-    }
+    public String getEnfermedades() { return enfermedades; }
+    public void setEnfermedades(String enfermedades) { this.enfermedades = enfermedades; }
 
-    public Double getAltura() {
-        return altura;
-    }
+    public Boolean getInformeMedico() { return informeMedico; }
+    public void setInformeMedico(Boolean informeMedico) { this.informeMedico = informeMedico; }
 
-    public void setAltura(Double altura) {
-        this.altura = altura;
-    }
+    public Estado getEstado() { return estado; }
+    public void setEstado(Estado estado) { this.estado = estado; }
 
-    public String getLesiones() {
-        return lesiones;
-    }
+    public OffsetDateTime getCreated_at() { return created_at; }
+    public void setCreated_at(OffsetDateTime created_at) { this.created_at = created_at; }
 
-    public void setLesiones(String lesiones) {
-        this.lesiones = lesiones;
-    }
+    public OffsetDateTime getUpdated_at() { return updated_at; }
+    public void setUpdated_at(OffsetDateTime updated_at) { this.updated_at = updated_at; }
 
-    public String getEnfermedades() {
-        return enfermedades;
-    }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
-    public void setEnfermedades(String enfermedades) {
-        this.enfermedades = enfermedades;
-    }
-
-    public Boolean getInformeMedico() {
-        return informeMedico;
-    }
-
-    public void setInformeMedico(Boolean informeMedico) {
-        this.informeMedico = informeMedico;
-    }
-
-    public Estado getEstado() {
-        return estado;
-    }
-
-    public void setEstado(Estado estado) {
-        this.estado = estado;
-    }
-
-    public OffsetDateTime getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(OffsetDateTime created_at) {
-        this.created_at = created_at;
-    }
-
-    public OffsetDateTime getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(OffsetDateTime updated_at) {
-        this.updated_at = updated_at;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public String getMotivoBaja() {
-        return motivoBaja;
-    }
-
-    public void setMotivoBaja(String motivoBaja) {
-        this.motivoBaja = motivoBaja;
-    }
+    public String getMotivoBaja() { return motivoBaja; }
+    public void setMotivoBaja(String motivoBaja) { this.motivoBaja = motivoBaja; }
 }

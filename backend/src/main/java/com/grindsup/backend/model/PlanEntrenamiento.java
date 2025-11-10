@@ -16,9 +16,10 @@ public class PlanEntrenamiento {
     @JoinColumn(name = "id_alumno", nullable = false)
     private Alumno alumno;
 
+    // ✅ CORRECCIÓN CLAVE: Mapeo directo a la columna id_entrenador
     @ManyToOne
     @JoinColumn(name = "id_entrenador")
-    private Entrenador entrenador;
+    private Entrenador entrenador; 
 
     @Column(columnDefinition = "TEXT")
     private String objetivo;

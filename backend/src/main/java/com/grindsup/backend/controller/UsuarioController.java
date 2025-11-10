@@ -16,6 +16,7 @@ import com.grindsup.backend.security.JwtService; // <-- IMPORTADO
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -176,6 +177,7 @@ public class UsuarioController {
     }
 
     // ===== QUIÉN SOY (para bootstrap con cookie JWT) =====
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication auth) {
         if (auth == null) {

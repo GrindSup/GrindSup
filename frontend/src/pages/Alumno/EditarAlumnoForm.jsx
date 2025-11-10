@@ -6,7 +6,7 @@ import {
 } from "@chakra-ui/react";
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../../config/axios.config.js"; // ✅ INSTANCIA CONFIGURADA
 import { getUsuario, getEntrenadorId } from "../../context/auth.js";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
@@ -48,6 +48,9 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
     nombre: "", apellido: "", documento: "", peso: "", altura: "",
     telefono: "", informeMedico: false, estado: undefined,
   });
+  
+  // 🎯 Estado para campo de fecha
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
 
   const [lesiones, setLesiones] = useState([]);
   const [enfermedades, setEnfermedades] = useState([]);
@@ -62,6 +65,13 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
 
     setLesiones(parseNotes(data.lesiones));
     setEnfermedades(parseNotes(data.enfermedades));
+    
+    // 🎯 Asignar fecha de nacimiento si viene
+    if (data.fechaNacimiento) { 
+        setFechaNacimiento(toStr(data.fechaNacimiento).slice(0, 10)); 
+    } else {
+        setFechaNacimiento("");
+    }
 
     return {
       nombre: toStr(data.nombre),
@@ -71,6 +81,7 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
       altura: toStr(data.altura),
       informeMedico: (data.informeMedico ?? data.informe_medico ?? false) ? true : false,
       telefono: toStr(data.telefono ?? data.contacto ?? data.telefono_contacto ?? data.phone),
+      // El estado debe mapear correctamente el objeto completo del backend (si existe)
       estado: data.estado ?? (snake && data.id_estado ? { id_estado: data.id_estado } : undefined),
     };
   }
@@ -88,6 +99,8 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
       telefono: alumno.telefono?.trim(),
       lesiones: stringifyNotes(lesiones),
       enfermedades: stringifyNotes(enfermedades),
+      // 🎯 Incluir la fecha en el payload
+      fechaNacimiento: fechaNacimiento || null,
     };
 
     if (useSnakeCase) {
@@ -110,20 +123,24 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
   useEffect(() => {
     const fetchAlumno = async () => {
       try {
+        // ✅ Carga de datos con autenticación
         const { data } = await axios.get(`${apiBaseUrl}/alumnos/${id}`);
         setAlumno(normalizeAlumno(data));
       } catch (err) {
         toast({ status: "error", title: "Error al cargar alumno", description: err.message, position: "top" });
+        // Si falla la carga, redirigir para evitar que el usuario intente editar datos vacíos
+        navigate("/alumnos"); 
       }
     };
     fetchAlumno();
-  }, [id, apiBaseUrl, toast]);
+  }, [id, apiBaseUrl, toast, navigate]);
 
   const errors = useMemo(() => {
     const e = {};
     if (!alumno.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!alumno.apellido?.trim()) e.apellido = "El apellido es obligatorio";
-    if (alumno.peso !== "" && !/^\d+(\.\d+)?$/.test(String(alumno.peso))) e.peso = "El peso debe ser numérico";
+    // Corregido el chequeo de campo vacío en el regex (no hace falta si se envía String(alumno.peso))
+    if (alumno.peso !== "" && !/^\d+(\.\d+)?$/.test(String(alumno.peso))) e.peso = "El peso debe ser numérico"; 
     if (alumno.altura !== "" && !/^\d+(\.\d+)?$/.test(String(alumno.altura))) e.altura = "La altura debe ser numérica";
     if (alumno.telefono && !/^\+?\d+$/.test(alumno.telefono)) e.telefono = "El teléfono debe ser numérico y puede incluir +";
     return e;
@@ -131,6 +148,7 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
 
   const isValid = Object.keys(errors).length === 0;
   const handleChange = (e) => setAlumno((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleDateChange = (e) => setFechaNacimiento(e.target.value); // 🎯 Manejador para el nuevo campo de fecha
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -142,11 +160,13 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
     setSubmitting(true);
     try {
       const payload = buildPayload();
-      await axios.put(`${apiBaseUrl}/alumnos/${id}`, payload);
+      // ✅ PUT con autenticación
+      await axios.put(`${apiBaseUrl}/alumnos/${id}`, payload); 
       toast({ status: "success", title: "Alumno actualizado", position: "top" });
       navigate("/alumnos");
     } catch (err) {
-      toast({ status: "error", title: "No se pudo actualizar", description: err.message, position: "top" });
+      const errorMsg = err.response?.data?.message || err.message;
+      toast({ status: "error", title: "No se pudo actualizar", description: errorMsg, position: "top" });
     } finally {
       setSubmitting(false);
     }
@@ -198,6 +218,16 @@ export default function EditarAlumnoForm({ apiBaseUrl = API }) {
                     <Input name="documento" value={alumno.documento} isDisabled />
                   </FormControl>
                 </GridItem>
+                
+                {/* 🎯 CAMPO FECHA DE NACIMIENTO (AGREGADO) */}
+                <GridItem>
+                  <FormControl>
+                    <FormLabel>Fecha de Nacimiento</FormLabel>
+                    <Input type="date" name="fechaNacimiento" value={fechaNacimiento} onChange={handleDateChange} />
+                  </FormControl>
+                </GridItem>
+
+
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.peso}>
                     <FormLabel>Peso (kg)</FormLabel>

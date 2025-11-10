@@ -6,6 +6,7 @@ import com.grindsup.backend.model.RutinaEjercicio;
 import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.DTO.CrearRutinarequestDTO;
 import com.grindsup.backend.DTO.EjercicioRutinaDTO;
+import com.grindsup.backend.DTO.PlanListDTO; // <-- Importación necesaria
 import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.Ejercicio;
 import com.grindsup.backend.model.Estado;
@@ -17,7 +18,6 @@ import com.grindsup.backend.service.PlanEntrenamientoService;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EjercicioRepository;
 import com.grindsup.backend.repository.EstadoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -30,89 +30,133 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/planes")
+@CrossOrigin
 public class PlanEntrenamientoController {
 
-    @Autowired
-    private PlanEntrenamientoRepository planRepository;
+    private final PlanEntrenamientoRepository planRepository;
+    private final AlumnoRepository alumnoRepository;
+    private final EstadoRepository estadoRepository;
+    private final PlanEntrenamientoService planService;
+    private final RutinaRepository rutinaRepository;
+    private final RutinaEjercicioRepository rutinaEjercicioRepository;
+    private final EjercicioRepository ejercicioRepository;
 
-    @Autowired
-    private AlumnoRepository alumnoRepository;
+    public PlanEntrenamientoController(
+                PlanEntrenamientoRepository planRepository,
+                AlumnoRepository alumnoRepository,
+                EstadoRepository estadoRepository,
+                PlanEntrenamientoService planService,
+                RutinaRepository rutinaRepository,
+                RutinaEjercicioRepository rutinaEjercicioRepository,
+                EjercicioRepository ejercicioRepository
+    ) {
+        this.planRepository = planRepository;
+        this.alumnoRepository = alumnoRepository;
+        this.estadoRepository = estadoRepository;
+        this.planService = planService;
+        this.rutinaRepository = rutinaRepository;
+        this.rutinaEjercicioRepository = rutinaEjercicioRepository;
+        this.ejercicioRepository = ejercicioRepository;
+    }
 
-    @Autowired
-    private EstadoRepository estadoRepository;
-
-    @Autowired
-    private PlanEntrenamientoService planService;
-
-    @Autowired
-    private RutinaRepository rutinaRepository;
-
-    @Autowired
-    private RutinaEjercicioRepository rutinaEjercicioRepository;
-
-    @Autowired
-    private EjercicioRepository ejercicioRepository;
-
-    // ==========================
-    // CRUD Planes
-    // ==========================
+    /* ==========================
+        LISTAR PLANES POR ENTRENADOR
+        ========================== */
     @GetMapping
-    public List<PlanEntrenamiento> getAll() {
-        return planRepository.findAll();
+    public ResponseEntity<List<PlanListDTO>> listarPorEntrenador( // <-- Retorna List<PlanListDTO>
+                @RequestParam Long entrenadorId
+    ) {
+        // Usa el método de proyección
+        List<PlanListDTO> lista = planRepository.findPlanDTOByEntrenador(entrenadorId);
+        return ResponseEntity.ok(lista);
     }
 
+    /* ==========================
+        OBTENER PLAN POR ID
+        ========================== */
     @GetMapping("/{id}")
-    public PlanEntrenamiento getById(@PathVariable Long id) {
-        return planRepository.findById(id).orElse(null);
+    public ResponseEntity<PlanEntrenamiento> obtenerPlan(@PathVariable Long id) {
+        return planRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
-
+    
+    /* ==========================
+        ACTUALIZAR PLAN
+        ========================== */
     @PutMapping("/{id}")
-    public PlanEntrenamiento update(@PathVariable Long id, @RequestBody PlanEntrenamiento plan) {
+    public ResponseEntity<PlanEntrenamiento> update(
+                @PathVariable Long id,
+                @RequestBody PlanEntrenamiento plan
+    ) {
         return planRepository.findById(id).map(existing -> {
+
             existing.setObjetivo(plan.getObjetivo());
             existing.setFecha_inicio(plan.getFecha_inicio());
             existing.setFecha_fin(plan.getFecha_fin());
 
             if (plan.getAlumno() != null) {
-                Alumno alumno = alumnoRepository.findById(plan.getAlumno().getId_alumno()).orElse(null);
+                Alumno alumno = alumnoRepository
+                        .findById(plan.getAlumno().getId_alumno())
+                        .orElse(null);
                 existing.setAlumno(alumno);
             }
+
             if (plan.getEstado() != null) {
-                Estado estado = estadoRepository.findById(plan.getEstado().getIdEstado()).orElse(null);
+                Estado estado = estadoRepository
+                        .findById(plan.getEstado().getIdEstado())
+                        .orElse(null);
                 existing.setEstado(estado);
             }
 
-            return planRepository.save(existing);
-        }).orElse(null);
+            existing.setUpdated_at(OffsetDateTime.now());
+            return ResponseEntity.ok(planRepository.save(existing));
+
+        }).orElse(ResponseEntity.notFound().build());
     }
 
+    /* ==========================
+        ELIMINAR PLAN
+        ========================== */
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         planRepository.deleteById(id);
-        return "Plan eliminado con id " + id;
+        return ResponseEntity.ok(Map.of("deleted", id));
     }
 
+    /* ==========================
+        CREAR PLAN
+        ========================== */
     @PostMapping
-    public ResponseEntity<PlanEntrenamiento> crearPlan(@RequestBody CrearPlanrequestDTO request) {
+    public ResponseEntity<PlanEntrenamiento> crearPlan(
+                @RequestBody CrearPlanrequestDTO request
+    ) {
         PlanEntrenamiento nuevoPlan = planService.crearPlan(request);
         return ResponseEntity.ok(nuevoPlan);
     }
 
+    /* ==========================
+        LISTAR PLANES POR ALUMNO
+        ========================== */
     @GetMapping("/alumno/{idAlumno}")
-    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumno(@PathVariable Long idAlumno) {
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumno(
+                @PathVariable Long idAlumno
+    ) {
         return ResponseEntity.ok(planService.listarPlanesPorAlumno(idAlumno));
     }
 
-    @GetMapping("/{idPlan}")
-    public ResponseEntity<PlanEntrenamiento> obtenerPlan(@PathVariable Long idPlan) {
-        return planService.obtenerPlan(idPlan)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /* ==========================
+        FINALIZAR PLAN
+        ========================== */
+    @PostMapping("/{idPlan}/finalizar")
+    public ResponseEntity<?> finalizarPlan(@PathVariable Long idPlan) {
+        PlanEntrenamiento actualizado = planService.finalizar(idPlan);
+        return ResponseEntity.ok(actualizado);
     }
 
-    // ==========================
-    // Grupos musculares (provisional)
-    // ==========================
+    /* ==========================
+        GRUPOS MUSCULARES
+        ========================== */
     @GetMapping("/grupos-musculares")
     public List<Map<String, String>> listarGrupos() {
         return Arrays.stream(GrupoMuscularEnum.values())
@@ -120,54 +164,45 @@ public class PlanEntrenamientoController {
                 .toList();
     }
 
-    // ==========================
-    // Crear rutina asociada a un plan
-    // ==========================
+    /* ==========================
+        CREAR RUTINA EN UN PLAN
+        ========================== */
     @PostMapping("/{idPlan}/rutinas")
     @Transactional
-    public ResponseEntity<Rutina> crearRutina(@PathVariable Long idPlan, @RequestBody CrearRutinarequestDTO request) {
-        // 1) buscar plan
+    public ResponseEntity<Rutina> crearRutina(
+                @PathVariable Long idPlan,
+                @RequestBody CrearRutinarequestDTO request
+    ) {
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
 
-        // 2) crear rutina y setear metadatos
         Rutina rutina = new Rutina();
         rutina.setNombre(request.getNombre());
         rutina.setDescripcion(request.getDescripcion());
         rutina.setPlan(plan);
 
-        // estado por defecto (o usar request si viene)
         Estado estadoRutina = estadoRepository.findById(
-                request.getIdEstado() != null ? request.getIdEstado() : 1L)
-                .orElseThrow(() -> new RuntimeException("Estado no encontrado"));
-        rutina.setEstado(estadoRutina);
+                        request.getIdEstado() != null ? request.getIdEstado() : 1L
+                ).orElseThrow(() -> new RuntimeException("Estado no encontrado"));
 
+        rutina.setEstado(estadoRutina);
         rutina.setCreated_at(OffsetDateTime.now());
         rutina.setUpdated_at(OffsetDateTime.now());
 
-        // 3) primero guardo la rutina (para tener id_rutina)
         Rutina nuevaRutina = rutinaRepository.save(rutina);
 
-        // 4) ahora guardo los ejercicios asociados (si los hay)
         if (request.getEjercicios() != null && !request.getEjercicios().isEmpty()) {
+
             List<RutinaEjercicio> lista = new ArrayList<>();
+
             for (EjercicioRutinaDTO dto : request.getEjercicios()) {
-                // buscar ejercicio
+
                 Ejercicio ejercicio = ejercicioRepository.findById(dto.getIdEjercicio())
                         .orElseThrow(() -> new RuntimeException("Ejercicio no encontrado: " + dto.getIdEjercicio()));
 
                 RutinaEjercicio re = new RutinaEjercicio();
-
-                // --- CORRECCIÓN ---
-                // AHORA solo seteamos los OBJETOS.
                 re.setRutina(nuevaRutina);
                 re.setEjercicio(ejercicio);
-
-                // --- (ELIMINAMOS ESTAS LÍNEAS) ---
-                // re.setId_rutina(nuevaRutina.getId_rutina());
-                // re.setId_ejercicio(ejercicio.getId_ejercicio());
-
-                // ... (seteo de series, reps, etc. sin cambios) ...
                 re.setSeries(dto.getSeries());
                 re.setRepeticiones(dto.getRepeticiones());
                 re.setObservaciones(dto.getObservaciones());
@@ -177,34 +212,10 @@ public class PlanEntrenamientoController {
 
                 lista.add(re);
             }
+
             rutinaEjercicioRepository.saveAll(lista);
         }
 
         return ResponseEntity.ok(nuevaRutina);
-    }
-
-    @PutMapping("/{id}/estado")
-    public ResponseEntity<?> actualizarEstadoRutina(
-            @PathVariable Long id,
-            @RequestParam Long idEstado) {
-        planService.actualizarEstado(id, idEstado);
-        return ResponseEntity.ok("Estado actualizado correctamente");
-    }
-
-    @GetMapping("/alumno/{idAlumno}/estado/{idEstado}")
-    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumnoYEstado(
-            @PathVariable Long idAlumno,
-            @PathVariable Long idEstado) {
-
-        List<PlanEntrenamiento> planes = planService.listarPlanesPorAlumnoYEstado(idAlumno, idEstado);
-        return ResponseEntity.ok(planes);
-    }
-
-    @GetMapping("/estado/{idEstado}")
-    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorEstado(
-            @PathVariable Long idEstado) {
-
-        List<PlanEntrenamiento> planes = planService.listarPlanesPorEstado(idEstado);
-        return ResponseEntity.ok(planes);
     }
 }

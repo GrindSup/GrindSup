@@ -31,7 +31,7 @@ export default function Header({ usuario, setUsuario }) {
     } finally {
       localStorage.removeItem("usuario");
       localStorage.removeItem("sesionId");
-      localStorage.removeItem("token");
+      localStorage.removeItem("gs_token");
       clearSessionCache();
       setUsuario?.(null);
       onClose();

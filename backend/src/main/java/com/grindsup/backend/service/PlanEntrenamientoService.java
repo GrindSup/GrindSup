@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.model.Alumno;
+import com.grindsup.backend.model.Entrenador; // <-- Importación necesaria
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.PlanEntrenamiento;
 import com.grindsup.backend.repository.AlumnoRepository;
@@ -26,9 +27,9 @@ public class PlanEntrenamientoService {
     private final EstadoRepository estadoRepository;
 
     public PlanEntrenamientoService(
-            PlanEntrenamientoRepository planRepository,
-            AlumnoRepository alumnoRepository,
-            EstadoRepository estadoRepository
+                PlanEntrenamientoRepository planRepository,
+                AlumnoRepository alumnoRepository,
+                EstadoRepository estadoRepository
     ) {
         this.planRepository = planRepository;
         this.alumnoRepository = alumnoRepository;
@@ -39,18 +40,30 @@ public class PlanEntrenamientoService {
         Alumno alumno = alumnoRepository.findById(request.getIdAlumno())
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
+        // 🎯 CORRECCIÓN CLAVE: Obtener y asignar el Entrenador del Alumno
+        Entrenador entrenador = alumno.getEntrenador();
+        if (entrenador == null) {
+             throw new RuntimeException("El alumno no tiene un entrenador asociado. No se puede crear el plan.");
+        }
+
         PlanEntrenamiento plan = new PlanEntrenamiento();
         plan.setAlumno(alumno);
+        
+        // Asignar el Entrenador al plan antes de guardar
+        plan.setEntrenador(entrenador); // <-- ¡ESTO RESUELVE EL PROBLEMA DEL ID NULL!
+        
         plan.setObjetivo(request.getObjetivo());
         // Asumiendo LocalDate en la entidad:
         plan.setFecha_inicio(request.getFechaInicio());
         plan.setFecha_fin(request.getFechaFin());
         plan.setCreated_at(OffsetDateTime.now());
         plan.setUpdated_at(OffsetDateTime.now());
+        
         // probar sino findByName
         Estado estadoInicial = estadoRepository.findById((long) 3)
                 .orElseThrow(() -> new EntityNotFoundException("Estado 'En proceso' no encontrado"));
         plan.setEstado(estadoInicial);
+        
         return planRepository.save(plan);
     }
 
@@ -96,5 +109,5 @@ public class PlanEntrenamientoService {
 
         plan.setUpdated_at(OffsetDateTime.now());
         return planRepository.save(plan);
-    }}
-
+    }
+}

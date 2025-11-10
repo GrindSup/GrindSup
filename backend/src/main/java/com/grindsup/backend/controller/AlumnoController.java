@@ -1,199 +1,263 @@
 package com.grindsup.backend.controller;
 
+import com.grindsup.backend.DTO.AlumnoListDTO; 
 import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EntrenadorRepository;
 import com.grindsup.backend.repository.EstadoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/alumnos")
 public class AlumnoController {
 
-    @Autowired
-    private AlumnoRepository alumnoRepository;
+    private final AlumnoRepository alumnoRepository;
+    private final EntrenadorRepository entrenadorRepository;
+    private final EstadoRepository estadoRepository;
 
-    @Autowired
-    private EstadoRepository estadoRepository;
+    public AlumnoController(
+                AlumnoRepository alumnoRepository,
+                EntrenadorRepository entrenadorRepository,
+                EstadoRepository estadoRepository
+    ) {
+        this.alumnoRepository = alumnoRepository;
+        this.entrenadorRepository = entrenadorRepository;
+        this.estadoRepository = estadoRepository;
+    }
 
-    @Autowired
-    private EntrenadorRepository entrenadorRepository;
 
-    /**
-     * GET con filtros opcionales:
-     * - documento: devuelve 0/1 elemento en una lista
-     * - entrenadorId: lista de activos del entrenador
-     * - sin filtros: lista de activos
-     */
+    /* ----------------- GET ?documento=xxxx (para chequeo de DNI) ----------------- */
     @GetMapping
-    public List<Alumno> getAll(
-            @RequestParam(required = false) Long entrenadorId,
-            @RequestParam(required = false) String documento) {
-
-        if (documento != null && !documento.isBlank()) {
-            // 🔍 Buscar solo alumnos activos (sin baja lógica)
-            return alumnoRepository.findByDocumentoAndDeletedAtIsNull(documento)
-                    .map(List::of)
-                    .orElseGet(List::of);
+    public ResponseEntity<List<Alumno>> findByDocumento(@RequestParam(name = "documento", required = false) String documento) {
+        if (documento == null || documento.isBlank()) {
+            // Podés devolver vacio para el autocompletado del front
+            return ResponseEntity.ok(List.of());
         }
-
-        if (entrenadorId != null) {
-            return alumnoRepository.findActivosByEntrenador(entrenadorId);
-        }
-
-        // 🔹 Si no se especifica nada, traer solo activos
-        return alumnoRepository.findByDeletedAtIsNull();
+        // solo activos
+        Optional<Alumno> uno = alumnoRepository.findByDocumentoAndDeletedAtIsNull(documento.trim());
+        return ResponseEntity.ok(uno.map(List::of).orElseGet(List::of));
     }
 
+    // ✅ NUEVO: listar alumnos por entrenador
+    @GetMapping(params = "entrenadorId")
+    public ResponseEntity<List<AlumnoListDTO>> listarPorEntrenador( // <-- Retorna List<AlumnoListDTO>
+                @RequestParam("entrenadorId") Long entrenadorId
+    ) {
+        // Usa el nuevo método que devuelve el DTO (findActivosDTOByEntrenador)
+        List<AlumnoListDTO> lista = alumnoRepository.findActivosDTOByEntrenador(entrenadorId);
+        return ResponseEntity.ok(lista); // <-- Ahora lista es un List<AlumnoListDTO>
+    }
+
+    // Opcional: GET by ID (Necesario para el formulario de edición)
     @GetMapping("/{id}")
-    public Alumno getById(@PathVariable Long id) {
-        return alumnoRepository.findById(id).orElse(null);
+    public ResponseEntity<Alumno> getById(@PathVariable Long id) {
+        return alumnoRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/eliminados")
-    public List<Alumno> getEliminados() {
-        return alumnoRepository.findByDeletedAtIsNotNull();
-    }
 
+    /* ----------------- POST /api/alumnos ----------------- */
     @PostMapping
-    public Alumno create(@RequestBody Alumno alumno) {
-        // Estado por defecto: Activo (id = 1)
-        Estado estadoActivo = estadoRepository.findById(1L).orElse(null);
-        alumno.setEstado(estadoActivo);
+    public ResponseEntity<Alumno> create(@RequestBody Map<String, Object> body) {
 
-        // NO pisamos entrenador: respetamos lo que envíe el front
-        OffsetDateTime ahora = OffsetDateTime.now();
-        alumno.setCreated_at(ahora);
-        alumno.setUpdated_at(ahora);
+        // Campos básicos
+        String nombre = str(body.get("nombre"));
+        String apellido = str(body.get("apellido"));
+        String documento = str(body.get("documento"));
+        String telefono = str(body.get("telefono"));
+        Boolean informeMedico = bool(body.get("informeMedico"), false);
 
-        if (alumno.getNombre() != null)
-            alumno.setNombre(alumno.getNombre().trim());
-        if (alumno.getApellido() != null)
-            alumno.setApellido(alumno.getApellido().trim());
-        if (alumno.getDocumento() != null)
-            alumno.setDocumento(alumno.getDocumento().trim());
-        if (alumno.getTelefono() != null)
-            alumno.setTelefono(alumno.getTelefono().trim());
-
-        try {
-            return alumnoRepository.save(alumno);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "No se pudo crear el alumno (verificá si el documento ya existe).",
-                    ex);
+        if (nombre.isBlank() || apellido.isBlank() || documento.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Faltan campos obligatorios (nombre/apellido/documento)");
         }
-    }
 
-    @PutMapping("/{id}")
-    public Alumno update(@PathVariable Long id, @RequestBody Alumno alumno) {
-        return alumnoRepository.findById(id).map(existing -> {
-            existing.setNombre(alumno.getNombre());
-            existing.setApellido(alumno.getApellido());
-            existing.setDocumento(alumno.getDocumento());
-            existing.setTelefono(alumno.getTelefono());
-            existing.setFechaNacimiento(alumno.getFechaNacimiento());
-            existing.setPeso(alumno.getPeso());
-            existing.setAltura(alumno.getAltura());
-            existing.setLesiones(alumno.getLesiones());
-            existing.setEnfermedades(alumno.getEnfermedades());
-            existing.setInformeMedico(alumno.getInformeMedico());
+        // Duplicado por documento (solo activos)
+        if (alumnoRepository.findByDocumentoAndDeletedAtIsNull(documento).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El documento ya está registrado");
+        }
 
-            // Actualizar entrenador solo si viene en el body
-            if (alumno.getEntrenador() != null) {
-                existing.setEntrenador(alumno.getEntrenador());
-            }
+        Alumno a = new Alumno();
+        a.setNombre(nombre);
+        a.setApellido(apellido);
+        a.setDocumento(documento);
+        a.setTelefono(telefono);
+        a.setInformeMedico(informeMedico);
 
-            if (alumno.getEstado() != null && alumno.getEstado().getIdEstado() != null) {
-                Estado nuevoEstado = estadoRepository
-                        .findById(alumno.getEstado().getIdEstado())
-                        .orElse(existing.getEstado());
-                existing.setEstado(nuevoEstado);
-            }
+        // fechaNacimiento (yyyy-MM-dd)
+        String fn = str(body.get("fechaNacimiento"));
+        if (!fn.isBlank()) {
+            a.setFechaNacimiento(java.time.LocalDate.parse(fn));
+        }
 
-            existing.setUpdated_at(OffsetDateTime.now());
+        // peso / altura (opcionales)
+        a.setPeso(toDouble(body.get("peso")));
+        a.setAltura(toDouble(body.get("altura")));
 
-            try {
-                return alumnoRepository.save(existing);
-            } catch (DataIntegrityViolationException ex) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "No se pudo actualizar el alumno (verificá si el documento ya existe).",
-                        ex);
-            }
-        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
-    }
+        // lesiones / enfermedades (texto JSON que armás en el front)
+        a.setLesiones(str(body.get("lesiones")));
+        a.setEnfermedades(str(body.get("enfermedades")));
 
-    /** PATCH: actualizar solo el informe médico */
-    @PatchMapping("/{id}/informe")
-    public Alumno updateInforme(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
-        return alumnoRepository.findById(id).map(existing -> {
-            if (body.containsKey("informeMedico")) {
-                existing.setInformeMedico(body.get("informeMedico"));
-                existing.setUpdated_at(OffsetDateTime.now());
-                return alumnoRepository.save(existing);
-            } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta el campo informeMedico");
-            }
-        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
-    }
+        // estado { id_estado: X }
+        Long idEstado = nestedId(body.get("estado"), "id_estado");
+        if (idEstado != null) {
+            Estado estado = estadoRepository.findById(idEstado)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido"));
+            a.setEstado(estado);
+        }
 
-    // 🔹 Baja lógica (soft delete)
-    @DeleteMapping("/{id}")
-    public Alumno darDeBaja(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String motivo = body.get("motivo");
-
-        Alumno alumno = alumnoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
-
-        alumno.setDeletedAt(LocalDateTime.now());
-        alumno.setMotivoBaja(motivo);
-        alumno.setUpdated_at(java.time.OffsetDateTime.now());
-
-        return alumnoRepository.save(alumno);
-    }
-
-    // 🔹 Eliminación definitiva (solo si querés usarla en casos especiales)
-    @DeleteMapping("/{id}/definitivo")
-    public void eliminarFisicamente(@PathVariable Long id) {
-        alumnoRepository.deleteById(id);
-    }
-
-    /**
-     * Vincular alumno ↔ entrenador (ManyToOne actual)
-     * - Si no tiene entrenador: se asigna
-     * - Si ya tiene y es el mismo: idempotente
-     * - Si ya tiene y es otro: 409
-     */
-    @PostMapping("/{alumnoId}/entrenadores/{entrenadorId}")
-    public Alumno vincular(@PathVariable Long alumnoId, @PathVariable Long entrenadorId) {
-        Alumno a = alumnoRepository.findById(alumnoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
-        Entrenador e = entrenadorRepository.findById(entrenadorId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrenador no encontrado"));
-
-        if (a.getEntrenador() == null) {
+        // entrenador: { id_entrenador: X } ó { id: X }
+        Long idEntrenador = nestedId(body.get("entrenador"), "id_entrenador");
+        if (idEntrenador == null) {
+            idEntrenador = nestedId(body.get("entrenador"), "id");
+        }
+        if (idEntrenador != null) {
+            Entrenador e = entrenadorRepository.findById(idEntrenador)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Entrenador inválido"));
             a.setEntrenador(e);
-        } else {
-            Long actual = a.getEntrenador().getIdEntrenador();
-            if (actual != null && !actual.equals(entrenadorId)) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Este alumno ya pertenece a otro entrenador. Para múltiples entrenadores migrá a ManyToMany.");
-            }
         }
+
+        // timestamps (por si no se llaman los callbacks, igual lo forzamos)
+        a.setCreated_at(OffsetDateTime.now());
         a.setUpdated_at(OffsetDateTime.now());
-        return alumnoRepository.save(a);
+
+        Alumno saved = alumnoRepository.save(a);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+    
+    
+    /* ----------------- PUT /api/alumnos/{id} ----------------- */
+    @PutMapping("/{id}")
+    public ResponseEntity<Alumno> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        
+        Alumno existing = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+
+        // Campos básicos
+        String nombre = str(body.get("nombre"));
+        String apellido = str(body.get("apellido"));
+        // El documento no se edita, se mantiene el existente
+        String telefono = str(body.get("telefono"));
+        Boolean informeMedico = bool(body.get("informeMedico"), false);
+
+        if (nombre.isBlank() || apellido.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Faltan campos obligatorios (nombre/apellido)");
+        }
+        
+        existing.setNombre(nombre);
+        existing.setApellido(apellido);
+        existing.setTelefono(telefono);
+        existing.setInformeMedico(informeMedico);
+
+        // ✅ CORRECCIÓN: Manejo seguro de fecha de nacimiento (permite enviar "" para limpiar o actualizar)
+        String fn = str(body.get("fechaNacimiento"));
+        if (!fn.isBlank()) {
+             try {
+                 existing.setFechaNacimiento(java.time.LocalDate.parse(fn));
+             } catch (Exception e) {
+                 // Si falla el parseo (ej: formato incorrecto), lanza un error legible.
+                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fechaNacimiento inválido.");
+             }
+        } else {
+             // Si se envía un String vacío, establece la fecha a null
+             existing.setFechaNacimiento(null);
+        }
+
+        // peso / altura (opcionales)
+        existing.setPeso(toDouble(body.get("peso")));
+        existing.setAltura(toDouble(body.get("altura")));
+
+        // lesiones / enfermedades (texto JSON)
+        existing.setLesiones(str(body.get("lesiones")));
+        existing.setEnfermedades(str(body.get("enfermedades")));
+
+        // estado { id_estado: X } (Si se envía)
+        Long idEstado = nestedId(body.get("estado"), "id_estado");
+        if (idEstado != null) {
+            Estado estado = estadoRepository.findById(idEstado)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido"));
+            existing.setEstado(estado);
+        }
+
+        // Actualizar timestamp
+        existing.setUpdated_at(OffsetDateTime.now());
+
+        Alumno saved = alumnoRepository.save(existing);
+        return ResponseEntity.ok(saved);
+    }
+    
+    /* ----------------- DELETE /api/alumnos/{id} ----------------- */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+                
+        String motivo = str(body.get("motivo"));
+
+        if (motivo.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Motivo de baja es obligatorio.");
+        }
+        
+        // Ejecutar eliminación lógica (Soft Delete)
+        alumno.setDeletedAt(java.time.LocalDateTime.now()); 
+        alumno.setMotivoBaja(motivo); 
+        alumno.setUpdated_at(OffsetDateTime.now());
+
+        alumnoRepository.save(alumno);
+        
+        return ResponseEntity.ok(Map.of("message", "Alumno dado de baja correctamente"));
+    }
+    
+    // Opcional: PATCH para informeMedico (si lo usas para la lista rápida)
+    @PatchMapping("/{id}/informe")
+    public ResponseEntity<?> updateInformeMedico(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        
+        Alumno alumno = alumnoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alumno no encontrado"));
+                
+        Boolean informeMedico = body.get("informeMedico");
+        if (informeMedico == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Falta el campo 'informeMedico'");
+        }
+        
+        alumno.setInformeMedico(informeMedico);
+        alumno.setUpdated_at(OffsetDateTime.now());
+        alumnoRepository.save(alumno);
+        
+        return ResponseEntity.ok(Map.of("message", "Informe médico actualizado"));
+    }
+    
+
+
+    /* ----------------- Helpers ----------------- */
+    private static String str(Object o) { return o == null ? "" : String.valueOf(o).trim(); }
+    private static Boolean bool(Object o, boolean dflt) {
+        if (o == null) return dflt;
+        if (o instanceof Boolean b) return b;
+        return Boolean.parseBoolean(String.valueOf(o));
+    }
+    private static Double toDouble(Object o) {
+        if (o == null) return null;
+        try { return Double.valueOf(String.valueOf(o)); } catch (Exception e) { return null; }
+    }
+    @SuppressWarnings("unchecked")
+    private static Long nestedId(Object node, String key) {
+        if (node instanceof Map<?, ?> m) {
+            Object v = m.get(key);
+            if (v == null) return null;
+            try { return Long.valueOf(String.valueOf(v)); } catch (Exception ignored) { return null; }
+        }
+        return null;
     }
 }

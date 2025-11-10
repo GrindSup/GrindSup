@@ -57,20 +57,26 @@ export default function AlumnoList() {
   const usuario = useMemo(() => getUsuario(), []);
   const entrenadorId = useMemo(() => getEntrenadorId(usuario), [usuario]);
 
+  // ✅ FIX: contemplar también `entrenador.idEntrenador` (camelCase)
   const getAlumnoEntrenadorId = (a) =>
-    a?.entrenador?.id_entrenador ?? a?.entrenador?.id ?? a?.id_entrenador ?? a?.entrenadorId ?? null;
+    a?.entrenador?.id_entrenador ??
+    a?.entrenador?.idEntrenador ??   // <-- agregado
+    a?.entrenador?.id ??
+    a?.id_entrenador ??
+    a?.entrenadorId ??
+    null;
 
   const fetchAlumnos = async () => {
     try {
-      // Si NO hay entrenador → no traemos nada y mostramos empty state
       if (!entrenadorId) {
         setAlumnos([]);
         return;
       }
       const { data } = await axios.get(`${API}/alumnos`, {
-        params: { entrenadorId }, // si el backend lo ignora, filtramos abajo
+        params: { entrenadorId },
       });
       const rows = Array.isArray(data) ? data : [];
+      // ✅ Si el backend ya filtró, esto igual no hace daño, pero ahora sí matchea
       const propios = rows.filter(
         (a) => Number(getAlumnoEntrenadorId(a)) === Number(entrenadorId)
       );
@@ -85,7 +91,7 @@ export default function AlumnoList() {
   const fetchEstados = async () => {
     try {
       const { data } = await axios.get(`${API}/estados`);
-      setEstados(data || []);
+      setEstados(Array.isArray(data) ? data : []);
     } catch {
       toast({ title: "Error al cargar estados", status: "error", duration: 2000, isClosable: true });
     }
@@ -106,15 +112,16 @@ export default function AlumnoList() {
   };
 
   const handleEstadoChange = (idAlumno, idEstado) => {
-    const alumnoActual = alumnos.find((a) => a.id_alumno === idAlumno);
+    const alumnoActual = alumnos.find((a) => (a.id_alumno ?? a.idAlumno) === idAlumno);
     if (!alumnoActual) return;
 
     const payload = {
       ...alumnoActual,
+      // ✅ aceptar camelCase o snake_case, pero enviar id_estado que espera el backend
       estado: { id_estado: Number(idEstado) },
       entrenador:
         alumnoActual.entrenador ??
-        (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null),
+        (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId, idEntrenador: entrenadorId } : null),
     };
 
     axios
@@ -153,7 +160,7 @@ export default function AlumnoList() {
     }
 
     axios
-      .delete(`${API}/alumnos/${alumnoToDelete.id_alumno}`, { data: { motivo } })
+      .delete(`${API}/alumnos/${alumnoToDelete.id_alumno ?? alumnoToDelete.idAlumno}`, { data: { motivo } })
       .then(() => {
         toast({
           title: "Alumno eliminado",
@@ -227,23 +234,23 @@ export default function AlumnoList() {
 
       {filteredAlumnos.length === 0 ? (
         <Center py={10}>
-           <Text fontSize="lg" color="gray.300" fontWeight="bold">
+          <Text fontSize="lg" color="gray.300" fontWeight="bold">
             {entrenadorId ? "No se encontraron alumnos." : "No hay alumnos para mostrar."}
           </Text>
         </Center>
       ) : (
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={5}>
           {filteredAlumnos.map((a) => {
-            const isOpen = expanded.has(a.id_alumno);
+            const aid = a.id_alumno ?? a.idAlumno; // ✅ por las dos variantes que devuelve el backend
+            const isOpen = expanded.has(aid);
             const imp = importantSummary(a);
             const impText = imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
 
             return (
-            
-              <Card key={a.id_alumno} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
+              <Card key={aid} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
                 <CardHeader pb={3}>
                   <Flex align="center" gap={3}>
-                    <Link as={RouterLink} to={`/alumno/perfil/${a.id_alumno}`} flex="1" _hover={{ textDecor: "none" }}>
+                    <Link as={RouterLink} to={`/alumno/perfil/${aid}`} flex="1" _hover={{ textDecor: "none" }}>
                       <Box>
                         <Heading size="md">{a.nombre} {a.apellido}</Heading>
                         {imp.length > 0 && (
@@ -264,7 +271,7 @@ export default function AlumnoList() {
                       aria-label={isOpen ? "Ocultar detalles" : "Ver detalles"}
                       icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                       variant="ghost"
-                      onClick={() => toggleExpand(a.id_alumno)}
+                      onClick={() => toggleExpand(aid)}
                     />
                   </Flex>
                 </CardHeader>
@@ -282,7 +289,7 @@ export default function AlumnoList() {
                       <Box mt={3}>
                         <Checkbox
                           isChecked={!!a.informeMedico}
-                          onChange={(e) => handleInformeChange(a.id_alumno, e.target.checked)}
+                          onChange={(e) => handleInformeChange(aid, e.target.checked)}
                         >
                           Informe médico entregado
                         </Checkbox>
@@ -292,14 +299,18 @@ export default function AlumnoList() {
                         <Text mb={1} fontWeight="medium">Estado</Text>
                         <Select
                           size="sm"
-                          value={a.estado?.id_estado || ""}
-                          onChange={(e) => handleEstadoChange(a.id_alumno, e.target.value)}
+                          // ✅ soportar idEstado o id_estado
+                          value={(a.estado?.id_estado ?? a.estado?.idEstado) ?? ""}
+                          onChange={(e) => handleEstadoChange(aid, e.target.value)}
                         >
-                          {estados.map((estado) => (
-                            <option key={estado.id_estado} value={estado.id_estado}>
-                              {estado.nombre}
-                            </option>
-                          ))}
+                          {estados.map((estado) => {
+                            const eid = estado.id_estado ?? estado.idEstado;
+                            return (
+                              <option key={eid} value={eid}>
+                                {estado.nombre}
+                              </option>
+                            );
+                          })}
                         </Select>
                       </Box>
                     </Box>
@@ -312,7 +323,7 @@ export default function AlumnoList() {
                       size="sm"
                       colorScheme="blue"
                       leftIcon={<EditIcon />}
-                      onClick={() => navigate(`/alumno/editar/${a.id_alumno}`)}
+                      onClick={() => navigate(`/alumno/editar/${aid}`)}
                       bg="#258d19"
                     >
                       Editar
@@ -322,8 +333,8 @@ export default function AlumnoList() {
                       bg="red.600"
                       color="white"
                       _hover={{ bg: "red.600" }}
-                      leftIcon={<DeleteIcon />}
                       onClick={() => openDeleteDialog(a)}
+                      leftIcon={<DeleteIcon />}
                     >
                       Eliminar
                     </Button>
@@ -362,7 +373,7 @@ export default function AlumnoList() {
 function Detail({ label, value }) {
   return (
     <Flex as="dl" gap={2} mt={1}>
-      <Text as="dt" minW="140px" color="gray.500">{label}</Text>
+      <Text as="dt" minWidth="140px" color="gray.500">{label}</Text>
       <Text as="dd" fontWeight="medium">{String(value)}</Text>
     </Flex>
   );

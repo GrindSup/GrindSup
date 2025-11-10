@@ -3,20 +3,26 @@ package com.grindsup.backend.security;
 import com.grindsup.backend.model.Usuario;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+// CAMBIO: Importar las nuevas clases OIDC
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class CustomOAuth2User implements OAuth2User {
+// CAMBIO: Implementar OidcUser en lugar de OAuth2User
+public class CustomOAuth2User implements OidcUser {
 
     private final Usuario usuario;
-    private final Map<String, Object> attributes;
+    // CAMBIO: Almacenar el OidcUser original para delegar llamadas
+    private final OidcUser oidcUser;
 
-    public CustomOAuth2User(Usuario usuario, Map<String, Object> attributes) {
+    // CAMBIO: El constructor ahora recibe el OidcUser completo
+    public CustomOAuth2User(Usuario usuario, OidcUser oidcUser) {
         this.usuario = usuario;
-        this.attributes = attributes;
+        this.oidcUser = oidcUser;
     }
 
     @Override
@@ -28,7 +34,8 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        return attributes;
+        // CAMBIO: Delegar al OidcUser original
+        return oidcUser.getAttributes();
     }
 
     @Override
@@ -40,5 +47,23 @@ public class CustomOAuth2User implements OAuth2User {
     // Método para exponer el objeto Usuario al SuccessHandler
     public Usuario getUsuario() {
         return usuario;
+    }
+
+    // --- MÉTODOS REQUERIDOS POR OidcUser ---
+    // Simplemente delegamos al OidcUser original que nos pasó Spring
+
+    @Override
+    public Map<String, Object> getClaims() {
+        return oidcUser.getClaims();
+    }
+
+    @Override
+    public OidcUserInfo getUserInfo() {
+        return oidcUser.getUserInfo();
+    }
+
+    @Override
+    public OidcIdToken getIdToken() {
+        return oidcUser.getIdToken();
     }
 }

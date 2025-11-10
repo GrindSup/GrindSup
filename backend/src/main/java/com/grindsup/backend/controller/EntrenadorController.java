@@ -3,6 +3,7 @@ package com.grindsup.backend.controller;
 import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.Usuario;
 import com.grindsup.backend.model.Estado;
+import com.grindsup.backend.DTO.PlanListDTO; // <-- Importación necesaria
 import com.grindsup.backend.repository.EntrenadorRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
 import com.grindsup.backend.repository.EstadoRepository;
@@ -26,6 +27,10 @@ public class EntrenadorController {
 
     @Autowired
     private EstadoRepository estadoRepository;
+    
+    // Inyección del PlanRepository para el endpoint de planes
+    @Autowired
+    private com.grindsup.backend.repository.PlanEntrenamientoRepository planRepository; 
 
     // -----------------------------
     // HU 38: Listado de entrenadores activos
@@ -83,7 +88,7 @@ public class EntrenadorController {
     // -----------------------------
     @PutMapping("/{id}")
     public ResponseEntity<Entrenador> updateEntrenador(
-            @PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
+                @PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
 
         Entrenador entrenador = entrenadorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
@@ -155,20 +160,18 @@ public class EntrenadorController {
     // -----------------------------
     // Listar planes por entrenador
     // -----------------------------
-
-    @Autowired
-    private com.grindsup.backend.repository.PlanEntrenamientoRepository planRepository;
-
     @GetMapping("/{id}/planes")
-    public ResponseEntity<?> obtenerPlanesPorEntrenador(@PathVariable Long id) {
+    public ResponseEntity<List<PlanListDTO>> obtenerPlanesPorEntrenador(@PathVariable Long id) {
         try {
-            List<com.grindsup.backend.model.PlanEntrenamiento> planes = planRepository
-                    .findByEntrenador_IdEntrenador(id);
+            // Se usa el nuevo método de proyección DTO
+            List<PlanListDTO> planes = planRepository.findPlanDTOByEntrenador(id);
 
             return ResponseEntity.ok(planes);
         } catch (Exception e) {
+            // Loguea el error internamente y retorna un 500 con una lista vacía para cumplir con el tipo de retorno.
+            System.err.println("Error al obtener planes del entrenador: " + e.getMessage());
             return ResponseEntity.internalServerError()
-                    .body("Error al obtener planes del entrenador: " + e.getMessage());
+                    .body(List.of()); 
         }
     }
 }

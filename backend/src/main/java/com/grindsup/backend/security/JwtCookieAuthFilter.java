@@ -1,3 +1,4 @@
+// src/main/java/com/grindsup/backend/security/JwtCookieAuthFilter.java
 package com.grindsup.backend.security;
 
 import jakarta.servlet.FilterChain;
@@ -26,49 +27,52 @@ public class JwtCookieAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
             throws ServletException, IOException {
 
         String token = null;
+        System.out.println("[JWT] URL=" + request.getRequestURI());
+        System.out.println("[JWT] Authorization=" + request.getHeader("Authorization"));
+        System.out.println("[JWT] Cookies=" + (request.getCookies() != null));
+        System.out.println("[JWT] query token=" + request.getParameter("token"));
 
-        // 1) Header Authorization: Bearer
+
+        // 1) Authorization: Bearer ...
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
 
-        // 2) Cookie gs_jwt (si no vino el header)
+        // 2) Cookies (si no vino header)
         if (token == null && request.getCookies() != null) {
             Cookie c = Arrays.stream(request.getCookies())
-                    .filter(k -> "gs_jwt".equals(k.getName()))
+                    .filter(k -> "gs_token".equals(k.getName()) || "gs_jwt".equals(k.getName()))
                     .findFirst().orElse(null);
             if (c != null) token = c.getValue();
         }
+        // 3) QUERY PARAM (¡LA NUEVA VÍA DE ESCAPE!)
+        // Si el token es null, revisamos si viene en la URL (como después del login)
+        if (token == null) {
+            token = request.getParameter("token");
+        }
 
-        // --- ✅ LÓGICA CORREGIDA ---
-        // Ya no comprobamos si la autenticación es 'null'.
-        // Si tenemos un token, lo validamos y lo usamos.
         if (token != null) {
             try {
-                // 'parseUserDetails' ya incluye la validación
                 UserDetails userDetails = jwtService.parseUserDetails(token);
-                
                 if (userDetails != null) {
-                    // Si el token es válido, creamos la autenticación
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    System.out.println("[JWT] token valido, subject=" + jwtService.getSubject(token));
+                    var authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
-                            
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
-                    // Y la establecemos en el contexto. Esto SOBREESCRIBE
-                    // cualquier autenticación "Anónima" que pudiera existir.
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
-            } catch (Exception e) {
-                // Si el token es inválido (expirado, malformado),
-                // simplemente no hacemos nada y el usuario seguirá
-                // como "Anónimo".
+            } catch (Exception ex) {
+                System.err.println("JWT AUTH FAILED: " + ex.getMessage());
                 SecurityContextHolder.clearContext();
+                ex.printStackTrace();
+
             }
         }
 
