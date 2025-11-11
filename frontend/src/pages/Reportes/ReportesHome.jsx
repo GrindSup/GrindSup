@@ -70,6 +70,7 @@ export default function ReportesHome() {
           icon={FiStar}
           title="Evaluaciones de Planes"
           desc="Promedio mensual de ratings (0–5) y distribución de calificaciones por puntaje."
+          // ✅ CORRECCIÓN: Apuntar a la ruta principal de Planes
           onClick={() => navigate("/reportes/planes")}
         />
         <Tile

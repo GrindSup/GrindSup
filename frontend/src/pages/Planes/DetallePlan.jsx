@@ -132,7 +132,7 @@ export default function DetallePlan() {
       <HStack mb={4} gap={3} wrap="wrap" justify="space-between">
         <HStack gap={3}>
           <BotonVolver />
-          <Heading size="lg" color="white">Plan N°{idPlan}</Heading>
+          <Heading size="lg" color="white">Plan de {alumnoNombre}</Heading>
         </HStack>
         <HStack gap={2}>
           {/* ✅ Editar plan ahora navega a /planes/:idPlan/editar */}

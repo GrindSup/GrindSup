@@ -272,7 +272,7 @@ export default function ListaEjercicios() {
           </InputGroup>
           <Button
             leftIcon={<AddIcon />}
-            onClick={() => navigate('/ejercicio/registrar')}
+            onClick={() => navigate('/registrar')}
             bg="#258d19"
             color="white"
           >

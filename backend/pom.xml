@@ -119,40 +119,31 @@
     <!-- Dotenv -->
 
 
-    <!-- DynamicReports (sin iText) -->
+    <!-- Dynamic Reports -->
     <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-core</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-adhoc</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.dynamicreports</groupId>
-      <artifactId>dynamicreports-googlecharts</artifactId>
-      <version>5.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.lowagie</groupId>
-          <artifactId>itext</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+			<groupId>net.sourceforge.dynamicreports</groupId>
+			<artifactId>dynamicreports-core</artifactId>
+			<version>6.20.1</version>
+		</dependency>
+
+		<!-- JasperReports motor -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+			<version>6.21.3</version>
+		</dependency>
+
+    <!-- JAXB para Java 11+ -->
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>4.0.2</version>
+		</dependency>
   </dependencies>
 
   <repositories>

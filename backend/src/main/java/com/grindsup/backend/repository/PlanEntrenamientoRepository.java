@@ -9,22 +9,29 @@ import org.springframework.data.repository.query.Param;
 
 public interface PlanEntrenamientoRepository extends JpaRepository<PlanEntrenamiento, Long> {
 
+    // 1. Consultas derivadas por Alumno y Estado
     List<PlanEntrenamiento> findByAlumno_IdAlumno(Long idAlumno);
 
     List<PlanEntrenamiento> findByAlumno_IdAlumnoAndEstado_IdEstado(Long idAlumno, Long idEstado);
+    
+    // Consulta derivada por nombre de estado (ya está bien)
+    List<PlanEntrenamiento> findByAlumno_IdAlumnoAndEstado_Nombre(Long idAlumno, String nombreEstado); 
 
+    // 2. Consulta derivada por Estado (general)
     List<PlanEntrenamiento> findByEstado_IdEstado(Long idEstado);
 
-    // Mantenemos el método que devuelve la entidad PlanEntrenamiento completa, pero corregido para usar el mapeo directo:
+    
+    // 3. Consulta para obtener la entidad PlanEntrenamiento COMPLETA por Entrenador ID (Mantenemos esta y eliminamos la duplicada/ambigua)
     @Query("""
         select p
         from PlanEntrenamiento p
         where p.entrenador.idEntrenador = :entrenadorId
         """)
-    List<PlanEntrenamiento> findByEntrenador_IdEntrenador(@Param("entrenadorId") Long entrenadorId);
+    // Hemos renombrado para evitar ambigüedad con el método sin @Query.
+    List<PlanEntrenamiento> findPlansByEntrenadorId(@Param("entrenadorId") Long entrenadorId);
 
 
-    // ✅ MÉTODO DE PROYECCIÓN DTO (CORREGIDO FINALMENTE)
+    // ✅ 4. MÉTODO DE PROYECCIÓN DTO (Para la lista del frontend)
     // Selecciona campos para el DTO. Accede al ID del plan como 'p.id_plan' y al entrenador como 'p.entrenador.idEntrenador'.
     @Query("""
         SELECT new com.grindsup.backend.DTO.PlanListDTO(

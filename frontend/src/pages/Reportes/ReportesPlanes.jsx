@@ -10,14 +10,18 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar
 } from "recharts";
-import BotonVolver from "../../components/BotonVolver";
-import { ensureEntrenadorId, getUsuario, getEntrenadorName } from "../../context/auth";
+import BotonVolver from "../../components/BotonVolver.jsx";
+import { ensureEntrenadorId, getUsuario, getEntrenadorName } from "../../context/auth.js";
 
-// ⚠️ Usa los mismos nombres de servicio que ya tenés funcionando
+// ⚠️ CORRECCIÓN CLAVE: Usamos los nombres que SÍ se exportan en reportes.servicio.js
 import {
-  getPlanesRatingMensual as getPlanesRatingMensual,         // promedio mensual (avg, month)
-  getPlanesRatingDistribucion     // buckets {score,cnt}
-} from "../../services/reportes.servicio";
+  getRatingMensual,         // ✅ Nombre CORTO
+  getRatingDistribucion     // ✅ Nombre CORTO
+} from "../../services/reportes.servicio.js";
+
+// Colores para la torta de Ratings (Score 1 a 5)
+const RATING_COLORS = ['#cccccc', '#FF6347', '#FFD700', '#32CD32', '#00BFFF', '#1E90FF']; 
+
 
 function ym(date) {
   const y = date.getFullYear();
@@ -37,8 +41,8 @@ export default function ReportesPlanes() {
   const [from, setFrom] = useState(ym(lastMonth));
   const [to, setTo] = useState(ym(today));
 
-  const [mensual, setMensual] = useState([]);      // [{month, avg}]
-  const [buckets, setBuckets] = useState([]);      // [{score, cnt}]
+  const [mensual, setMensual] = useState([]);       // [{month, avg}]
+  const [buckets, setBuckets] = useState([]);       // [{score, cnt}]
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -81,14 +85,16 @@ export default function ReportesPlanes() {
     setErr("");
     try {
       const [m, b] = await Promise.all([
-        getPlanesRatingMensual({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
-        getPlanesRatingDistribucion({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
+        // ✅ USAR EL NOMBRE CORREGIDO: getRatingMensual
+        getRatingMensual({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
+        getRatingDistribucion({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
       ]);
 
       // normalizo mensual -> [{month, avg}]
       const mens = (m || []).map(x => ({
         month: x.month,
         avg: Number(x.avg ?? x.average ?? 0),
+        count: Number(x.count ?? x.cnt ?? 0), // Aseguramos que tenemos count para el Bar
       })).sort((a, b) => a.month.localeCompare(b.month));
 
       // normalizo buckets -> scores 0..5 siempre
@@ -110,9 +116,11 @@ export default function ReportesPlanes() {
 
   const promedioGlobal = useMemo(() => {
     if (!mensual.length) return 0;
-    const sum = mensual.reduce((acc, r) => acc + (r.avg || 0), 0);
-    return (sum / mensual.length).toFixed(2);
+    const totalCount = mensual.reduce((sum, r) => sum + (r.count || 0), 0);
+    const weightedSum = mensual.reduce((sum, r) => sum + (r.avg || 0) * (r.count || 0), 0);
+    return totalCount > 0 ? (weightedSum / totalCount).toFixed(2) : 0;
   }, [mensual]);
+
 
   return (
     <Container maxW="7xl" py={8}>
@@ -207,7 +215,8 @@ export default function ReportesPlanes() {
                   <YAxis domain={[0, 5]} allowDecimals={false} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="avg" name="Promedio" />
+                  <Line type="monotone" dataKey="avg" name="Promedio" stroke="#8884d8" />
+                  <Bar dataKey="count" name="Total Evaluaciones" fill="#82ca9d" yAxisId="right" />
                 </LineChart>
               </ResponsiveContainer>
               {mensual.length === 0 && <Text mt={2}>No hay datos en el período seleccionado.</Text>}

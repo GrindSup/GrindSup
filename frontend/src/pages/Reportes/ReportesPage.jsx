@@ -1,3 +1,5 @@
+// frontend/src/pages/Reportes/ReportesAlumnosPage.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import { getAltasBajasPorMes, getActivosFinDeMes } from "../../services/reportes.servicio.js";
 import {
@@ -13,18 +15,21 @@ import {
 import BotonVolver from "../../components/BotonVolver";
 import { ensureEntrenadorInfo } from "../../context/auth";
 
+const RATING_COLORS = ['#48BB78', '#E53E3E']; // Verde para Altas, Rojo para Bajas
+
 function ym(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
 
-export default function ReportesPage() {
+export default function ReportesAlumnosPage() {
   const toast = useToast();
-
-  // datos del entrenador desde la sesión (solo lectura)
   const [entrenadorId, setEntrenadorId] = useState(null);
   const [entrenadorName, setEntrenadorName] = useState(null);
+  const [alumnoData, setAlumnoData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -34,15 +39,10 @@ export default function ReportesPage() {
     })();
   }, []);
 
-  // rango default: últimos 2 meses
   const today = new Date();
   const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
   const [from, setFrom] = useState(ym(lastMonth));
   const [to, setTo] = useState(ym(today));
-
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
 
   async function load() {
     if (!entrenadorId) return;
@@ -53,42 +53,43 @@ export default function ReportesPage() {
         getAltasBajasPorMes({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
         getActivosFinDeMes({ entrenadorId, fromYYYYMM: from, toYYYYMM: to }),
       ]);
+      
       const map = new Map();
       ab.forEach(r => map.set(r.month, { ...r }));
       afm.forEach(r => {
         const prev = map.get(r.month) || { month: r.month, altas: 0, bajas: 0 };
         map.set(r.month, { ...prev, activos: r.activos });
       });
-      setData(Array.from(map.values()).sort((a, b) => a.month.localeCompare(b.month)));
+      setAlumnoData(Array.from(map.values()).sort((a, b) => a.month.localeCompare(b.month)));
+
     } catch (e) {
       console.error(e);
-      setErr("No pude cargar los datos de reportes.");
-      toast({ title: "Error", description: "No pude cargar reportes.", status: "error" });
+      setErr("No pude cargar los datos de reportes de alumnos.");
+      toast({ title: "Error", description: "No pude cargar reportes de alumnos.", status: "error" });
     } finally {
       setLoading(false);
     }
   }
 
-  // carga inicial cuando ya tenemos el id
   useEffect(() => {
     if (entrenadorId) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entrenadorId]);
 
   const totals = useMemo(() => {
-    const altas = data.reduce((acc, r) => acc + (r.altas || 0), 0);
-    const bajas = data.reduce((acc, r) => acc + (r.bajas || 0), 0);
+    const altas = alumnoData.reduce((acc, r) => acc + (r.altas || 0), 0);
+    const bajas = alumnoData.reduce((acc, r) => acc + (r.bajas || 0), 0);
     return [
-      { name: "Altas", value: altas },
-      { name: "Bajas", value: bajas },
+      { name: "Altas", value: altas, color: RATING_COLORS[0] }, 
+      { name: "Bajas", value: bajas, color: RATING_COLORS[1] },
     ];
-  }, [data]);
+  }, [alumnoData]);
 
   return (
     <Container maxW="7xl" py={8}>
       <HStack align="center" mb={4} gap={3} wrap="wrap">
         <BotonVolver />
-        <Heading size="lg" color="white">Reportes y Estadísticas — Alumnos</Heading>
+        <Heading size="lg" color="white">Reportes — Estadísticas de Alumnos</Heading>
         <Spacer />
       </HStack>
 
@@ -104,19 +105,14 @@ export default function ReportesPage() {
               </Tag>
             </Box>
 
+            {/* ... (Bloques de filtros de fecha y botón Cargar) ... */}
             <Box>
               <FormLabel>Desde (YYYY-MM)</FormLabel>
               <InputGroup>
                 <InputLeftElement pointerEvents="none">
                   <CalendarIcon color="gray.500" />
                 </InputLeftElement>
-                <Input
-                  type="month"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  bg="white"
-                  borderRadius="full"
-                />
+                <Input type="month" value={from} onChange={(e) => setFrom(e.target.value)} bg="white" borderRadius="full" />
               </InputGroup>
             </Box>
 
@@ -126,13 +122,7 @@ export default function ReportesPage() {
                 <InputLeftElement pointerEvents="none">
                   <CalendarIcon color="gray.500" />
                 </InputLeftElement>
-                <Input
-                  type="month"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  bg="white"
-                  borderRadius="full"
-                />
+                <Input type="month" value={to} onChange={(e) => setTo(e.target.value)} bg="white" borderRadius="full" />
               </InputGroup>
             </Box>
 
@@ -146,10 +136,7 @@ export default function ReportesPage() {
       {loading && <Center py={10}><Spinner size="xl" /></Center>}
 
       {!loading && err && (
-        <Alert status="warning" mb={6} borderRadius="lg">
-          <AlertIcon />
-          {err}
-        </Alert>
+        <Alert status="warning" mb={6} borderRadius="lg"><AlertIcon />{err}</Alert>
       )}
 
       {!loading && !err && (
@@ -158,18 +145,18 @@ export default function ReportesPage() {
             <CardHeader pb={2}><Heading size="md">Altas vs Bajas por mes + Activos</Heading></CardHeader>
             <CardBody pt={0} minH="360px">
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data}>
+                <BarChart data={alumnoData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="altas" name="Altas" />
-                  <Bar dataKey="bajas" name="Bajas" />
-                  <Line type="monotone" dataKey="activos" name="Activos fin de mes" />
+                  <Bar dataKey="altas" name="Altas" fill="#48BB78" />
+                  <Bar dataKey="bajas" name="Bajas" fill="#E53E3E" />
+                  <Line type="monotone" dataKey="activos" name="Activos fin de mes" stroke="#4299E1" />
                 </BarChart>
               </ResponsiveContainer>
-              {data.length === 0 && <Text mt={2}>No hay datos en el período seleccionado.</Text>}
+              {alumnoData.length === 0 && <Text mt={2}>No hay datos en el período seleccionado.</Text>}
             </CardBody>
           </Card>
 
@@ -178,8 +165,17 @@ export default function ReportesPage() {
             <CardBody pt={0} minH="360px">
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie data={totals} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                    {totals.map((_, i) => <Cell key={i} />)}
+                  <Pie 
+                    data={totals} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" cy="50%" 
+                    outerRadius={100} 
+                    label 
+                  >
+                    {totals.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
                   </Pie>
                   <Tooltip /><Legend />
                 </PieChart>

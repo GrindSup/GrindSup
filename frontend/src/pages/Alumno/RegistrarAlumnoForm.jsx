@@ -12,13 +12,80 @@ import { useNavigate } from "react-router-dom";
 // 🚀 Usamos el axios configurado
 import axios from "../../config/axios.config.js";
 
-/* helpers JSON */
+/* =========================================================================
+ * 📦 HELPERS
+ * ========================================================================= */
+
+/* TIPOS DE DOCUMENTO (API de ejemplo o mock) */
+const DOCUMENT_TYPES = [
+    { code: "DNI", name: "DNI" },
+    { code: "LE", name: "Libreta de Enrolamiento" },
+    { code: "LC", name: "Libreta Cívica" },
+    { code: "PAS", name: "Pasaporte" },
+    { code: "CI", name: "Cédula de Identidad" },
+];
+// NOTA: Usamos un mock de API libre ya que no hay una API universal para tipos de DNI.
+// En un entorno real, esto vendría de tu backend.
+
 function stringifyNotes(items) {
   const list = (items || [])
     .map((i) => ({ text: String(i.text ?? "").trim(), important: !!i.important }))
     .filter((i) => i.text);
   return JSON.stringify({ items: list });
 }
+
+/* ⚡ Componente para Optimización de Rendimiento (React.memo) */
+// Se usa React.memo para evitar re-renders innecesarios en las listas
+// de Lesiones y Enfermedades cuando otros campos del formulario cambian.
+const DetalleItem = React.memo(
+  function DetalleItem({ item, idx, which, setItem, removeItem }) {
+    const isLesion = which === "les";
+    const placeholderText = isLesion ? "Detalle de la lesión..." : "Detalle de la enfermedad...";
+    
+    // Función de cambio centralizada para manejar inputs y checkboxes
+    const handleTextChange = (e) => setItem(which, idx, { text: e.target.value });
+    const handleCheckboxChange = (e) => setItem(which, idx, { important: e.target.checked });
+
+    return (
+      <HStack key={`${which}-${idx}`} mt={2}>
+        <Input
+          placeholder={placeholderText}
+          value={item.text}
+          onChange={handleTextChange}
+        />
+        <Checkbox
+          isChecked={item.important}
+          onChange={handleCheckboxChange}
+        >
+          Importante
+        </Checkbox>
+        <IconButton
+          aria-label="Eliminar"
+          icon={<DeleteIcon />}
+          onClick={() => removeItem(which, idx)}
+          bg="#258d19"
+          color="white"
+          _hover={{ bg: "#1f7a14" }}
+        />
+      </HStack>
+    );
+  }
+);
+
+function SectionHeader({ title, onAdd }) {
+  return (
+    <HStack justify="space-between" mb={2}>
+      <FormLabel m={0} fontSize="md" fontWeight="bold">{title}</FormLabel>
+      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#258d19" color="white" _hover={{ bg: "#1f7a14" }}>
+        Agregar
+      </Button>
+    </HStack>
+  );
+}
+
+/* =========================================================================
+ * ⚙️ COMPONENTE PRINCIPAL
+ * ========================================================================= */
 
 export default function RegistrarAlumnoForm({ usarMock = false }) {
   const navigate = useNavigate();
@@ -33,16 +100,20 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     nombre: "", apellido: "", documento: "", fechaNac: "",
     peso: "", altura: "", telefono: "", informeMedico: false,
     codigoArea: "+54", contactoNumero: "",
+    tipoDocumento: DOCUMENT_TYPES[0].code, // Nuevo campo
   });
 
-  const [dniDisponible, setDniDisponible] = useState(true);
-  const [checkingDni, setCheckingDni] = useState(false);
+  // Eliminamos checkingDni y setCheckingDni. dniDisponible solo se usará al hacer submit.
+  const [dniDisponible, setDniDisponible] = useState(true); 
   const [lesiones, setLesiones] = useState([]);
   const [enfermedades, setEnfermedades] = useState([]);
   const [codigos, setCodigos] = useState([]);
   const [loadingCodigos, setLoadingCodigos] = useState(true);
+  
+  const hoy = new Date().toISOString().split("T")[0];
+  const documentoLimpio = form.documento?.trim();
 
-  // Códigos de área (fetch público)
+  // Códigos de área (fetch público) - Se mantiene igual
   useEffect(() => {
     const fetchCodes = async () => {
       try {
@@ -69,63 +140,46 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     fetchCodes();
   }, []);
 
+  // Validación de errores (uso de useMemo para optimizar)
   const errors = useMemo(() => {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!form.apellido?.trim()) e.apellido = "El apellido es obligatorio";
-    if (!form.documento?.trim()) e.documento = "El documento es obligatorio";
-    else if (!/^[0-9]+$/.test(form.documento)) e.documento = "El DNI debe contener solo números";
+    
+    // Nueva validación para Tipo de Documento
+    if (!form.tipoDocumento) e.tipoDocumento = "Seleccioná el tipo de documento";
+    
+    if (!form.documento?.trim()) e.documento = "El número de documento es obligatorio";
+    else if (!/^[0-9]+$/.test(form.documento)) e.documento = "El documento debe contener solo números";
+    
     if (!form.fechaNac?.trim()) e.fechaNac = "La fecha de nacimiento es obligatoria";
     else {
-      const hoy = new Date().toISOString().split("T")[0];
       if (form.fechaNac > hoy) e.fechaNac = "La fecha no puede ser futura";
     }
     if (form.peso && !/^\d+(\.\d+)?$/.test(form.peso)) e.peso = "El peso debe ser numérico";
     if (form.altura && !/^\d+(\.\d+)?$/.test(form.altura)) e.altura = "La altura debe ser numérica";
     if (form.contactoNumero && !/^[0-9]+$/.test(form.contactoNumero)) e.contactoNumero = "El número debe ser numérico";
     return e;
-  }, [form]);
+  }, [form, hoy]);
 
-  // Verificación de DNI con axios
-  useEffect(() => {
-    if (!form.documento?.trim() || !/^[0-9]+$/.test(form.documento)) {
-      setDniDisponible(true);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(async () => {
-      try {
-        setCheckingDni(true);
-        const res = await axios.get(
-          `/api/alumnos?documento=${encodeURIComponent(form.documento.trim())}`,
-          { signal: controller.signal }
-        );
-        const data = res.data;
-        setDniDisponible(!(Array.isArray(data) && data.length > 0));
-      } catch (_err) {
-        // si falla, asumimos disponible y se valida al submit
-        setDniDisponible(true);
-      } finally {
-        setCheckingDni(false);
-      }
-    }, 600);
-
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [form.documento]);
+  // 🛑 ELIMINAMOS EL useEffect DE VERIFICACIÓN DE DNI EN TIEMPO REAL 🛑
+  // Esto es lo que causaba la lentitud. La verificación ahora solo se hace en onSubmit.
+  // useEffect(() => { ... }, [form.documento]); // Código eliminado
 
   const isValid = Object.keys(errors).length === 0;
+  // Handler para campos de formulario
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const hoy = new Date().toISOString().split("T")[0];
+  // Handler específico para Menú de Tipo de Documento
+  const handleDocTypeChange = (code) => setForm((p) => ({ ...p, tipoDocumento: code }));
+
 
   const buildPayload = () => {
     const entrenadorRef = entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId } : null;
     return {
       nombre: form.nombre.trim(),
       apellido: form.apellido.trim(),
+      // ⚠️ Incluimos el tipo de documento en el payload
+      tipoDocumento: form.tipoDocumento, 
       documento: form.documento.trim(),
       fechaNacimiento: form.fechaNac,
       peso: form.peso ? Number(form.peso) : null,
@@ -160,16 +214,25 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
 
     setSubmitting(true);
+    setDniDisponible(true); // Resetear estado antes del chequeo final
     try {
-      // Doble chequeo de DNI
+      // ✅ CHEQUEO DE DNI: SOLO AQUÍ (doble chequeo)
+      // Usamos el tipo de documento en la consulta si el backend lo requiere.
       const dupRes = await axios.get(
-        `/api/alumnos?documento=${encodeURIComponent(form.documento.trim())}`
+        `/api/alumnos?documento=${encodeURIComponent(documentoLimpio)}&tipoDocumento=${form.tipoDocumento}`
       );
       const posibles = dupRes.data;
       if (Array.isArray(posibles) && posibles.length > 0) {
-        throw new Error("El documento ya está registrado.");
+        setDniDisponible(false);
+        toast({
+          status: "error",
+          title: "Documento duplicado",
+          description: "El documento ya está registrado.",
+          position: "top",
+        });
+        return; // Salir de la función si está duplicado
       }
-
+      
       const payload = buildPayload();
 
       if (usarMock) {
@@ -192,6 +255,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
   };
 
+  // Lógica para añadir/modificar/eliminar ítems de Lesiones/Enfermedades
   const addItem = (which) => {
     if (which === "les") {
       setLesiones((p) => [...p, { text: "", important: false }]);
@@ -214,6 +278,14 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
   };
 
+  // Buscamos el nombre del documento seleccionado para mostrarlo en la etiqueta
+  const selectedDocType = DOCUMENT_TYPES.find(d => d.code === form.tipoDocumento);
+  const docLabel = selectedDocType ? `${selectedDocType.name} (Número)` : "Documento (Número)";
+
+
+  // =========================================================================
+  // 🎨 RENDERIZADO
+  // =========================================================================
   return (
     <Box py={{ base: 8, md: 12 }}>
       <Container maxW="container.sm">
@@ -235,37 +307,74 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
           <CardBody pt={6} px={{ base: 6, md: 10 }} pb={8}>
             <Box as="form" onSubmit={onSubmit}>
               <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
+                {/* Nombre */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
                     <FormLabel>Nombre</FormLabel>
-                    <Input name="nombre" placeholder="Ej: Betina" value={form.nombre} onChange={handleChange} />
+                    <Input name="nombre" placeholder="Ej: Sofia" value={form.nombre} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.nombre}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
 
+                {/* Apellido */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
                     <FormLabel>Apellido</FormLabel>
-                    <Input name="apellido" placeholder="Ej: Yost" value={form.apellido} onChange={handleChange} />
+                    <Input name="apellido" placeholder="Ej: Perez" value={form.apellido} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.apellido}</FormErrorMessage>}
                   </FormControl>
                 </GridItem>
 
+                {/* Tipo de Documento (NUEVO) */}
+                <GridItem>
+                    <FormControl isRequired isInvalid={submitted && !!errors.tipoDocumento}>
+                        <FormLabel>Tipo de Documento</FormLabel>
+                        <Menu>
+                            <MenuButton 
+                                as={Button} 
+                                variant="outline" 
+                                rightIcon={<ChevronDownIcon />} 
+                                width="100%"
+                                textAlign="left"
+                            >
+                                {selectedDocType?.name || "Seleccionar..."}
+                            </MenuButton>
+                            <MenuList zIndex={2000}>
+                                {DOCUMENT_TYPES.map((d) => (
+                                    <MenuItem 
+                                        key={d.code}
+                                        onClick={() => handleDocTypeChange(d.code)}
+                                    >
+                                        {d.name} ({d.code})
+                                    </MenuItem>
+                                ))}
+                            </MenuList>
+                        </Menu>
+                        {submitted && <FormErrorMessage>{errors.tipoDocumento}</FormErrorMessage>}
+                    </FormControl>
+                </GridItem>
+
+                {/* Documento (Número) - Área crítica de lentitud */}
                 <GridItem>
                   <FormControl
                     isRequired
-                    isInvalid={(submitted && !!errors.documento) || (!dniDisponible && form.documento.trim() !== "")}
+                    isInvalid={(submitted && !!errors.documento) || (submitted && !dniDisponible)}
                   >
-                    <FormLabel>Documento (DNI)</FormLabel>
-                    <Input name="documento" placeholder="Ej: 40123456" value={form.documento} onChange={handleChange} />
-                    {checkingDni && <Text fontSize="sm" color="gray.500">Verificando DNI...</Text>}
+                    {/* La etiqueta cambia dinámicamente */}
+                    <FormLabel>{docLabel}</FormLabel>
+                    <Input name="documento" placeholder="Ej: 41059876" value={form.documento} onChange={handleChange} />
+                    
+                    {/* Eliminamos el mensaje de 'Verificando' ya que se eliminó la verificación en tiempo real */}
+                    
                     {submitted && errors.documento && (<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
-                    {!dniDisponible && form.documento.trim() !== "" && (
-                      <FormErrorMessage>El documento ya está registrado.</FormErrorMessage>
+                    {/* El mensaje de duplicado se activa solo después de intentar submit */}
+                    {submitted && !dniDisponible && (
+                      <FormErrorMessage>Este documento ya está registrado.</FormErrorMessage>
                     )}
                   </FormControl>
                 </GridItem>
 
+                {/* Fecha de nacimiento */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.fechaNac}>
                     <FormLabel>Fecha de nacimiento</FormLabel>
@@ -274,12 +383,15 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
+                {/* Peso */}
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.peso}>
                     <FormLabel>Peso (kg)</FormLabel>
                     <Input type="number" name="peso" value={form.peso} onChange={handleChange} />
                   </FormControl>
                 </GridItem>
+
+                {/* Altura */}
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.altura}>
                     <FormLabel>Altura (cm)</FormLabel>
@@ -287,6 +399,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
+                {/* Contacto */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <FormControl isInvalid={submitted && !!errors.contactoNumero}>
                     <FormLabel>Contacto</FormLabel>
@@ -300,7 +413,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                           <MenuButton as={Button} variant="outline" rightIcon={<ChevronDownIcon />} minW="120px">
                             {form.codigoArea}
                           </MenuButton>
-                          <MenuList maxH="280px" overflowY="auto">
+                          <MenuList maxH="280px" overflowY="auto" zIndex={2000}>
                             {codigos.map((c) => (
                               <MenuItem
                                 key={c.code + c.country}
@@ -319,33 +432,23 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                         onChange={handleChange}
                       />
                     </Stack>
+                    {submitted && errors.contactoNumero && (<FormErrorMessage>{errors.contactoNumero}</FormErrorMessage>)}
                   </FormControl>
                 </GridItem>
 
+                {/* Lesiones (Optimizadas con React.memo) */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
                   {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
                   {lesiones.map((it, idx) => (
-                    <HStack key={`les-${idx}`} mt={2}>
-                      <Input
-                        placeholder="Detalle de la lesión…"
-                        value={it.text}
-                        onChange={(e) => setItem("les", idx, { text: e.target.value })}
-                      />
-                      <Checkbox
-                        isChecked={it.important}
-                        onChange={(e) => setItem("les", idx, { important: e.target.checked })}
-                      >
-                        Importante
-                      </Checkbox>
-                      <IconButton
-                        aria-label="Eliminar"
-                        icon={<DeleteIcon />}
-                        onClick={() => removeItem("les", idx)}
-                        bg="#258d19"
-                        color="white"
-                      />
-                    </HStack>
+                    <DetalleItem
+                      key={`les-${idx}`}
+                      item={it}
+                      idx={idx}
+                      which="les"
+                      setItem={setItem}
+                      removeItem={removeItem}
+                    />
                   ))}
                 </GridItem>
 
@@ -353,33 +456,23 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   <Divider />
                 </GridItem>
 
+                {/* Enfermedades (Optimizadas con React.memo) */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
                   {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
                   {enfermedades.map((it, idx) => (
-                    <HStack key={`dis-${idx}`} mt={2}>
-                      <Input
-                        placeholder="Detalle de la enfermedad…"
-                        value={it.text}
-                        onChange={(e) => setItem("dis", idx, { text: e.target.value })}
-                      />
-                      <Checkbox
-                        isChecked={it.important}
-                        onChange={(e) => setItem("dis", idx, { important: e.target.checked })}
-                      >
-                        Importante
-                      </Checkbox>
-                      <IconButton
-                        aria-label="Eliminar"
-                        icon={<DeleteIcon />}
-                        onClick={() => removeItem("dis", idx)}
-                        bg="#258d19"
-                        color="white"
-                      />
-                    </HStack>
+                    <DetalleItem
+                      key={`dis-${idx}`}
+                      item={it}
+                      idx={idx}
+                      which="dis"
+                      setItem={setItem}
+                      removeItem={removeItem}
+                    />
                   ))}
                 </GridItem>
 
+                {/* Informe Médico */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <Checkbox
                     name="informeMedico"
@@ -399,7 +492,10 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   px={10}
                   bg="#258d19"
                   color="white"
-                  isDisabled={!dniDisponible || checkingDni}
+                  _hover={{ bg: "#1f7a14" }}
+                  // Solo se deshabilita por submit/cargando o si no hay entrenador. 
+                  // El DNI duplicado es manejado por el chequeo de onSubmit.
+                  isDisabled={submitting || !entrenadorId} 
                 >
                   Registrar
                 </Button>
@@ -412,16 +508,5 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
         </Card>
       </Container>
     </Box>
-  );
-}
-
-function SectionHeader({ title, onAdd }) {
-  return (
-    <HStack justify="space-between">
-      <FormLabel m={0}>{title}</FormLabel>
-      <Button size="sm" leftIcon={<AddIcon />} onClick={onAdd} bg="#258d19" color="white">
-        Agregar
-      </Button>
-    </HStack>
   );
 }

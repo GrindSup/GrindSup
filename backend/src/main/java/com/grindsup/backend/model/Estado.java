@@ -15,10 +15,10 @@ public class Estado {
     @Column(nullable = false, length = 50)
     private String nombre;
 
-    @Column(length = 255)
+    @Column(name = "descripcion",length = 255)
     private String descripcion;
 
-    @Column(length = 50)
+    @Column(name = "ambito", length = 50)
     private String ambito;
 
     @Column(name = "created_at", insertable = false, updatable = false)
