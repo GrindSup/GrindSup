@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import { Box, Container } from "@chakra-ui/react";
+import { Box, Container, Center, Spinner } from "@chakra-ui/react"; // Agregamos Center y Spinner
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import api from "./config/axios.config.js";
@@ -10,7 +10,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./components/Login";
 import PantallaInicio from "./components/Inicio";
-import OAuthSuccess from "./pages/OAuthSuccess.jsx";
+import OAuthSuccess from "./pages/OAuthSuccess.jsx"; // Lo dejaremos limpio
 import RegistrarAlumnoForm from "./pages/Alumno/RegistrarAlumnoForm";
 import AlumnoList from "./components/AlumnoList";
 import ListaTurnos from "./pages/Turnos/ListaTurnos.jsx";
@@ -57,24 +57,23 @@ export default function App() {
     const saved = localStorage.getItem("usuario");
     return saved ? JSON.parse(saved) : null;
   });
+  
+  // 🚀 NUEVO ESTADO: Bandera para saber si ya intentamos chequear la sesión
+  const [authAttempted, setAuthAttempted] = useState(false);
 
   // Controla la primera carga para evitar limpiar storage al volver de OAuth
   const isInitialMount = useRef(true);
 
-  // Persistencia / limpieza cuando cambia 'usuario' (no corre en el primer render)
+  // Persistencia / limpieza cuando cambia 'usuario'
   useEffect(() => {
-    // El 'useRef' que agregamos está perfecto.
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
 
-    // Esta lógica de limpieza se activa SÓLO cuando 
-    // el usuario cambia (ej: al hacer logout)
     if (usuario) {
       localStorage.setItem("usuario", JSON.stringify(usuario));
     } else {
-      // Si el usuario se setea a null, borramos todo.
       localStorage.removeItem("usuario");
       localStorage.removeItem("gs_token");
       localStorage.removeItem("sesionId");
@@ -82,32 +81,31 @@ export default function App() {
     }
   }, [usuario]);
 
-  // Bootstrap de sesión: ¡ESTE ES EL ARREGLO!
+  // Bootstrap de sesión (Corre una sola vez)
   useEffect(() => {
     let cancel = false;
     (async () => {
       try {
-        // LÍNEA CLAVE 1: Leer directamente el token de LocalStorage
-            const token = localStorage.getItem("gs_token");
-            if (!token) return; // Si no hay, salimos y el guardián te manda al login
-
-            // LÍNEA CLAVE 2: Forzar el header de Axios (evita latencia del interceptor)
-            api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        // 🚀 ¡SACAMOS EL "if (usuario) return;"!
-        // Forzamos a que SIEMPRE valide el token con el backend al cargar.
-        // El interceptor de axios usará el 'gs_token' (si existe).
+        const token = localStorage.getItem("gs_token");
+        if (!token) return; // Si no hay token, salimos
+        
+        // Forzar el header de Axios (evita latencia del interceptor)
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        
+        // Llamar a /me para validar el token y obtener datos de usuario frescos
         const { data } = await api.get("/api/usuarios/me");
 
         if (!cancel && data) {
           const user = data.usuario ?? data;
-          setUsuario(user); // <-- Esto setea el usuario y dispara el hook de arriba
+          setUsuario(user); // Esto setea el usuario
         }
       } catch {
-        // Si la llamada a /me falla (401), seteamos usuario a null.
+        // Si la llamada a /me falla (401), limpiamos todo.
         localStorage.removeItem("gs_token");
         setUsuario(null);
-        // Esto dispara el hook de arriba (limpieza), que borra 
-        // el 'usuario' fantasma y el 'gs_token' (si lo había).
+      } finally {
+        // 🚀 ESTO ES CLAVE: Marcamos que el chequeo de sesión ha terminado
+        setAuthAttempted(true);
       }
     })();
     return () => {
@@ -115,8 +113,18 @@ export default function App() {
     };
   }, []); // corre una sola vez
 
-  const guard = (el) => (usuario ? el : <Navigate to="/login" replace />);
-  const [authChecked, setAuthChecked] = useState(false);
+  // Función de guarda de ruta: SOLO si el chequeo ha terminado
+  const guard = (el) => (usuario ? el : (authAttempted ? <Navigate to="/login" replace /> : <LoadingScreen />));
+  
+  // Componente simple de carga (para mientras se chequea la sesión)
+  const LoadingScreen = () => (
+      <Center flex="1" h="calc(100vh - 150px)">
+          <Spinner size="xl" color="#258d19" />
+          <Text ml={3} color="gray.700">Cargando sesión...</Text>
+      </Center>
+  );
+
+
   return (
     <BrowserRouter>
       <Box minH="100vh" display="flex" flexDirection="column" position="relative">
@@ -149,15 +157,17 @@ export default function App() {
             <Container maxW="container.xl">
               <Routes>
                 {/* Home → Dashboard si hay sesión; Landing si no */}
+                {/* ⚠️ Nota: Usamos authAttempted para evitar que la landing parpadee. */}
                 <Route
                   path="/"
                   element={usuario ? <InicioDashboard /> : <PantallaInicio />}
                 />
 
                 {/* OAuth bridge */}
+                {/* 🚀 Redirigimos a dashboard en OAuthSuccess para asegurar que el estado se propague */}
                 <Route
                   path="/oauth/success"
-                  element={<OAuthSuccess setUsuario={setUsuario} />}
+                  element={<OAuthSuccess setUsuario={setUsuario} redirectTo="/dashboard" />}
                 />
 
                 {/* Públicas */}
@@ -165,6 +175,10 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot" element={<ForgotPassword />} />
                 <Route path="/reset" element={<ResetPassword />} />
+                <Route path="/contacto" element={<Contacto />} />
+
+
+                {/* Rutas protegidas (usando guard) */}
 
                 {/* Alumnos */}
                 <Route path="/alumnos" element={guard(<AlumnoList />)} />
@@ -202,17 +216,8 @@ export default function App() {
 
                 {/* Entrenadores */}
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
-                <Route
-                  path="/entrenadores/editar/:idEntrenador"
-                  element={guard(<EditarEntrenador />)}
-                />
-                <Route
-                  path="/entrenadores/perfil/:idEntrenador"
-                  element={guard(<PerfilEntrenador />)}
-                />
-
-                {/* Contacto */}
-                <Route path="/contacto" element={<Contacto />} />
+                <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
+                <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
 
                 {/* Reportes */}
                 <Route path="/reportes" element={guard(<ReportesHome />)} />
