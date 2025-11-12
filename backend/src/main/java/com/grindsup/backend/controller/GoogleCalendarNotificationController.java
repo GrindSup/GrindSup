@@ -2,12 +2,14 @@ package com.grindsup.backend.controller;
 
 import com.google.api.services.calendar.model.Event;
 import com.grindsup.backend.service.GoogleCalendarNotificationService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.ZonedDateTime;
 
 @RestController
+@ConditionalOnBean(GoogleCalendarNotificationService.class)
 @RequestMapping("/api/google-calendar/notifications")
 public class GoogleCalendarNotificationController {
 

@@ -1,4 +1,3 @@
-// src/services/turnos.servicio.js
 import axios from '../config/axios.config'; // (Ajusta la ruta si es necesario)
 
 /** Base URL (env o fallback local) */
@@ -8,23 +7,57 @@ const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 const ok = (r) => r && r.status >= 200 && r.status < 300;
 const toIsoWithOffset = (d) => {
     // A veces el backend espera +00:00 en vez de Z
-    const iso = new Date(d).toISOString();      // 2025-10-10T15:00:00.000Z
+    const iso = new Date(d).toISOString();       // 2025-10-10T15:00:00.000Z
     return iso.replace(/\.000Z$/, "+00:00");    // 2025-10-10T15:00:00+00:00
 };
 
-// 🎯 CORRECCIÓN CLAVE 1: Helper para obtener el ID del usuario autenticado (si no se provee)
-const getAuthHeaders = (optUserId) => {
-    // Fallback ID to ensure the header is always present for the backend controller
-    const userId = optUserId || 
-                   localStorage.getItem("gs_user_id") || 
-                   localStorage.getItem("userId") || 
-                   "primary"; 
-    
-    return {
-        headers: {
-            'X-User-Id': userId
+// -----------------------------------------------------
+// LÓGICA DE RESOLUCIÓN DE USER ID
+// -----------------------------------------------------
+
+/** Lectura segura de localStorage */
+const safeLocalStorageGet = (key) => {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            return window.localStorage.getItem(key);
         }
-    };
+    } catch (err) {
+        console.warn('No se pudo leer de localStorage:', err);
+    }
+    return null;
+};
+
+/** Resuelve el ID del usuario priorizando: optUserId, gs_user_id, userId (localStorage) */
+const resolveUserId = (optUserId) => {
+    const candidates = [
+        optUserId,
+        safeLocalStorageGet("gs_user_id"),
+        safeLocalStorageGet("userId"),
+        // Intenta obtener el ID del objeto 'usuario' si está guardado
+        safeLocalStorageGet("usuario") ? JSON.parse(safeLocalStorageGet("usuario")).id_usuario : null 
+    ];
+
+    const raw = candidates.find((value) => value != null && String(value).trim() !== '' && String(value).toLowerCase() !== 'undefined');
+    
+    // Solo devuelve si es un valor numérico (asumiendo que el ID de usuario es un número o string numérico)
+    if (raw && /^\d+$/.test(String(raw).trim())) {
+        return String(raw).trim();
+    }
+    return null;
+};
+
+/**
+ * Retorna los headers y el userId resuelto.
+ * Headers se usa para 'X-User-Id' (backend lo espera)
+ * userId se usa para el query param (legacy/compatibilidad)
+ */
+const getAuthHeaders = (optUserId) => {
+    const userId = resolveUserId(optUserId);
+    const headers = {};
+    if (userId) {
+        headers['X-User-Id'] = userId;
+    }
+    return { headers, userId }; // Retorna ambos para flexibilidad
 };
 
 
@@ -112,7 +145,7 @@ export async function listarAlumnos(entrenadorId) {
 }
 
 /* =============================================================================
- * CREACIÓN / ACTUALIZACIÓN
+ * CREACIÓN / ACTUALIZACIÓN (CON X-User-Id)
  * ============================================================================= */
 
 /**
@@ -123,20 +156,18 @@ export async function crearTurno(payload, opts = {}) {
     const fecha = payload?.fecha ? toIsoWithOffset(payload.fecha) : undefined;
     const body = { ...payload, ...(fecha ? { fecha } : {}) };
 
-    const headers = getAuthHeaders(opts.userId); 
-    
-    // 🛑 IMPORTANTE: El backend espera X-User-Id como HEADER, y el controller espera un QUERY PARAM 'userId'.
-    const queryParams = { userId: headers.headers['X-User-Id'] };
+    const { headers, userId } = getAuthHeaders(opts.userId); 
+    const queryParams = userId ? { userId } : {};
 
     try {
         // Enviar body, HEADERS (X-User-Id) y QUERY PARAM (userId)
-        return await axios.post(`${API}/turnos`, body, { headers: headers.headers, params: queryParams });
+        return await axios.post(`${API}/turnos`, body, { headers, params: queryParams });
         
     } catch (e) {
         // Fallback 1: algunos backends esperan 'alumnos' en lugar de 'alumnosIds'
         if (body.alumnosIds && !body.alumnos) {
             const alt = { ...body, alumnos: body.alumnosIds };
-            return await axios.post(`${API}/turnos`, alt, { headers: headers.headers, params: queryParams });
+            return await axios.post(`${API}/turnos`, alt, { headers, params: queryParams });
         }
         throw e;
     }
@@ -148,17 +179,26 @@ export async function crearTurno(payload, opts = {}) {
 export async function actualizarFechaTurno(id, isoDateTime, opts = {}) {
     if (!id) throw new Error("turnoId requerido");
     const fecha = toIsoWithOffset(isoDateTime);
-    const headers = getAuthHeaders(opts.userId);
+    const { headers, userId } = getAuthHeaders(opts.userId);
+    const params = userId ? { userId } : {};
 
     try {
-        return await axios.put(`${API}/turnos/${id}/fecha`, { fecha }, { headers: headers.headers });
+        // Intenta endpoint específico
+        return await axios.put(`${API}/turnos/${id}/fecha`, { fecha }, {
+            headers,
+            params,
+        });
     } catch {
-        return await axios.put(`${API}/turnos/${id}`, { fecha }, { headers: headers.headers });
+        // Fallback a PUT completo
+        return await axios.put(`${API}/turnos/${id}`, { fecha }, {
+            headers,
+            params,
+        });
     }
 }
 
 /* =============================================================================
- * RELACIÓN ALUMNOS - TURNOS
+ * RELACIÓN ALUMNOS - TURNOS (CON X-User-Id)
  * ============================================================================= */
 
 export async function asignarAlumnos(turnoId, ids, opts = {}) {
@@ -166,23 +206,34 @@ export async function asignarAlumnos(turnoId, ids, opts = {}) {
     const clean = (ids || []).map(Number).filter(Boolean);
     if (!clean.length) throw new Error("alumnosIds vacío");
 
-    const headers = getAuthHeaders(opts.userId);
+    const { headers, userId } = getAuthHeaders(opts.userId);
+    const queryParams = userId ? { userId } : {};
 
-    // 🎯 CORRECCIÓN: Intentar el formato envuelto primero, que es más estable con Jackson/Axios
-    const bodyWithWrapper = { alumnosIds: clean };
-    
+    // 🛑 IMPORTANTE: El backend espera un List<Long>, por lo que enviamos el array limpio (clean)
+    // o un objeto envoltorio si eso falla.
+
     try {
-        // Forma 1: Envuelto en objeto { alumnosIds: [31, 32] }
-        return await axios.post(`${API}/turnos/${turnoId}/alumnos`, bodyWithWrapper, { headers: headers.headers });
+        // Forma 1 (preferida por Spring): Array JSON plano [31, 32]
+        return await axios.post(`${API}/turnos/${turnoId}/alumnos`, clean, {
+            headers,
+            params: queryParams,
+        });
     } catch (e) {
-        // Si el envuelto falla, probamos el array crudo [...]
+        // Si el array plano falla (por compatibilidad con backends antiguos), probamos con objeto envoltorio
+        const bodyWithWrapper = { alumnosIds: clean };
         try {
-            // Forma 2: Array crudo [31, 32]
-            return await axios.post(`${API}/turnos/${turnoId}/alumnos`, clean, { headers: headers.headers });
+            // Forma 2: Objeto envoltorio { alumnosIds: [31, 32] }
+            return await axios.post(`${API}/turnos/${turnoId}/alumnos`, bodyWithWrapper, {
+                headers,
+                params: queryParams,
+            });
         } catch {
-            // Forma 3: query string (si el backend lo soporta, aunque es incorrecto para @RequestBody)
+            // Forma 3: query string (fallback extremo)
             const params = { ids: clean.join(",") };
-            return await axios.post(`${API}/turnos/${turnoId}/alumnos`, null, { params, headers: headers.headers });
+            return await axios.post(`${API}/turnos/${turnoId}/alumnos`, null, {
+                params: { ...params, ...queryParams },
+                headers,
+            });
         }
     }
 }
@@ -192,17 +243,30 @@ export async function asignarAlumnos(turnoId, ids, opts = {}) {
  */
 export async function quitarAlumnoDeTurno(turnoId, alumnoId, opts = {}) {
     if (!turnoId || !alumnoId) throw new Error("turnoId y alumnoId requeridos");
-    const headers = getAuthHeaders(opts.userId);
+    const { headers, userId } = getAuthHeaders(opts.userId);
+    const queryParams = userId ? { userId } : {};
 
     try {
-        return await axios.delete(`${API}/turnos/${turnoId}/alumnos/${alumnoId}`, { headers: headers.headers });
+        // Endpoint DELETE principal
+        return await axios.delete(`${API}/turnos/${turnoId}/alumnos/${alumnoId}`, {
+            headers,
+            params: queryParams,
+        });
     } catch {
-        // Fallbacks (ajustados para incluir headers)
+        // Fallbacks (ajustados para incluir headers y params)
         try {
-            return await axios.post(`${API}/turnos/${turnoId}/alumnos/${alumnoId}/delete`, null, { headers: headers.headers });
+            // Fallback 1: POST con /delete
+            return await axios.post(`${API}/turnos/${turnoId}/alumnos/${alumnoId}/delete`, null, {
+                headers,
+                params: queryParams,
+            });
         } catch {
+            // Fallback 2: DELETE genérico con query params
             const params = { turnoId, alumnoId };
-            return await axios.delete(`${API}/turnos/alumno`, { params, headers: headers.headers });
+            return await axios.delete(`${API}/turnos/alumno`, {
+                params: { ...params, ...queryParams },
+                headers,
+            });
         }
     }
 }
@@ -210,12 +274,17 @@ export async function quitarAlumnoDeTurno(turnoId, alumnoId, opts = {}) {
 /** Eliminar turno */
 export function eliminarTurno(id, opts = {}) {
     if (!id) throw new Error("turnoId requerido");
-    const headers = getAuthHeaders(opts.userId);
-    return axios.delete(`${API}/turnos/${id}`, { headers: headers.headers });
+    const { headers, userId } = getAuthHeaders(opts.userId);
+    const params = userId ? { userId } : {};
+    
+    return axios.delete(`${API}/turnos/${id}`, {
+        headers,
+        params,
+    });
 }
 
 /* =============================================================================
- * EXPORT POR DEFECTO (opcional)
+ * EXPORT POR DEFECTO
  * ============================================================================= */
 const turnosService = {
     listarTurnos,

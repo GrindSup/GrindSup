@@ -37,19 +37,27 @@ public class TurnoController {
         return turnoService.listarPorEntrenador(entrenadorId, d, h, t);
     }
 
-    // ========= CRUD =========
+    // ========= CRUD: CREAR TURNO =========
     @PostMapping
     public ResponseEntity<TurnoResponseDTO> createTurno(
             @RequestBody TurnoRequestDTO turnoDTO,
-            @RequestParam String userId) throws Exception {
-        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, userId));
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestParam(value = "userId", required = false) String userId) throws Exception {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        return ResponseEntity.ok(turnoService.crearTurno(turnoDTO, resolvedUserId));
     }
 
+    // ========= CRUD: ASIGNAR ALUMNOS EN TURNO =========
     @PostMapping("/{turnoId}/alumnos")
     public ResponseEntity<TurnoResponseDTO> asignarAlumnos(
             @PathVariable Long turnoId,
-            @RequestBody List<Long> alumnosIds) {
-        return ResponseEntity.ok(turnoService.asignarAlumnos(turnoId, alumnosIds));
+            @RequestBody List<Long> alumnosIds,
+            @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+            @RequestParam(value = "userId", required = false) String userId) {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        return ResponseEntity.ok(turnoService.asignarAlumnos(turnoId, alumnosIds, resolvedUserId));
     }
 
     @GetMapping
@@ -62,27 +70,48 @@ public class TurnoController {
         return turnoService.getTurnoById(id);
     }
 
+    // ========= CRUD: ELIMINAR TURNO =========
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
-        turnoService.deleteTurno(id);
+    public ResponseEntity<String> delete(@PathVariable Long id,
+                                        @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+                                        @RequestParam(value = "userId", required = false) String userId) {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        turnoService.deleteTurno(id, resolvedUserId);
         return ResponseEntity.ok("Turno eliminado con id " + id);
     }
 
+    // ========= CRUD: AÑADIR ALUMNO INDIVIDUAL =========
     @PostMapping("/{turnoId}/alumnos/{alumnoId}")
-    public void addAlumno(@PathVariable Long turnoId, @PathVariable Long alumnoId) {
-        turnoService.addAlumnoToTurno(turnoId, alumnoId);
+    public void addAlumno(@PathVariable Long turnoId,
+                          @PathVariable Long alumnoId,
+                          @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+                          @RequestParam(value = "userId", required = false) String userId) {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        turnoService.addAlumnoToTurno(turnoId, alumnoId, resolvedUserId);
     }
 
+    // ========= CRUD: ELIMINAR ALUMNO INDIVIDUAL =========
     @DeleteMapping("/{turnoId}/alumnos/{alumnoId}")
-    public void removeAlumno(@PathVariable Long turnoId, @PathVariable Long alumnoId) {
-        turnoService.removeAlumnoFromTurno(turnoId, alumnoId);
+    public void removeAlumno(@PathVariable Long turnoId,
+                             @PathVariable Long alumnoId,
+                             @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+                             @RequestParam(value = "userId", required = false) String userId) {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        turnoService.removeAlumnoFromTurno(turnoId, alumnoId, resolvedUserId);
     }
 
+    // ========= CRUD: MODIFICAR TURNO =========
     @PutMapping("/{id}")
     public TurnoResponseDTO modificarTurno(@PathVariable Long id,
                                            @RequestBody TurnoRequestDTO turnoDTO,
-                                           @RequestParam String userId) throws Exception {
-        return turnoService.modificarTurno(id, turnoDTO, userId);
+                                           @RequestHeader(value = "X-User-Id", required = false) String headerUserId,
+                                           @RequestParam(value = "userId", required = false) String userId) throws Exception {
+        
+        String resolvedUserId = resolveUserId(headerUserId, userId);
+        return turnoService.modificarTurno(id, turnoDTO, resolvedUserId);
     }
 
     // ========= ALUMNOS DEL TURNO (con id, para chips del front) =========
@@ -91,7 +120,22 @@ public class TurnoController {
         return turnoService.alumnosMinDeTurno(id);
     }
 
-    // ========= helpers fechas =========
+    // ========================================================
+    // -------- HELPERS FECHAS Y USER ID --------
+    // ========================================================
+    
+    // Método para resolver el userId (prioriza Header sobre Query Param)
+    private String resolveUserId(String headerUserId, String paramUserId) {
+        if (headerUserId != null && !headerUserId.isBlank()) {
+            return headerUserId;
+        }
+        if (paramUserId != null && !paramUserId.isBlank()) {
+            return paramUserId;
+        }
+        return null;
+    }
+
+
     private OffsetDateTime parseStart(String s) {
         if (s == null || s.isBlank()) return null;
         try { return OffsetDateTime.parse(s); }

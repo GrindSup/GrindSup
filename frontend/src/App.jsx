@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import { Box, Container, Center, Spinner } from "@chakra-ui/react"; // Agregamos Center y Spinner
+import { Box, Container, Center, Spinner, Text } from "@chakra-ui/react"; // Agregamos Center, Spinner y Text
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import api from "./config/axios.config.js";
@@ -73,10 +73,16 @@ export default function App() {
 
     if (usuario) {
       localStorage.setItem("usuario", JSON.stringify(usuario));
+      if (usuario?.correo) {
+        localStorage.setItem("userId", usuario.correo);
+      } else if (usuario?.id_usuario) {
+        localStorage.setItem("userId", String(usuario.id_usuario));
+      }
     } else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("gs_token");
       localStorage.removeItem("sesionId");
+      localStorage.removeItem("userId");
       clearSessionCache();
     }
   }, [usuario]);

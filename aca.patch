@@ -1,0 +1,221 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/backend/src/main/java/com/grindsup/backend/service/TurnoService.java b/backend/src/main/java/com/grindsup/backend/service/TurnoService.java
+index 34075fe2705c7e3578c2f87c03be1651c13cee19..68bfe40b85167911b4b78c11f62750fbfac08602 100644
+--- a/backend/src/main/java/com/grindsup/backend/service/TurnoService.java
++++ b/backend/src/main/java/com/grindsup/backend/service/TurnoService.java
+@@ -18,54 +18,54 @@ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.stream.Collectors;
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ 
+ @Service
+ public class TurnoService {
+ 
+     @Autowired
+     private TurnoRepository turnoRepository;
+ 
+     @Autowired
+     private EntrenadorRepository entrenadorRepository;
+ 
+     @Autowired
+     private TipoTurnoRepository tipoTurnoRepository;
+ 
+     @Autowired
+     private EstadoRepository estadoRepository;
+ 
+     @Autowired
+     private AlumnoRepository alumnoRepository;
+ 
+-    @Autowired
++    @Autowired(required = false)
+     private GoogleCalendarNotificationService googleCalendarNotificationService;
+ 
+-    @Autowired
++    @Autowired(required = false)
+     private GoogleCalendarService googleCalendarService;
+ 
+     // ======== NUEVO: listar por entrenador + filtros ========
+     public List<TurnoResponseDTO> listarPorEntrenador(Long entrenadorId,
+                                                       OffsetDateTime desde,
+                                                       OffsetDateTime hasta,
+                                                       String tipo)  {
+ 
+         var turnos = turnoRepository.findByEntrenadorAndFilters(entrenadorId, desde, hasta, tipo);
+         return turnos.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+     }
+     // ========================================================
+ 
+     // ======== NUEVO: alumnos (con id) de un turno ========
+     public List<AlumnoMinDTO> alumnosMinDeTurno(Long turnoId) {
+         Turno turno = turnoRepository.findById(turnoId)
+                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+ 
+         if (turno.getAlumnos() == null)
+             return List.of();
+ 
+         return turno.getAlumnos().stream()
+                 .map(a -> new AlumnoMinDTO(a.getId_alumno(), a.getNombre(), a.getApellido()))
+                 .collect(Collectors.toList());
+     }
+@@ -79,57 +79,59 @@ public class TurnoService {
+                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado")));
+ 
+         turno.setTipoTurno(tipoTurnoRepository.findById(dto.getTipoTurnoId())
+                 .orElseThrow(() -> new RuntimeException("Tipo de turno no encontrado")));
+ 
+         turno.setFecha(dto.getFecha());
+ 
+         if (dto.getEstadoId() != null) {
+             turno.setEstado(estadoRepository.findById(dto.getEstadoId())
+                     .orElseThrow(() -> new RuntimeException("Estado no encontrado")));
+         }
+ 
+         turno.setAlumnos(new ArrayList<>());
+         turno.setCreated_at(OffsetDateTime.now());
+         turno.setUpdated_at(OffsetDateTime.now());
+ 
+         Turno turnoGuardado = turnoRepository.save(turno);
+ 
+         var start = turnoGuardado.getFecha().toZonedDateTime();
+         var end = turnoGuardado.getFecha().plusHours(1).toZonedDateTime();
+ 
+         String title = "Turno disponible - "
+                 + (turnoGuardado.getTipoTurno() != null ? turnoGuardado.getTipoTurno().getNombre() : "Turno");
+         String description = "Turno vacío, aún sin alumnos asignados.";
+ 
+-        try {
+-            var event = googleCalendarNotificationService.createEvent(
+-                    userId, title, description, start, end);
+-            turnoGuardado.setGoogleEventId(event.getId());
+-            turnoRepository.save(turnoGuardado);
+-        } catch (Exception e) {
+-            System.err.println("⚠️ Error al crear evento en Google Calendar: " + e.getMessage());
++        if (googleCalendarNotificationService != null) {
++            try {
++                var event = googleCalendarNotificationService.createEvent(
++                        userId, title, description, start, end);
++                turnoGuardado.setGoogleEventId(event.getId());
++                turnoRepository.save(turnoGuardado);
++            } catch (Exception e) {
++                System.err.println("⚠️ Error al crear evento en Google Calendar: " + e.getMessage());
++            }
+         }
+ 
+         return mapToResponseDTO(turnoGuardado);
+     }
+ 
+     public TurnoResponseDTO asignarAlumnos(Long turnoId, List<Long> alumnosIds) {
+         Turno turno = turnoRepository.findById(turnoId)
+                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+ 
+         List<Alumno> alumnos = alumnoRepository.findAllById(alumnosIds);
+         turno.getAlumnos().addAll(alumnos);
+         turno.setUpdated_at(OffsetDateTime.now());
+ 
+         turnoRepository.save(turno);
+         return mapToResponseDTO(turno);
+     }
+ 
+     public List<TurnoResponseDTO> getAllTurnos() {
+         return turnoRepository.findAllWithEntrenadorAndTipoTurno()
+                 .stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+     }
+ 
+     public TurnoResponseDTO getTurnoById(Long id) {
+         return turnoRepository.findById(id)
+                 .map(this::mapToResponseDTO)
+@@ -170,67 +172,73 @@ public class TurnoService {
+         Turno turnoOriginal = turnoRepository.findById(idTurno)
+                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+ 
+         turnoOriginal.setDeleted_at(OffsetDateTime.now());
+         turnoRepository.save(turnoOriginal);
+ 
+         Turno nuevoTurno = new Turno();
+         nuevoTurno.setEntrenador(turnoOriginal.getEntrenador());
+         nuevoTurno.setTipoTurno(turnoOriginal.getTipoTurno());
+         nuevoTurno.setAlumnos(new ArrayList<>(turnoOriginal.getAlumnos()));
+         nuevoTurno.setFecha(dto.getFecha() != null ? dto.getFecha() : turnoOriginal.getFecha());
+         nuevoTurno.setEstado(turnoOriginal.getEstado());
+         nuevoTurno.setCreated_at(OffsetDateTime.now());
+         nuevoTurno.setUpdated_at(OffsetDateTime.now());
+ 
+         if (dto.getAlumnosIds() != null && !dto.getAlumnosIds().isEmpty()) {
+             List<Alumno> alumnos = alumnoRepository.findAllById(dto.getAlumnosIds());
+             nuevoTurno.setAlumnos(alumnos);
+         }
+ 
+         Turno turnoCreado = turnoRepository.save(nuevoTurno);
+ 
+         var start = turnoCreado.getFecha().toZonedDateTime();
+         var end = turnoCreado.getFecha().plusHours(1).toZonedDateTime();
+ 
+-        var newEvent = googleCalendarNotificationService.createEvent(
+-                userId,
+-                "Turno con " + (turnoCreado.getEntrenador() != null && turnoCreado.getEntrenador().getUsuario() != null
+-                        ? turnoCreado.getEntrenador().getUsuario().getNombre()
+-                        : "Entrenador"),
+-                turnoCreado.getTipoTurno() != null ? turnoCreado.getTipoTurno().getNombre() : "Turno",
+-                start,
+-                end);
+-
+-        turnoCreado.setGoogleEventId(newEvent.getId());
+-        turnoRepository.save(turnoCreado);
+-
+-        if (turnoOriginal.getGoogleEventId() != null) {
++        if (googleCalendarNotificationService != null) {
+             try {
+-                googleCalendarService.deleteEvent(userId, "primary", turnoOriginal.getGoogleEventId());
++                var newEvent = googleCalendarNotificationService.createEvent(
++                        userId,
++                        "Turno con " + (turnoCreado.getEntrenador() != null && turnoCreado.getEntrenador().getUsuario() != null
++                                ? turnoCreado.getEntrenador().getUsuario().getNombre()
++                                : "Entrenador"),
++                        turnoCreado.getTipoTurno() != null ? turnoCreado.getTipoTurno().getNombre() : "Turno",
++                        start,
++                        end);
++
++                turnoCreado.setGoogleEventId(newEvent.getId());
++                turnoRepository.save(turnoCreado);
++
++                if (turnoOriginal.getGoogleEventId() != null && googleCalendarService != null) {
++                    try {
++                        googleCalendarService.deleteEvent(userId, "primary", turnoOriginal.getGoogleEventId());
++                    } catch (Exception e) {
++                        System.err.println("⚠️ No se pudo eliminar evento anterior de Google Calendar: " + e.getMessage());
++                    }
++                }
+             } catch (Exception e) {
+-                System.err.println("⚠️ No se pudo eliminar evento anterior de Google Calendar: " + e.getMessage());
++                System.err.println("⚠️ Error al actualizar evento en Google Calendar: " + e.getMessage());
+             }
+         }
+ 
+         return mapToResponseDTO(turnoCreado);
+     }
+ 
+     @Transactional
+     public void addAlumnoToTurno(Long turnoId, Long alumnoId) {
+         Turno turno = turnoRepository.findById(turnoId)
+                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+         Alumno alumno = alumnoRepository.findById(alumnoId)
+                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+ 
+         turno.getAlumnos().add(alumno);
+         turnoRepository.save(turno);
+     }
+ 
+     @Transactional
+     public void removeAlumnoFromTurno(Long turnoId, Long alumnoId) {
+         Turno turno = turnoRepository.findById(turnoId)
+                 .orElseThrow(() -> new RuntimeException("Turno no encontrado"));
+         Alumno alumno = alumnoRepository.findById(alumnoId)
+                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
+ 
+         turno.getAlumnos().remove(alumno);
+ 
+EOF
+)

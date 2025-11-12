@@ -2,11 +2,13 @@ package com.grindsup.backend.controller;
 
 import com.google.api.services.calendar.model.Event;
 import com.grindsup.backend.service.GoogleCalendarService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@ConditionalOnBean(GoogleCalendarService.class)
 @RequestMapping("/api/google-calendar")
 public class GoogleCalendarController {
 

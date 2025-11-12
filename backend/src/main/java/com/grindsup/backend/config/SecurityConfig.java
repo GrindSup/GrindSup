@@ -5,6 +5,8 @@ import com.grindsup.backend.security.CustomOAuth2UserService;
 import com.grindsup.backend.security.JwtCookieAuthFilter;
 import com.grindsup.backend.security.OAuth2LoginSuccessHandler;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,18 +15,34 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final boolean calendarIntegrationEnabled;
+
+    public SecurityConfig(@Value("${grindsup.calendar.enabled:true}") boolean calendarIntegrationEnabled) {
+        this.calendarIntegrationEnabled = calendarIntegrationEnabled;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -48,7 +66,8 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtCookieAuthFilter jwtCookieAuthFilter,
             CustomOAuth2UserService customOAuth2UserService,
-            OAuth2LoginSuccessHandler successHandler
+            OAuth2LoginSuccessHandler successHandler,
+            ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider
     ) throws Exception {
 
         http
@@ -82,10 +101,20 @@ public class SecurityConfig {
             )
 
             // === OAuth2 ===
-            .oauth2Login(oauth -> oauth
-                .userInfoEndpoint(ui -> ui.oidcUserService(customOAuth2UserService))
-                .successHandler(successHandler)
-            )
+            .oauth2Login(oauth -> {
+                if (calendarIntegrationEnabled) {
+                    ClientRegistrationRepository clientRegistrationRepository =
+                            clientRegistrationRepositoryProvider.getIfAvailable();
+                    if (clientRegistrationRepository != null) {
+                        oauth.authorizationEndpoint(authorization ->
+                                authorization.authorizationRequestResolver(
+                                        googleAuthorizationRequestResolver(clientRegistrationRepository)));
+                    }
+                }
+
+                oauth.userInfoEndpoint(ui -> ui.oidcUserService(customOAuth2UserService));
+                oauth.successHandler(successHandler);
+            })
 
             // === Filtro JWT, ANTES del UsernamePasswordAuthenticationFilter ===
             .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -100,5 +129,46 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    private OAuth2AuthorizationRequestResolver googleAuthorizationRequestResolver(
+            ClientRegistrationRepository clientRegistrationRepository) {
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+                new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
+
+        resolver.setAuthorizationRequestCustomizer(customizer ->
+                customizer.additionalParameters(params -> {
+                    params.put("access_type", "offline");
+                    params.put("prompt", "consent");
+                }));
+
+        return new OAuth2AuthorizationRequestResolver() {
+            @Override
+            public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
+                    HttpServletRequest request) {
+                return augment(resolver.resolve(request));
+            }
+
+            @Override
+            public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
+                    HttpServletRequest request, String clientRegistrationId) {
+                return augment(resolver.resolve(request, clientRegistrationId));
+            }
+
+            private org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest augment(
+                    org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest original) {
+                if (original == null) {
+                    return null;
+                }
+
+                Set<String> scopes = new LinkedHashSet<>(original.getScopes());
+                scopes.add("https://www.googleapis.com/auth/calendar.events");
+
+                return org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest
+                        .from(original)
+                        .scopes(scopes)
+                        .build();
+            }
+        };
     }
 }

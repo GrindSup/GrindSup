@@ -81,6 +81,11 @@ export default function Login({ setUsuario, usuario }) {
 
             // Guardar usuario/sesión si vinieron
             if (data.usuario) localStorage.setItem("usuario", JSON.stringify(data.usuario));
+            if (data.usuario?.correo) {
+                localStorage.setItem("userId", data.usuario.correo);
+            } else if (data.usuario?.id_usuario) {
+                localStorage.setItem("userId", String(data.usuario.id_usuario));
+            }
             if (data.idSesion) localStorage.setItem("sesionId", data.idSesion);
 
             // Si no vino el usuario, lo obtenemos con /me usando el token recién seteado
@@ -91,6 +96,11 @@ export default function Login({ setUsuario, usuario }) {
                     usuarioFinal = me.data?.usuario ?? me.data ?? null;
                     if (usuarioFinal) {
                         localStorage.setItem("usuario", JSON.stringify(usuarioFinal));
+                        if (usuarioFinal.correo) {
+                            localStorage.setItem("userId", usuarioFinal.correo);
+                        } else if (usuarioFinal.id_usuario) {
+                            localStorage.setItem("userId", String(usuarioFinal.id_usuario));
+                        }
                     }
                 } catch {
                     // si /me falla, igual seguimos con el token guardado

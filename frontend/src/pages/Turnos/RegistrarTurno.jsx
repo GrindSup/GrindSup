@@ -89,7 +89,7 @@ export default function RegistrarTurno() {
       setLoading(true);
 
       // userId requerido por el backend (para Google Calendar)
-      const userId = localStorage.getItem("userId") || "primary";
+      const userId = entrenadorId || "primary";
 
       const { data: turnoCreado } = await crearTurno(payload, { userId });
       const turnoId = turnoCreado?.id_turno;
