@@ -1,73 +1,115 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/frontend/src/services/turnos.servicio.js b/frontend/src/services/turnos.servicio.js
-index b964758635372abea073537c66c80296c925661a..8a79b8bd2216d8b0b724e947d936690e6004c1c9 100644
---- a/frontend/src/services/turnos.servicio.js
-+++ b/frontend/src/services/turnos.servicio.js
-@@ -1,47 +1,59 @@
- // src/services/turnos.servicio.js
- import axios from '../config/axios.config'; // (Ajusta la ruta si es necesario)
+diff --git a/backend/src/main/java/com/grindsup/backend/service/UserService.java b/backend/src/main/java/com/grindsup/backend/service/UserService.java
+index e062c44c570e01fa25dc56f428179366229423e2..b7447f8733adbf78bd953510bda85cac77cc6c34 100644
+--- a/backend/src/main/java/com/grindsup/backend/service/UserService.java
++++ b/backend/src/main/java/com/grindsup/backend/service/UserService.java
+@@ -1,53 +1,102 @@
+ package com.grindsup.backend.service;
  
- /** Base URL (env o fallback local) */
- const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
+ import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
++import com.grindsup.backend.model.Usuario;
++import com.grindsup.backend.repository.UsuarioRepository;
+ import org.springframework.stereotype.Service;
  
- /** Utils */
- const ok = (r) => r && r.status >= 200 && r.status < 300;
- const toIsoWithOffset = (d) => {
-     // A veces el backend espera +00:00 en vez de Z
-     const iso = new Date(d).toISOString();      // 2025-10-10T15:00:00.000Z
-     return iso.replace(/\.000Z$/, "+00:00");    // 2025-10-10T15:00:00+00:00
- };
+ import java.util.HashMap;
+ import java.util.Map;
++import java.util.Optional;
  
- // 🎯 CORRECCIÓN CLAVE 1: Helper para obtener el ID del usuario autenticado (si no se provee)
- const getAuthHeaders = (optUserId) => {
-     // Fallback ID to ensure the header is always present for the backend controller
--    const userId = optUserId || 
--                   localStorage.getItem("gs_user_id") || 
--                   localStorage.getItem("userId") || 
--                   "primary"; 
--    
-+    let resolvedId = optUserId ||
-+                     localStorage.getItem("gs_user_id") ||
-+                     localStorage.getItem("userId");
+ @Service
+ public class UserService {
+ 
+     // Simulación de base de datos en memoria (se borra al reiniciar)
+     private final Map<String, String> userRefreshTokens = new HashMap<>();
+     private GoogleClientSecrets clientSecrets; // Asumimos que se configura externamente
++    private final UsuarioRepository usuarioRepository;
 +
-+    if (!resolvedId) {
-+        try {
-+            const storedUser = JSON.parse(localStorage.getItem("usuario") || "null");
-+            if (storedUser?.id_usuario != null) {
-+                resolvedId = String(storedUser.id_usuario);
-+            }
-+        } catch {
-+            // ignore JSON errors and continue with fallback
++    public UserService(UsuarioRepository usuarioRepository) {
++        this.usuarioRepository = usuarioRepository;
++    }
+ 
+     /**
+      * Devuelve el refresh token de un usuario por su ID.
+      * ⚠️ Nota: Esta simulación en memoria se limpia al reiniciar el servidor.
+      * * @param userId ID del usuario (debe coincidir con la clave de guardado, ej: "4")
+      * @return refresh token o null si no existe.
+      */
+     public String getRefreshTokenForUser(String userId) {
+         // Devuelve el token si existe, o null. Esto evita el crash.
+         String token = userRefreshTokens.get(userId);
+-        if (token == null) {
+-            // Log para diagnóstico: si no encuentra la clave, es porque el Map está vacío o la clave no coincide.
++        if (token != null && !token.isBlank()) {
++            return token;
 +        }
++
++        Optional<Usuario> usuarioOpt = resolveUsuario(userId);
++        if (usuarioOpt.isEmpty()) {
++            System.err.println("❌ ERROR AUTH: Usuario NO encontrado para userId: " + userId);
++            return null;
++        }
++
++        String persistedToken = usuarioOpt.get().getGoogleRefreshToken();
++        if (persistedToken == null || persistedToken.isBlank()) {
+             System.err.println("❌ ERROR AUTH: Refresh Token NO encontrado para userId: " + userId);
++            return null;
+         }
+-        return token;
++
++        // Cachear para siguientes llamadas en esta ejecución
++        userRefreshTokens.put(userId, persistedToken);
++        return persistedToken;
+     }
+ 
+     /**
+      * Guarda o actualiza el refresh token de un usuario.
+      * * @param userId ID del usuario (clave: ej. "4")
+      * @param refreshToken refresh token de Google
+      */
+     public void setRefreshTokenForUser(String userId, String refreshToken) {
++        if (userId == null || userId.isBlank() || refreshToken == null || refreshToken.isBlank()) {
++            return;
++        }
++
+         userRefreshTokens.put(userId, refreshToken);
++
++        resolveUsuario(userId).ifPresent(usuario -> {
++            usuario.setGoogleRefreshToken(refreshToken);
++            usuarioRepository.save(usuario);
++        });
++
+         System.out.println("✅ Refresh Token guardado para userId: " + userId.trim());
+     }
+ 
++    private Optional<Usuario> resolveUsuario(String userId) {
++        if (userId == null || userId.isBlank()) {
++            return Optional.empty();
++        }
++
++        if (userId.chars().allMatch(Character::isDigit)) {
++            try {
++                Long id = Long.parseLong(userId);
++                return usuarioRepository.findById(id);
++            } catch (NumberFormatException ex) {
++                // Continuar intentando con correo
++            }
++        }
++
++        return usuarioRepository.findByCorreoIgnoreCase(userId);
 +    }
 +
-+    const userId = resolvedId || "primary";
-+
-     return {
-         headers: {
-             'X-User-Id': userId
+     // El resto de los métodos se mantienen iguales (get/setClientSecrets)
+     public void setClientSecrets(GoogleClientSecrets clientSecrets) {
+         this.clientSecrets = clientSecrets;
+     }
+ 
+     public GoogleClientSecrets getClientSecrets() {
+         if (clientSecrets == null) {
+             throw new RuntimeException("Client secrets no configurados");
          }
-     };
- };
- 
- 
- /**
-  * Lista turnos. Intenta /turnos/entrenador/{id} y cae a /turnos?entrenadorId=...
-  * Params opcionales: {desde, hasta, tipo}
-  */
- export async function listarTurnos(entrenadorId, { desde, hasta, tipo } = {}) {
-     const params = {};
-     if (desde) params.desde = desde;
-     if (hasta) params.hasta = hasta;
-     if (tipo)  params.tipo  = tipo;
- 
-     // Ruta 1: específica por entrenador
-     if (entrenadorId != null) {
-         try {
-             const r1 = await axios.get(`${API}/turnos/entrenador/${entrenadorId}`, { params });
-             if (ok(r1)) return r1;
-         } catch { /* fallback */ }
-         params.entrenadorId = entrenadorId; // para la ruta 2
+         return clientSecrets;
+     }
+ }
+\ No newline at end of file
  
 EOF
 )
