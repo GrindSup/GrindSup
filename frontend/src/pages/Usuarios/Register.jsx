@@ -1,8 +1,13 @@
-// frontend/src/pages/Usuarios/Register.jsx
+// frontend/src/pages/Usuarios/Register.jsx - Versión Mejorada
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../config/axios.config";
 import GoogleButton from "../../components/GoogleButton";
+
+// Expresión regular simple para validar formato de correo
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6; // Longitud mínima recomendada
 
 export default function Register() {
   const [nombre, setNombre] = useState("");
@@ -12,41 +17,73 @@ export default function Register() {
   const [confirmar, setConfirmar] = useState("");
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
+  const [cargando, setCargando] = useState(false); // Para deshabilitar el botón
   const navigate = useNavigate();
 
   const enviar = async (e) => {
     e.preventDefault();
     setError("");
     setOk("");
+    setCargando(true);
 
-    if (!nombre || !apellido || !correo || !contrasena) {
-      setError("Completá todos los campos.");
+    // --- 1. VALIDACIONES LOCALES (Frontend) ---
+    if (!nombre || !apellido || !correo || !contrasena || !confirmar) {
+      setError("❌ ¡Error! Completá todos los campos.");
+      setCargando(false);
       return;
     }
+
+    if (!EMAIL_REGEX.test(correo)) {
+      setError("❌ ¡Error! El formato del correo electrónico no es válido.");
+      setCargando(false);
+      return;
+    }
+
+    if (contrasena.length < MIN_PASSWORD_LENGTH) {
+      setError(`❌ ¡Error! La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+      setCargando(false);
+      return;
+    }
+
     if (contrasena !== confirmar) {
-      setError("Las contraseñas no coinciden.");
+      setError("❌ ¡Error! Las contraseñas no coinciden.");
+      setCargando(false);
       return;
     }
+    // --- FIN VALIDACIONES LOCALES ---
+
 
     try {
-      // Tu backend hashea si viene texto plano (como en tu UsuarioController.create)
       const { data } = await api.post("/api/usuarios", {
         nombre,
         apellido,
         correo,
         contrasena,
-        // opcionalmente podrías setear rol/estado por defecto desde el backend
       });
 
       if (data?.id_usuario || data?.correo) {
-        setOk("Cuenta creada. Ahora podés iniciar sesión.");
+        setOk("✅ ¡Éxito! Cuenta creada. Ahora podés iniciar sesión.");
         setTimeout(() => navigate("/login"), 900);
       } else {
-        setError("No se pudo crear la cuenta.");
+        // En caso de que el backend devuelva un 200 pero sin datos esperados
+        setError("❌ No se pudo crear la cuenta. Inténtalo más tarde.");
       }
     } catch (err) {
-      const msg = err?.response?.data?.mensaje || "Error al crear la cuenta.";
-      setError(msg);
+      const responseMsg = err?.response?.data?.mensaje || err?.response?.data?.message || "";
+
+      // 2. MANEJO DE ERRORES DEL BACKEND (Ej: Correo duplicado)
+      if (responseMsg.toLowerCase().includes('duplicate') || responseMsg.toLowerCase().includes('unique constraint')) {
+        // Asumiendo que tu backend devuelve un error 400/409/500 con un mensaje específico
+        setError("❌ ¡Error! El correo electrónico ya está registrado.");
+      } else if (responseMsg) {
+        // Otros errores del backend con mensaje claro
+        setError(`❌ Error del servidor: ${responseMsg}`);
+      } else {
+        // Error genérico (ej: el servidor no responde o 500 desconocido)
+        setError("❌ Error al crear la cuenta. Por favor, verifica tu conexión.");
+      }
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -76,6 +113,7 @@ export default function Register() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               className="login-input"
+              disabled={cargando}
             />
             <input
               type="text"
@@ -83,6 +121,7 @@ export default function Register() {
               value={apellido}
               onChange={(e) => setApellido(e.target.value)}
               className="login-input"
+              disabled={cargando}
             />
           </div>
 
@@ -93,15 +132,17 @@ export default function Register() {
             onChange={(e) => setCorreo(e.target.value)}
             className="login-input"
             autoComplete="username"
+            disabled={cargando}
           />
 
           <input
             type="password"
-            placeholder="Contraseña"
+            placeholder={`Contraseña (mín. ${MIN_PASSWORD_LENGTH} caracteres)`}
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
             className="login-input"
             autoComplete="new-password"
+            disabled={cargando}
           />
 
           <input
@@ -111,11 +152,17 @@ export default function Register() {
             onChange={(e) => setConfirmar(e.target.value)}
             className="login-input"
             autoComplete="new-password"
+            disabled={cargando}
           />
 
           <div className="button-group">
-            <button type="submit" className="login-button" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
-              Crear cuenta
+            <button
+              type="submit"
+              className="login-button"
+              style={{ fontWeight: "bold", fontSize: "1.1rem" }}
+              disabled={cargando} // Deshabilita el botón mientras carga
+            >
+              {cargando ? 'Registrando...' : 'Crear cuenta'}
             </button>
             <Link to="/login" className="back-button as-link" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
               Ya tengo cuenta

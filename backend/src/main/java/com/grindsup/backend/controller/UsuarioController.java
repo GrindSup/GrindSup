@@ -12,7 +12,7 @@ import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.RolRepository;
 import com.grindsup.backend.repository.SesionRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
-import com.grindsup.backend.security.JwtService; // <-- IMPORTADO
+import com.grindsup.backend.security.JwtService; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +20,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException; // Añadir para manejar errores de Roles/Estados
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map; // <-- IMPORTADO
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -34,8 +35,7 @@ public class UsuarioController {
     @Autowired private EstadoRepository estadoRepository;
     @Autowired private SesionRepository sesionRepository;
     @Autowired private PasswordEncoder passwordEncoder;
-    
-    @Autowired private JwtService jwtService; // <-- INYECTADO
+    @Autowired private JwtService jwtService;
 
     // ===== CRUD básico =====
     @GetMapping
@@ -46,26 +46,57 @@ public class UsuarioController {
         return usuarioRepository.findById(id).orElse(null);
     }
 
+    /**
+     * Crea un nuevo usuario. Asigna Rol y Estado por defecto si no son proporcionados.
+     * Este es el método corregido para el registro.
+     */
     @PostMapping
     public Usuario create(@RequestBody Usuario usuario) {
-        // hash si viene contraseña en texto plano
+        // 1. Hashear contraseña si viene en texto plano
         if (usuario.getContrasena() != null && !usuario.getContrasena().isBlank()) {
             usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
         }
 
-        if (usuario.getRol() != null) {
+        // 2. ASIGNAR ROL POR DEFECTO: Si el usuario no tiene rol (registro normal)
+        if (usuario.getRol() == null) {
+            // Se asume que el ID 1 es el Rol 'CLIENTE' o 'ESTANDAR'
+            Rol rolDefecto = rolRepository.findById(1L).orElseThrow(
+                // Si el Rol 1 no existe en la DB, es un error grave de configuración.
+                () -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "El rol por defecto (ID 1) no está configurado en la base de datos.")
+            );
+            usuario.setRol(rolDefecto);
+        } else {
+            // Si el rol viene en el request (ej: es un ADMIN creando un usuario), se busca y se asigna.
             Rol rol = rolRepository.findById(usuario.getRol().getId_rol()).orElse(null);
             usuario.setRol(rol);
         }
-        if (usuario.getEstado() != null) {
+
+        // 3. ASIGNAR ESTADO POR DEFECTO: Si el usuario no tiene estado (registro normal)
+        if (usuario.getEstado() == null) {
+            // Se asume que el ID 1 es el Estado 'ACTIVO' (ajusta el ID si es diferente en tu DB)
+            Estado estadoDefecto = estadoRepository.findById(1L).orElseThrow(
+                // Si el Estado 1 no existe en la DB, es un error grave de configuración.
+                () -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "El estado por defecto (ID 1) no está configurado en la base de datos.")
+            );
+            usuario.setEstado(estadoDefecto);
+        } else {
+            // Si el estado viene en el request, se busca y se asigna.
             Estado estado = estadoRepository.findById(usuario.getEstado().getIdEstado()).orElse(null);
             usuario.setEstado(estado);
         }
+        
+        // 4. Asignar Foto de Perfil por defecto si es NOT NULL en DB y está vacía
+        if (usuario.getFoto_perfil() == null) {
+             usuario.setFoto_perfil(""); // O puedes usar una URL de imagen por defecto
+        }
 
+
+        // 5. Asignar fechas (solo si tu entidad JPA no lo hace automáticamente)
         if (usuario.getCreated_at() == null)
             usuario.setCreated_at(OffsetDateTime.now());
         usuario.setUpdated_at(OffsetDateTime.now());
 
+        // 6. Intentar guardar el usuario con todos los campos NOT NULL requeridos.
         return usuarioRepository.save(usuario);
     }
 
@@ -136,25 +167,25 @@ public class UsuarioController {
 
         // --- ✅ GENERAR TOKEN JWT ---
         Map<String, Object> claims = Map.of(
-            "uid", usuario.getId_usuario(),
-            "rol", (usuario.getRol() != null ? usuario.getRol().getNombre() : "CLIENTE"), // Asigna un rol default si es nulo
-            "prov", "credentials" // Proveedor: email/pass
+                "uid", usuario.getId_usuario(),
+                "rol", (usuario.getRol() != null ? usuario.getRol().getNombre() : "CLIENTE"), // Asigna un rol default si es nulo
+                "prov", "credentials" // Proveedor: email/pass
         );
         String token = jwtService.generate(usuario.getCorreo(), claims);
         // --- FIN DE LA GENERACIÓN ---
 
         UsuarioDTO usuarioDTO = new UsuarioDTO(
-                usuario.getId_usuario(),
-                usuario.getNombre(),
-                usuario.getApellido(),
-                usuario.getCorreo());
+                        usuario.getId_usuario(),
+                        usuario.getNombre(),
+                        usuario.getApellido(),
+                        usuario.getCorreo());
 
         LoginResponse respuesta = new LoginResponse(
-                "Sesión iniciada correctamente",
-                true,
-                sesion.getId_sesion(),
-                usuarioDTO,
-                token // <-- ✅ TOKEN AÑADIDO A LA RESPUESTA
+                        "Sesión iniciada correctamente",
+                        true,
+                        sesion.getId_sesion(),
+                        usuarioDTO,
+                        token // <-- ✅ TOKEN AÑADIDO A LA RESPUESTA
         );
 
         return ResponseEntity.ok(respuesta);
@@ -194,14 +225,14 @@ public class UsuarioController {
 
         Usuario u = opt.get();
         return ResponseEntity.ok(Map.of(
-            "usuario", Map.of(
-                "id_usuario", u.getId_usuario(),
-                "nombre", u.getNombre(),
-                "apellido", u.getApellido(),
-                "correo", u.getCorreo(),
-                "rol", (u.getRol() != null ? u.getRol().getNombre() : null),
-                "foto_perfil", u.getFoto_perfil()
-            )
+                "usuario", Map.of(
+                        "id_usuario", u.getId_usuario(),
+                        "nombre", u.getNombre(),
+                        "apellido", u.getApellido(),
+                        "correo", u.getCorreo(),
+                        "rol", (u.getRol() != null ? u.getRol().getNombre() : null),
+                        "foto_perfil", u.getFoto_perfil()
+                )
         ));
     }
 }

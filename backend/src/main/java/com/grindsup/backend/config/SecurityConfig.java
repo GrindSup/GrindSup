@@ -10,19 +10,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -30,8 +31,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Configuration
@@ -46,7 +47,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // ✅ Soluciona el error de PasswordEncoder faltante
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -54,10 +55,12 @@ public class SecurityConfig {
         CorsConfiguration c = new CorsConfiguration();
         c.setAllowedOrigins(List.of("http://localhost:5173"));
         c.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-        c.setAllowedHeaders(List.of("*"));          // incluye Authorization
-        c.setAllowCredentials(true);                // necesario para cookies + Authorization
+        c.setAllowedHeaders(List.of("*"));
+        c.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
         src.registerCorsConfiguration("/**", c);
+
         return src;
     }
 
@@ -77,10 +80,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                // Preflight CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Públicas
                 .requestMatchers(
                     "/auth/**",
                     "/public/**",
@@ -89,26 +89,22 @@ public class SecurityConfig {
                     "/api/usuarios/recuperar/**",
                     "/error"
                 ).permitAll()
-
-                // Google OAuth
                 .requestMatchers("/login/**", "/oauth2/**").permitAll()
-
-                // API protegida
                 .requestMatchers("/api/**").authenticated()
-
-                // Resto del sitio (React, estáticos)
                 .anyRequest().permitAll()
             )
 
-            // === OAuth2 ===
             .oauth2Login(oauth -> {
                 if (calendarIntegrationEnabled) {
                     ClientRegistrationRepository clientRegistrationRepository =
                             clientRegistrationRepositoryProvider.getIfAvailable();
+
                     if (clientRegistrationRepository != null) {
                         oauth.authorizationEndpoint(authorization ->
                                 authorization.authorizationRequestResolver(
-                                        googleAuthorizationRequestResolver(clientRegistrationRepository)));
+                                        googleAuthorizationRequestResolver(clientRegistrationRepository)
+                                )
+                        );
                     }
                 }
 
@@ -116,10 +112,8 @@ public class SecurityConfig {
                 oauth.successHandler(successHandler);
             })
 
-            // === Filtro JWT, ANTES del UsernamePasswordAuthenticationFilter ===
             .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-            // === Manejo unificado de 401 ===
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, e) -> {
                     res.setStatus(401);
@@ -133,16 +127,20 @@ public class SecurityConfig {
 
     private OAuth2AuthorizationRequestResolver googleAuthorizationRequestResolver(
             ClientRegistrationRepository clientRegistrationRepository) {
+
         DefaultOAuth2AuthorizationRequestResolver resolver =
-                new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
+                new DefaultOAuth2AuthorizationRequestResolver(
+                        clientRegistrationRepository, "/oauth2/authorization");
 
         resolver.setAuthorizationRequestCustomizer(customizer ->
                 customizer.additionalParameters(params -> {
                     params.put("access_type", "offline");
                     params.put("prompt", "consent");
-                }));
+                })
+        );
 
         return new OAuth2AuthorizationRequestResolver() {
+
             @Override
             public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(
                     HttpServletRequest request) {
@@ -157,11 +155,11 @@ public class SecurityConfig {
 
             private org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest augment(
                     org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest original) {
-                if (original == null) {
-                    return null;
-                }
+
+                if (original == null) return null;
 
                 Set<String> scopes = new LinkedHashSet<>(original.getScopes());
+                scopes.add("https://www.googleapis.com/auth/calendar");
                 scopes.add("https://www.googleapis.com/auth/calendar.events");
 
                 return org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest

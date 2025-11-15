@@ -1,12 +1,10 @@
-// frontend/src/components/Login.jsx
-import { useState, useEffect } from "react"; // 💡 AGREGAR useEffect
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../config/axios.config";
 import GoogleButton from "./GoogleButton";
 import "./Login.css";
 
-// 💡 RECIBIR LA PROP 'usuario' del App.jsx
-export default function Login({ setUsuario, usuario }) { 
+export default function Login({ setUsuario, usuario }) {
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [showPwd, setShowPwd] = useState(false);
@@ -14,12 +12,10 @@ export default function Login({ setUsuario, usuario }) {
     const [errorMensaje, setErrorMensaje] = useState("");
     const navigate = useNavigate();
 
-    // 🚀 REDIRECCIÓN CLAVE: Si ya está logueado, vamos al dashboard
+    // 🚀 Si ya hay sesión, redirigir
     useEffect(() => {
-        if (usuario) {
-            navigate("/dashboard", { replace: true });
-        }
-    }, [usuario, navigate]); // Se ejecuta al cargar el componente y cuando 'usuario' cambia
+        if (usuario) navigate("/dashboard", { replace: true });
+    }, [usuario]);
 
     const validar = async (e) => {
         e.preventDefault();
@@ -38,9 +34,10 @@ export default function Login({ setUsuario, usuario }) {
                 correo: correoLimpio,
                 contrasena,
             });
+
             const data = res?.data || {};
 
-            // Intentos robustos para extraer token
+            // Token robusto
             let token =
                 data.token ||
                 data.jwt ||
@@ -50,14 +47,12 @@ export default function Login({ setUsuario, usuario }) {
                 data?.data?.token ||
                 null;
 
-            // Si vino en headers (Authorization: Bearer xxx / X-Auth-Token)
             if (!token) {
                 const authHeader =
                     res.headers?.authorization || res.headers?.Authorization || "";
-                if (authHeader && /^Bearer\s+/i.test(authHeader)) {
+
+                if (/^Bearer\s+/i.test(authHeader)) {
                     token = authHeader.replace(/^Bearer\s+/i, "");
-                } else if (res.headers?.["x-auth-token"]) {
-                    token = res.headers["x-auth-token"];
                 }
             }
 
@@ -67,28 +62,20 @@ export default function Login({ setUsuario, usuario }) {
                 return;
             }
 
-            if (!token) {
-                setError(true);
-                setErrorMensaje(
-                    "Inicio de sesión exitoso pero el servidor no envió token. Verifica la clave (token/jwt/access_token) o el header Authorization."
-                );
-                return;
-            }
-
-            // Guardar token y configurar axios inmediatamente
+            // Guardar token e inyectar en axios
             localStorage.setItem("gs_token", token);
             api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-            // Guardar usuario/sesión si vinieron
-            if (data.usuario) localStorage.setItem("usuario", JSON.stringify(data.usuario));
-            if (data.usuario?.correo) {
-                localStorage.setItem("userId", data.usuario.correo);
-            } else if (data.usuario?.id_usuario) {
-                localStorage.setItem("userId", String(data.usuario.id_usuario));
+            // Guardar usuario si vino en la respuesta
+            if (data.usuario) {
+                localStorage.setItem("usuario", JSON.stringify(data.usuario));
             }
-            if (data.idSesion) localStorage.setItem("sesionId", data.idSesion);
 
-            // Si no vino el usuario, lo obtenemos con /me usando el token recién seteado
+            if (data.idSesion) {
+                localStorage.setItem("sesionId", data.idSesion);
+            }
+
+            // Obtener usuario vía /me si no vino
             let usuarioFinal = data.usuario;
             if (!usuarioFinal) {
                 try {
@@ -96,56 +83,62 @@ export default function Login({ setUsuario, usuario }) {
                     usuarioFinal = me.data?.usuario ?? me.data ?? null;
                     if (usuarioFinal) {
                         localStorage.setItem("usuario", JSON.stringify(usuarioFinal));
-                        if (usuarioFinal.correo) {
-                            localStorage.setItem("userId", usuarioFinal.correo);
-                        } else if (usuarioFinal.id_usuario) {
-                            localStorage.setItem("userId", String(usuarioFinal.id_usuario));
-                        }
                     }
                 } catch {
-                    // si /me falla, igual seguimos con el token guardado
+                    // Seguimos igual
                 }
             }
 
+            // 🚀 Guardar IDs de forma consistente (id_usuario SIEMPRE)
+            const finalUserId =
+                usuarioFinal?.id_usuario ??
+                data.usuario?.id_usuario ??
+                null;
+
+            if (finalUserId != null) {
+                const idString = String(finalUserId);
+                localStorage.setItem("gs_user_id", idString);
+                localStorage.setItem("userId", idString);
+            }
+
+            // Setear estado global
             setUsuario?.(usuarioFinal || null);
-            navigate("/dashboard", { replace: true }); // Redirigir al dashboard
+
+            navigate("/dashboard", { replace: true });
 
         } catch (err) {
             const status = err?.response?.status;
             const msg = err?.response?.data?.mensaje;
+
             if (status === 401) setErrorMensaje(msg ?? "Contraseña incorrecta");
             else if (status === 404) setErrorMensaje(msg ?? "Usuario no encontrado");
             else setErrorMensaje("Error al conectar con el servidor. Intente nuevamente.");
+
             setError(true);
         }
     };
 
     return (
         <div className="login-container">
-            {/* ... Tu JSX de Login se mantiene igual ... */}
             <div className="login-box">
                 <h1 className="login-title" style={{ fontWeight: "bold", fontSize: "2rem" }}>
                     Inicio de Sesión
                 </h1>
 
-                {/* Botón Google arriba como opción rápida */}
                 <GoogleButton label="Continuar con Google" />
 
-                {/* separador */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "1rem 0" }}>
                     <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
                     <span style={{ color: "#6b7280", fontSize: 13, fontWeight: 600 }}>o</span>
                     <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
                 </div>
 
-                {/* Form tradicional */}
                 <form onSubmit={validar} className="login-form">
                     <input
                         type="email"
                         placeholder="Correo electrónico"
                         value={correo}
                         onChange={(e) => setCorreo(e.target.value)}
-                        name="correo"
                         className="login-input"
                         autoComplete="username"
                     />
@@ -156,26 +149,23 @@ export default function Login({ setUsuario, usuario }) {
                             placeholder="Contraseña"
                             value={contrasena}
                             onChange={(e) => setContrasena(e.target.value)}
-                            name="contrasena"
                             className="login-input login-input-password"
                             autoComplete="current-password"
                         />
                         <button
                             type="button"
                             className="toggle-visibility"
-                            aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                             onClick={() => setShowPwd((v) => !v)}
-                            title={showPwd ? "Ocultar" : "Mostrar"}
                         >
                             {showPwd ? "🙈" : "👁️"}
                         </button>
                     </div>
 
                     <div className="button-group">
-                        <button type="submit" className="login-button" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
+                        <button type="submit" className="login-button">
                             Iniciar Sesión
                         </button>
-                        <Link to="/" className="back-button as-link" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
+                        <Link to="/" className="back-button as-link">
                             Volver
                         </Link>
                     </div>
@@ -185,7 +175,6 @@ export default function Login({ setUsuario, usuario }) {
                     ¿Olvidaste tu contraseña?
                 </Link>
 
-                {/* CTA de registro */}
                 <div style={{ marginTop: "1rem", textAlign: "center", fontSize: 14 }}>
                     <span>¿Eres nuevo?</span>{" "}
                     <Link to="/register" className="forgot-link" style={{ fontWeight: 700 }}>
