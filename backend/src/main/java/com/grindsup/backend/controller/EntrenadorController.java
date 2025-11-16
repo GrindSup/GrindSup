@@ -27,10 +27,10 @@ public class EntrenadorController {
 
     @Autowired
     private EstadoRepository estadoRepository;
-    
+
     // Inyección del PlanRepository para el endpoint de planes
     @Autowired
-    private com.grindsup.backend.repository.PlanEntrenamientoRepository planRepository; 
+    private com.grindsup.backend.repository.PlanEntrenamientoRepository planRepository;
 
     // -----------------------------
     // HU 38: Listado de entrenadores activos
@@ -88,7 +88,7 @@ public class EntrenadorController {
     // -----------------------------
     @PutMapping("/{id}")
     public ResponseEntity<Entrenador> updateEntrenador(
-                @PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
+            @PathVariable Long id, @RequestBody Entrenador entrenadorDetails) {
 
         Entrenador entrenador = entrenadorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Entrenador no encontrado"));
@@ -168,10 +168,11 @@ public class EntrenadorController {
 
             return ResponseEntity.ok(planes);
         } catch (Exception e) {
-            // Loguea el error internamente y retorna un 500 con una lista vacía para cumplir con el tipo de retorno.
+            // Loguea el error internamente y retorna un 500 con una lista vacía para
+            // cumplir con el tipo de retorno.
             System.err.println("Error al obtener planes del entrenador: " + e.getMessage());
             return ResponseEntity.internalServerError()
-                    .body(List.of()); 
+                    .body(List.of());
         }
     }
 }
