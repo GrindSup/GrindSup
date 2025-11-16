@@ -8,9 +8,22 @@ public class ReporteProgresoPlanesDTO {
     private float incompletas;
     private float enProceso;
     private float porcentajeCumplimiento;
+    private Long entrenadorId;
+    private String entrenadorNombre;
+    private String entrenadorCorreo;
+    private String entrenadorTelefono;
 
-    public ReporteProgresoPlanesDTO(Long id_alumno, String nomAlumno, float total, float totalCompletas, float totalIncompletas,
-            float totalEnProceso, float porcentaje) {
+    public ReporteProgresoPlanesDTO(Long id_alumno,
+            String nomAlumno,
+            float total,
+            float totalCompletas,
+            float totalIncompletas,
+            float totalEnProceso,
+            float porcentaje,
+            Long entrenadorId,
+            String entrenadorNombre,
+            String entrenadorCorreo,
+            String entrenadorTelefono) {
         idAlumno = id_alumno;
         nombreAlumno = nomAlumno;
         totalRutinas = total;
@@ -18,6 +31,10 @@ public class ReporteProgresoPlanesDTO {
         incompletas = totalIncompletas;
         enProceso = totalEnProceso;
         porcentajeCumplimiento = porcentaje;
+        this.entrenadorId = entrenadorId;
+        this.entrenadorNombre = entrenadorNombre;
+        this.entrenadorCorreo = entrenadorCorreo;
+        this.entrenadorTelefono = entrenadorTelefono;
 
     }
     public float getCompletadas() {
@@ -62,5 +79,29 @@ public class ReporteProgresoPlanesDTO {
     }
     public void setPorcentajeCumplimiento(float porcentajeCumplimiento) {
         this.porcentajeCumplimiento = porcentajeCumplimiento;
+    }
+    public Long getEntrenadorId() {
+        return entrenadorId;
+    }
+    public void setEntrenadorId(Long entrenadorId) {
+        this.entrenadorId = entrenadorId;
+    }
+    public String getEntrenadorNombre() {
+        return entrenadorNombre;
+    }
+    public void setEntrenadorNombre(String entrenadorNombre) {
+        this.entrenadorNombre = entrenadorNombre;
+    }
+    public String getEntrenadorCorreo() {
+        return entrenadorCorreo;
+    }
+    public void setEntrenadorCorreo(String entrenadorCorreo) {
+        this.entrenadorCorreo = entrenadorCorreo;
+    }
+    public String getEntrenadorTelefono() {
+        return entrenadorTelefono;
+    }
+    public void setEntrenadorTelefono(String entrenadorTelefono) {
+        this.entrenadorTelefono = entrenadorTelefono;
     }
 }

@@ -48,6 +48,19 @@ public class AlumnoController {
         return ResponseEntity.ok(uno.map(List::of).orElseGet(List::of));
     }
 
+    /* ----------------- GET /exists?documento=xxxx (chequeo liviano) ----------------- */
+    @GetMapping("/exists")
+    public ResponseEntity<Map<String, Boolean>> existsByDocumento(
+            @RequestParam(name = "documento") String documento) {
+
+        if (documento == null || documento.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("exists", false));
+        }
+
+        boolean exists = alumnoRepository.existsByDocumentoAndDeletedAtIsNull(documento.trim());
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
+
     // ✅ NUEVO: listar alumnos por entrenador
     @GetMapping(params = "entrenadorId")
     public ResponseEntity<List<AlumnoListDTO>> listarPorEntrenador( // <-- Retorna List<AlumnoListDTO>

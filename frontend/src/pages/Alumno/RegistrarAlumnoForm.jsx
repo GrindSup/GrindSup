@@ -218,11 +218,11 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     try {
       // ✅ CHEQUEO DE DNI: SOLO AQUÍ (doble chequeo)
       // Usamos el tipo de documento en la consulta si el backend lo requiere.
-      const dupRes = await axios.get(
-        `/api/alumnos?documento=${encodeURIComponent(documentoLimpio)}&tipoDocumento=${form.tipoDocumento}`
-      );
-      const posibles = dupRes.data;
-      if (Array.isArray(posibles) && posibles.length > 0) {
+      const dupRes = await axios.get("/api/alumnos/exists", {
+        params: { documento: documentoLimpio }
+      });
+      const existe = dupRes.data?.exists;
+      if (existe) {
         setDniDisponible(false);
         toast({
           status: "error",

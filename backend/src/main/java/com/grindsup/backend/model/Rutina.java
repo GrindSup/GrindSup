@@ -11,9 +11,16 @@ public class Rutina {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_rutina;
 
+    // null => rutina “plantilla” (catálogo)
+    // no null => rutina asociada a un plan
     @ManyToOne
     @JoinColumn(name = "id_plan", nullable = true)
     private PlanEntrenamiento plan;
+
+    // si no es null => esta rutina usa como base otra rutina (plantilla)
+    @ManyToOne
+    @JoinColumn(name = "id_rutina_base")
+    private Rutina rutinaBase;
 
     @Column(length = 100)
     private String nombre;
@@ -34,7 +41,7 @@ public class Rutina {
     @Column(name = "deleted_at")
     private OffsetDateTime deleted_at;
 
-    /* ---------- Métodos automáticos de tiempo ---------- */
+    /* ---------- Hooks automáticos ---------- */
 
     @PrePersist
     protected void onCreate() {
@@ -64,6 +71,14 @@ public class Rutina {
 
     public void setPlan(PlanEntrenamiento plan) {
         this.plan = plan;
+    }
+
+    public Rutina getRutinaBase() {
+        return rutinaBase;
+    }
+
+    public void setRutinaBase(Rutina rutinaBase) {
+        this.rutinaBase = rutinaBase;
     }
 
     public String getNombre() {

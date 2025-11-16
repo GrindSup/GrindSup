@@ -1,6 +1,7 @@
 package com.grindsup.backend.service;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
@@ -8,13 +9,11 @@ import com.grindsup.backend.config.GoogleCalendarConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.TimeZone;
-import java.time.ZonedDateTime; 
+import java.time.ZonedDateTime;
 
 /**
- * Servicio encargado de la creación, actualización y eliminación de eventos 
+ * Servicio encargado de la creación, actualización y eliminación de eventos
  * en Google Calendar para la cuenta del entrenador.
- * Depende de GoogleCalendarCredentialService para obtener Credenciales.
  */
 @Service
 @ConditionalOnProperty(prefix = "grindsup.calendar", name = "enabled", havingValue = "true")
@@ -23,89 +22,87 @@ public class GoogleCalendarNotificationService {
     private final GoogleCalendarConfig calendarConfig;
     private final GoogleCalendarCredentialService credentialService;
 
-    // Constructor para inyección de dependencia
     public GoogleCalendarNotificationService(
-            GoogleCalendarConfig calendarConfig, 
-            GoogleCalendarCredentialService credentialService) {
+            GoogleCalendarConfig calendarConfig,
+            GoogleCalendarCredentialService credentialService
+    ) {
         this.calendarConfig = calendarConfig;
         this.credentialService = credentialService;
     }
 
-    /**
-     * Construye y devuelve el objeto Calendar Service para el usuario dado, 
-     * delegando la obtención y el refresh de Credential.
-     */
     private Calendar buildServiceForUser(String userId) throws Exception {
         if (userId == null || userId.isBlank()) {
             throw new IllegalArgumentException("userId requerido para operar con Google Calendar");
         }
 
-        // 💡 Delegamos la obtención/refresco de Credential
-        // Se asume que CredentialService maneja el refresh del token si es necesario
-        Credential credential = credentialService.getCredentialForUser(userId); 
-
+        Credential credential = credentialService.getCredentialForUser(userId);
         if (credential == null) {
             throw new RuntimeException("No credential found for user " + userId);
         }
 
-        // Construye el servicio de Calendar
         return calendarConfig.buildCalendar(credential);
     }
 
-    private Event buildEvent(String title,
-                             String description,
-                             ZonedDateTime startTime,
-                             ZonedDateTime endTime) {
+    /**
+     * Construye un objeto Event para Google Calendar usando ZonedDateTime.
+     * DateTime de Google requiere epochMillis + offset, y timezone separada.
+     */
+    private Event buildEvent(
+            String title,
+            String description,
+            ZonedDateTime startTime,
+            ZonedDateTime endTime
+    ) {
+
+        ZonedDateTime start = startTime != null ? startTime : ZonedDateTime.now();
+        ZonedDateTime end   = endTime != null ? endTime : start.plusHours(1);
+
+        String zoneId = start.getZone().getId();  // Ej: "America/Argentina/Buenos_Aires"
+
+        EventDateTime startEvent = new EventDateTime()
+                .setDateTime(new DateTime(start.toInstant().toEpochMilli(), 0))
+                .setTimeZone(zoneId);
+
+        EventDateTime endEvent = new EventDateTime()
+                .setDateTime(new DateTime(end.toInstant().toEpochMilli(), 0))
+                .setTimeZone(zoneId);
 
         Event event = new Event();
         event.setSummary(title);
         event.setDescription(description);
+        event.setStart(startEvent);
+        event.setEnd(endEvent);
 
-        EventDateTime start = new EventDateTime()
-                .setDateTime(new com.google.api.client.util.DateTime(startTime.toInstant().toEpochMilli()))
-                .setTimeZone(TimeZone.getDefault().getID());
-
-        EventDateTime end = new EventDateTime()
-                .setDateTime(new com.google.api.client.util.DateTime(endTime.toInstant().toEpochMilli()))
-                .setTimeZone(TimeZone.getDefault().getID());
-
-        event.setStart(start);
-        event.setEnd(end);
         return event;
     }
 
-    /**
-     * Crea un evento en Google Calendar.
-     */
-    public Event createEvent(String userId,
-                             String title,
-                             String description,
-                             ZonedDateTime startTime,
-                             ZonedDateTime endTime) throws Exception {
+    public Event createEvent(
+            String userId,
+            String title,
+            String description,
+            ZonedDateTime startTime,
+            ZonedDateTime endTime
+    ) throws Exception {
 
         Calendar service = buildServiceForUser(userId);
         Event event = buildEvent(title, description, startTime, endTime);
         return service.events().insert("primary", event).execute();
     }
 
-    /**
-     * Actualiza un evento existente en Google Calendar.
-     */
-    public Event updateEvent(String userId,
-                             String eventId,
-                             String title,
-                             String description,
-                             ZonedDateTime startTime,
-                             ZonedDateTime endTime) throws Exception {
+    public Event updateEvent(
+            String userId,
+            String eventId,
+            String title,
+            String description,
+            ZonedDateTime startTime,
+            ZonedDateTime endTime
+    ) throws Exception {
 
         Calendar service = buildServiceForUser(userId);
         Event event = buildEvent(title, description, startTime, endTime);
         return service.events().update("primary", eventId, event).execute();
     }
 
-    /**
-     * Elimina un evento de Google Calendar.
-     */
     public void deleteEvent(String userId, String eventId) throws Exception {
         Calendar service = buildServiceForUser(userId);
         service.events().delete("primary", eventId).execute();

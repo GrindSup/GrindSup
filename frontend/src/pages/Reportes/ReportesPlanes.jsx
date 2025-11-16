@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import BotonVolver from "../../components/BotonVolver.jsx";
 import { ensureEntrenadorId, getUsuario, getEntrenadorName } from "../../context/auth.js";
+import axiosInstance from "../../config/axios.config.js";
 
 // ⚠️ CORRECCIÓN CLAVE: Usamos los nombres que SÍ se exportan en reportes.servicio.js
 import {
@@ -114,6 +115,29 @@ export default function ReportesPlanes() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [entrenadorId]);
 
+  const exportPdf = async () => {
+    if (!entrenadorId) return;
+    try {
+      const resp = await axiosInstance.get(`/api/reportes/planes/entrenador/${entrenadorId}/pdf`, {
+        params: { from, to },
+        responseType: "blob"
+      });
+      const blob = new Blob([resp.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safe = `reporte_planes_${entrenadorId}_${from}_${to}`.replace(/\W+/g, "_");
+      a.href = url;
+      a.download = `${safe}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Reporte exportado", status: "success" });
+    } catch (err) {
+      toast({ title: "No pude exportar el PDF", status: "error", description: err?.message });
+    }
+  };
+
   const promedioGlobal = useMemo(() => {
     if (!mensual.length) return 0;
     const totalCount = mensual.reduce((sum, r) => sum + (r.count || 0), 0);
@@ -182,6 +206,13 @@ export default function ReportesPlanes() {
 
             <Button onClick={load} isLoading={loading} bg="#258d19" color="white">
               Aplicar filtros
+            </Button>
+            <Button
+              variant="outline"
+              onClick={exportPdf}
+              isDisabled={!entrenadorId || loading}
+            >
+              Exportar PDF
             </Button>
           </HStack>
 

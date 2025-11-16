@@ -13,6 +13,7 @@ import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.repository.EjercicioRepository;
 
 import com.grindsup.backend.service.RutinaService;
+import org.springframework.core.io.ClassPathResource;
 
 import com.grindsup.backend.DTO.RutinaUpdateRequestDTO;
 import com.grindsup.backend.DTO.CrearRutinarequestDTO;
@@ -52,12 +53,20 @@ public class RutinaController {
     @Autowired
     private EjercicioRepository ejercicioRepository;
 
+    // ================== LISTA DE RUTINAS (CATÁLOGO O TODAS) ==================
     @GetMapping
-    public List<Rutina> getAll() {
-        return rutinaRepository.findAll()
-                .stream()
-                .filter(r -> r.getDeleted_at() == null)
-                .toList();
+    public List<Rutina> getAll(
+            @RequestParam(name = "entrenadorId", required = false) Long entrenadorId,
+            @RequestParam(name = "all", required = false) Boolean all
+    ) {
+
+        // Si 'all' es true Y nos pasan un entrenadorId, buscamos modo híbrido
+        if (Boolean.TRUE.equals(all) && entrenadorId != null) {
+            return rutinaRepository.findAllByEntrenadorOrPublicTemplates(entrenadorId);
+        }
+
+        // Comportamiento original: solo plantillas "disponibles" (catálogo)
+        return rutinaRepository.findDisponiblesParaEntrenador();
     }
 
     @GetMapping("/{id}")
@@ -65,6 +74,7 @@ public class RutinaController {
         return rutinaRepository.findById(id).orElse(null);
     }
 
+    // ================== CREAR RUTINA ==================
     @PostMapping
     @Transactional
     public ResponseEntity<Rutina> create(@RequestBody CrearRutinarequestDTO request) {
@@ -73,6 +83,7 @@ public class RutinaController {
         rutina.setNombre(request.getNombre());
         rutina.setDescripcion(request.getDescripcion());
 
+        // si viene planId, la rutina queda asociada directamente a ese plan
         if (request.getPlanId() != null) {
             PlanEntrenamiento plan = planRepository.findById(request.getPlanId())
                     .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + request.getPlanId()));
@@ -109,6 +120,31 @@ public class RutinaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaRutina);
     }
 
+    // ================== USAR RUTINA BASE EN UN PLAN ==================
+    // No duplica ejercicios: sólo crea una Rutina con plan + rutinaBase
+    @PostMapping("/planes/{idPlan}/usar/{idRutinaBase}")
+    @Transactional
+    public ResponseEntity<Rutina> usarRutinaEnPlan(@PathVariable Long idPlan,
+                                                   @PathVariable Long idRutinaBase) {
+
+        PlanEntrenamiento plan = planRepository.findById(idPlan)
+                .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + idPlan));
+
+        Rutina base = rutinaRepository.findById(idRutinaBase)
+                .orElseThrow(() -> new RuntimeException("Rutina base no encontrada: " + idRutinaBase));
+
+        // Se permite usar rutinas que ya pertenecen a otro plan
+        Rutina nueva = new Rutina();
+        nueva.setNombre(base.getNombre());
+        nueva.setDescripcion(base.getDescripcion());
+        nueva.setPlan(plan);
+        nueva.setRutinaBase(base);
+        nueva.setEstado(base.getEstado());
+
+        Rutina guardada = rutinaRepository.save(nueva);
+        return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
+    }
+
     @PutMapping("/{id}")
     public Rutina update(@PathVariable Long id, @RequestBody RutinaUpdateRequestDTO dto) {
         return rutinaService.update(id, dto);
@@ -126,11 +162,18 @@ public class RutinaController {
         return ResponseEntity.noContent().build();
     }
 
+    // ================== DETALLE (usa rutinaBase si existe) ==================
     @GetMapping("/{id}/detalle")
     public ResponseEntity<?> getRutinaDetalle(@PathVariable Long id) {
         return rutinaRepository.findById(id)
                 .map(rutina -> {
-                    List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findActivosByRutinaId(id);
+                    Long rutinaDetalleId = (rutina.getRutinaBase() != null)
+                            ? rutina.getRutinaBase().getId_rutina()
+                            : rutina.getId_rutina();
+
+                    List<RutinaEjercicio> ejercicios =
+                            rutinaEjercicioRepository.findActivosByRutinaId(rutinaDetalleId);
+
                     Map<String, Object> resultado = new HashMap<>();
                     resultado.put("rutina", rutina);
                     resultado.put("ejercicios", ejercicios);
@@ -139,6 +182,7 @@ public class RutinaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ================== EXPORTAR PDF (usa rutinaBase si existe) ==================
     @GetMapping("/{id}/exportar")
     public void exportarRutinaPDF(@PathVariable Long id, HttpServletResponse response) throws Exception {
 
@@ -148,7 +192,33 @@ public class RutinaController {
             return;
         }
 
-        List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findActivosByRutinaId(id);
+        // Si la rutina tiene rutinaBase, usamos esa para los ejercicios
+        Long rutinaDetalleId = (rutina.getRutinaBase() != null)
+                ? rutina.getRutinaBase().getId_rutina()
+                : rutina.getId_rutina();
+
+        List<RutinaEjercicio> ejercicios =
+                rutinaEjercicioRepository.findActivosByRutinaId(rutinaDetalleId);
+
+        // ======== Datos alumno / entrenador ========
+        String nombreAlumno = "-";
+        String nombreEntrenador = "-";
+
+        if (rutina.getPlan() != null) {
+            if (rutina.getPlan().getAlumno() != null) {
+                var al = rutina.getPlan().getAlumno();
+                nombreAlumno = String.join(" ",
+                        al.getNombre() != null ? al.getNombre() : "",
+                        al.getApellido() != null ? al.getApellido() : "").trim();
+            }
+            if (rutina.getPlan().getEntrenador() != null
+                    && rutina.getPlan().getEntrenador().getUsuario() != null) {
+                var u = rutina.getPlan().getEntrenador().getUsuario();
+                nombreEntrenador = String.join(" ",
+                        u.getNombre() != null ? u.getNombre() : "",
+                        u.getApellido() != null ? u.getApellido() : "").trim();
+            }
+        }
 
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=rutina_" + id + ".pdf");
@@ -168,15 +238,16 @@ public class RutinaController {
         Font fontNormal = new Font(baseFont, 12, Font.NORMAL, Color.BLACK);
         Font fontHeader = new Font(baseFont, 12, Font.BOLD, Color.WHITE);
 
-        // HEADER ESTILIZADO
+        // ========== HEADER ESTILIZADO (CON LOGO) ==========
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[] { 1f, 3f });
+        headerTable.setWidths(new float[]{1f, 3f});
         headerTable.getDefaultCell().setBorder(Rectangle.NO_BORDER);
 
         try {
-            String rutaLogo = "C:/Users/Blue Oyola/GrindSupBackend/backend/src/main/resources/static/logo-grindsup.png";
-            Image logo = Image.getInstance(rutaLogo);
+            // carga el logo desde src/main/resources/static/logo-grindsup.png
+            ClassPathResource res = new ClassPathResource("static/logo-grindsup.png");
+            Image logo = Image.getInstance(res.getURL());
             logo.scaleToFit(70, 70);
             PdfPCell logoCell = new PdfPCell(logo, false);
             logoCell.setBorder(Rectangle.NO_BORDER);
@@ -195,7 +266,10 @@ public class RutinaController {
         title.setSpacingAfter(3);
         titleCell.addElement(title);
 
-        Paragraph sub = new Paragraph("Rutina personalizada", new Font(baseFont, 12, Font.ITALIC, Color.GRAY));
+        Paragraph sub = new Paragraph(
+                "Rutina personalizada",
+                new Font(baseFont, 12, Font.ITALIC, Color.GRAY)
+        );
         titleCell.addElement(sub);
 
         headerTable.addCell(titleCell);
@@ -205,19 +279,21 @@ public class RutinaController {
         document.add(separator);
         document.add(Chunk.NEWLINE);
 
-        // Descripción y Alumno
-        document.add(new Paragraph("Descripción: " + rutina.getDescripcion(), fontNormal));
-        if (rutina.getPlan() != null && rutina.getPlan().getAlumno() != null)
-            document.add(new Paragraph("Alumno: " + rutina.getPlan().getAlumno().getNombre(), fontNormal));
+        // ======== Descripción + Alumno + Entrenador ========
+        if (rutina.getDescripcion() != null && !rutina.getDescripcion().isBlank()) {
+            document.add(new Paragraph("Descripción: " + rutina.getDescripcion(), fontNormal));
+        }
+        document.add(new Paragraph("Alumno: " + nombreAlumno, fontNormal));
+        document.add(new Paragraph("Entrenador: " + nombreEntrenador, fontNormal));
         document.add(Chunk.NEWLINE);
 
-        // TABLA
+        // ========== TABLA DE EJERCICIOS ==========
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10);
-        table.setWidths(new float[] { 2f, 3f, 1f, 1.4f, 3f });
+        table.setWidths(new float[]{2f, 3f, 1f, 1.4f, 3f});
 
-        String[] headers = { "Grupo Muscular", "Ejercicio", "Series", "Reps", "Observaciones" };
+        String[] headers = {"Grupo Muscular", "Ejercicio", "Series", "Reps", "Observaciones"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, fontHeader));
             cell.setBackgroundColor(colorPrincipal);
@@ -236,20 +312,27 @@ public class RutinaController {
             table.addCell(makeCell(str(re.getSeries()), fontNormal, bg));
             table.addCell(makeCell(str(re.getRepeticiones()), fontNormal, bg));
             table.addCell(makeCell(
-                    (re.getObservaciones() == null || re.getObservaciones().isBlank()) ? "-" : re.getObservaciones(),
-                    fontNormal, bg));
+                    (re.getObservaciones() == null || re.getObservaciones().isBlank())
+                            ? "-"
+                            : re.getObservaciones(),
+                    fontNormal,
+                    bg
+            ));
         }
 
         document.add(table);
 
-        Paragraph footer = new Paragraph("Generado por GrindSup - " + new Date(),
-                new Font(baseFont, 10, Font.ITALIC, Color.GRAY));
+        Paragraph footer = new Paragraph(
+                "Generado por GrindSup - " + new Date(),
+                new Font(baseFont, 10, Font.ITALIC, Color.GRAY)
+        );
         footer.setAlignment(Element.ALIGN_RIGHT);
         document.add(footer);
 
         document.close();
     }
 
+    // ===== helpers =====
     private PdfPCell makeCell(String texto, Font font, Color bg) {
         PdfPCell cell = new PdfPCell(new Phrase(texto != null ? texto : "", font));
         cell.setBackgroundColor(bg);

@@ -1,114 +1,83 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/backend/src/main/java/com/grindsup/backend/service/UserService.java b/backend/src/main/java/com/grindsup/backend/service/UserService.java
-index e062c44c570e01fa25dc56f428179366229423e2..b7447f8733adbf78bd953510bda85cac77cc6c34 100644
---- a/backend/src/main/java/com/grindsup/backend/service/UserService.java
-+++ b/backend/src/main/java/com/grindsup/backend/service/UserService.java
-@@ -1,53 +1,102 @@
- package com.grindsup.backend.service;
- 
- import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-+import com.grindsup.backend.model.Usuario;
-+import com.grindsup.backend.repository.UsuarioRepository;
- import org.springframework.stereotype.Service;
- 
- import java.util.HashMap;
- import java.util.Map;
-+import java.util.Optional;
- 
- @Service
- public class UserService {
- 
-     // Simulación de base de datos en memoria (se borra al reiniciar)
-     private final Map<String, String> userRefreshTokens = new HashMap<>();
-     private GoogleClientSecrets clientSecrets; // Asumimos que se configura externamente
-+    private final UsuarioRepository usuarioRepository;
-+
-+    public UserService(UsuarioRepository usuarioRepository) {
-+        this.usuarioRepository = usuarioRepository;
-+    }
- 
-     /**
-      * Devuelve el refresh token de un usuario por su ID.
-      * ⚠️ Nota: Esta simulación en memoria se limpia al reiniciar el servidor.
-      * * @param userId ID del usuario (debe coincidir con la clave de guardado, ej: "4")
-      * @return refresh token o null si no existe.
-      */
-     public String getRefreshTokenForUser(String userId) {
-         // Devuelve el token si existe, o null. Esto evita el crash.
-         String token = userRefreshTokens.get(userId);
--        if (token == null) {
--            // Log para diagnóstico: si no encuentra la clave, es porque el Map está vacío o la clave no coincide.
-+        if (token != null && !token.isBlank()) {
-+            return token;
-+        }
-+
-+        Optional<Usuario> usuarioOpt = resolveUsuario(userId);
-+        if (usuarioOpt.isEmpty()) {
-+            System.err.println("❌ ERROR AUTH: Usuario NO encontrado para userId: " + userId);
-+            return null;
-+        }
-+
-+        String persistedToken = usuarioOpt.get().getGoogleRefreshToken();
-+        if (persistedToken == null || persistedToken.isBlank()) {
-             System.err.println("❌ ERROR AUTH: Refresh Token NO encontrado para userId: " + userId);
-+            return null;
-         }
--        return token;
-+
-+        // Cachear para siguientes llamadas en esta ejecución
-+        userRefreshTokens.put(userId, persistedToken);
-+        return persistedToken;
-     }
- 
-     /**
-      * Guarda o actualiza el refresh token de un usuario.
-      * * @param userId ID del usuario (clave: ej. "4")
-      * @param refreshToken refresh token de Google
-      */
-     public void setRefreshTokenForUser(String userId, String refreshToken) {
-+        if (userId == null || userId.isBlank() || refreshToken == null || refreshToken.isBlank()) {
-+            return;
-+        }
-+
-         userRefreshTokens.put(userId, refreshToken);
-+
-+        resolveUsuario(userId).ifPresent(usuario -> {
-+            usuario.setGoogleRefreshToken(refreshToken);
-+            usuarioRepository.save(usuario);
-+        });
-+
-         System.out.println("✅ Refresh Token guardado para userId: " + userId.trim());
-     }
- 
-+    private Optional<Usuario> resolveUsuario(String userId) {
-+        if (userId == null || userId.isBlank()) {
-+            return Optional.empty();
-+        }
-+
-+        if (userId.chars().allMatch(Character::isDigit)) {
-+            try {
-+                Long id = Long.parseLong(userId);
-+                return usuarioRepository.findById(id);
-+            } catch (NumberFormatException ex) {
-+                // Continuar intentando con correo
-+            }
-+        }
-+
-+        return usuarioRepository.findByCorreoIgnoreCase(userId);
-+    }
-+
-     // El resto de los métodos se mantienen iguales (get/setClientSecrets)
-     public void setClientSecrets(GoogleClientSecrets clientSecrets) {
-         this.clientSecrets = clientSecrets;
-     }
- 
-     public GoogleClientSecrets getClientSecrets() {
-         if (clientSecrets == null) {
-             throw new RuntimeException("Client secrets no configurados");
-         }
-         return clientSecrets;
-     }
+diff --git a/frontend/src/services/rutinas.servicio.js b/frontend/src/services/rutinas.servicio.js
+index a0d91342218dcb443442ec7e90b301491ea97936..6ae3ff5d9b0c77b34f4ce78fa8f0d12d0911f9ff 100644
+--- a/frontend/src/services/rutinas.servicio.js
++++ b/frontend/src/services/rutinas.servicio.js
+@@ -62,67 +62,74 @@ async function obtenerDetalleRutina(idPlan, idRutina) {
+   return null;
  }
+ 
+ /* ---------- Crear ---------- */
+ async function crear(idPlan, payload) {
+   // Si el plan es “SIN_PLAN”, vacío o null, usar endpoint general
+   if (!idPlan || idPlan === "SIN_PLAN") {
+     const r = await axiosInstance.post(`/api/rutinas`, payload);
+     return r.data;
+   }
+ 
+   // Si hay plan válido, usar el endpoint anidado
+   const r = await axiosInstance.post(`/api/planes/${idPlan}/rutinas`, payload);
+   return r.data;
+ }
+ 
+ /* ---------- Actualizar ---------- */
+ async function update(idPlan, idRutina, payload) {
+   const body = {
+     nombre: payload?.nombre ?? "",
+     descripcion: payload?.descripcion ?? "",
+     ejercicios: (payload?.ejercicios ?? []).map((e) => ({
+       idEjercicio: e.idEjercicio ?? e.id ?? e.id_ejercicio,
+       series: Number(e.series ?? 0),
+       repeticiones: Number(e.repeticiones ?? 0),
++      grupoMuscular: e.grupoMuscular ?? e.grupo_muscular ?? null,
+       observaciones: e.observaciones?.trim() || null
+     })),
+   };
+ 
+   const r = await axiosInstance.put(`/api/rutinas/${idRutina}`, body, {
+     headers: { "Content-Type": "application/json" },
+   });
+   return r.data ?? true;
+ }
+ 
+ /* ---------- Eliminar ---------- */
+ async function remove(idPlan, idRutina) {
+   const attempts = [
+     { method: "delete", url: `/api/planes/${idPlan}/rutinas/${idRutina}` },
+     { method: "delete", url: `/api/rutinas/${idRutina}` },
+     { method: "post", url: `/api/planes/${idPlan}/rutinas/${idRutina}/delete` },
+     { method: "post", url: `/api/rutinas/${idRutina}/delete` },
+   ];
+ 
+   for (const att of attempts) {
+     try {
+       if (att.method === "delete") {
+         await axiosInstance.delete(att.url, att.config);
+       } else {
+         await axiosInstance.post(att.url, att.config?.data ?? {});
+       }
+       return true;
+     } catch {}
+   }
+   return false;
+ }
+ 
++async function copiarEnPlan(idPlan, rutinaId) {
++  const r = await axiosInstance.post(`/api/planes/${idPlan}/rutinas/copiar`, { rutinaId });
++  return r.data;
++}
++
+ /* ---------- Export único ---------- */
+ const rutinasService = {
+   listByPlan,
+   obtenerDetalleRutina,
+   crear,
+   update,
+   remove,
++  copiarEnPlan,
+ };
+ 
+ export default rutinasService;
 \ No newline at end of file
  
 EOF

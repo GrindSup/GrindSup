@@ -31,8 +31,8 @@ public class RutinaService {
     private EntityManager entityManager;
 
     public RutinaService(RutinaRepository rutinaRepository,
-            RutinaEjercicioRepository rutinaEjercicioRepository,
-            EjercicioRepository ejercicioRepository) {
+                         RutinaEjercicioRepository rutinaEjercicioRepository,
+                         EjercicioRepository ejercicioRepository) {
         this.rutinaRepository = rutinaRepository;
         this.rutinaEjercicioRepository = rutinaEjercicioRepository;
         this.ejercicioRepository = ejercicioRepository;
@@ -47,8 +47,10 @@ public class RutinaService {
         rutina.setNombre(dto.getNombre());
         rutina.setDescripcion(dto.getDescripcion());
 
+        // Borramos ejercicios actuales de esa rutina
         rutinaEjercicioRepository.deleteAllByRutinaId(idRutina);
 
+        // Limpiamos el contexto para evitar problemas de cache
         entityManager.flush();
         entityManager.clear();
 
@@ -65,13 +67,12 @@ public class RutinaService {
                                 "Ejercicio no encontrado con id: " + ejDto.getIdEjercicio()));
 
                 RutinaEjercicio nuevoItem = new RutinaEjercicio();
-
                 nuevoItem.setRutina(rutinaRef);
                 nuevoItem.setEjercicio(ejercicio);
                 nuevoItem.setSeries(ejDto.getSeries());
                 nuevoItem.setRepeticiones(ejDto.getRepeticiones());
                 nuevoItem.setGrupo_muscular(ejDto.getGrupoMuscular());
-                nuevoItem.setObservaciones(ejDto.getGrupoMuscular());
+                nuevoItem.setObservaciones(ejDto.getObservaciones());
 
                 nuevosEjercicios.add(nuevoItem);
             }
@@ -91,6 +92,7 @@ public class RutinaService {
         r.setDeleted_at(now);
         rutinaRepository.save(r);
 
+        // Si esta rutina tiene ejercicios propios, los marcamos como borrados
         List<RutinaEjercicio> ejercicios = rutinaEjercicioRepository.findAllByRutinaId(idRutina);
         for (RutinaEjercicio re : ejercicios) {
             re.setDeleted_at(now);

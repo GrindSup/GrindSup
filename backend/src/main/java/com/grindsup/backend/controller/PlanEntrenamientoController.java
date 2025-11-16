@@ -6,7 +6,7 @@ import com.grindsup.backend.model.RutinaEjercicio;
 import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.DTO.CrearRutinarequestDTO;
 import com.grindsup.backend.DTO.EjercicioRutinaDTO;
-import com.grindsup.backend.DTO.PlanListDTO; // <-- Importación necesaria
+import com.grindsup.backend.DTO.PlanListDTO;
 import com.grindsup.backend.model.Alumno;
 import com.grindsup.backend.model.Ejercicio;
 import com.grindsup.backend.model.Estado;
@@ -18,9 +18,12 @@ import com.grindsup.backend.service.PlanEntrenamientoService;
 import com.grindsup.backend.repository.AlumnoRepository;
 import com.grindsup.backend.repository.EjercicioRepository;
 import com.grindsup.backend.repository.EstadoRepository;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -42,13 +45,13 @@ public class PlanEntrenamientoController {
     private final EjercicioRepository ejercicioRepository;
 
     public PlanEntrenamientoController(
-                PlanEntrenamientoRepository planRepository,
-                AlumnoRepository alumnoRepository,
-                EstadoRepository estadoRepository,
-                PlanEntrenamientoService planService,
-                RutinaRepository rutinaRepository,
-                RutinaEjercicioRepository rutinaEjercicioRepository,
-                EjercicioRepository ejercicioRepository
+            PlanEntrenamientoRepository planRepository,
+            AlumnoRepository alumnoRepository,
+            EstadoRepository estadoRepository,
+            PlanEntrenamientoService planService,
+            RutinaRepository rutinaRepository,
+            RutinaEjercicioRepository rutinaEjercicioRepository,
+            EjercicioRepository ejercicioRepository
     ) {
         this.planRepository = planRepository;
         this.alumnoRepository = alumnoRepository;
@@ -61,33 +64,30 @@ public class PlanEntrenamientoController {
 
     /* ==========================
         LISTAR PLANES POR ENTRENADOR
-        ========================== */
+       ========================== */
     @GetMapping
-    public ResponseEntity<List<PlanListDTO>> listarPorEntrenador( // <-- Retorna List<PlanListDTO>
-                @RequestParam Long entrenadorId
-    ) {
-        // Usa el método de proyección
+    public ResponseEntity<List<PlanListDTO>> listarPorEntrenador(@RequestParam Long entrenadorId) {
         List<PlanListDTO> lista = planRepository.findPlanDTOByEntrenador(entrenadorId);
         return ResponseEntity.ok(lista);
     }
 
     /* ==========================
         OBTENER PLAN POR ID
-        ========================== */
+       ========================== */
     @GetMapping("/{id}")
     public ResponseEntity<PlanEntrenamiento> obtenerPlan(@PathVariable Long id) {
         return planRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     /* ==========================
         ACTUALIZAR PLAN
-        ========================== */
+       ========================== */
     @PutMapping("/{id}")
     public ResponseEntity<PlanEntrenamiento> update(
-                @PathVariable Long id,
-                @RequestBody PlanEntrenamiento plan
+            @PathVariable Long id,
+            @RequestBody PlanEntrenamiento plan
     ) {
         return planRepository.findById(id).map(existing -> {
 
@@ -96,16 +96,12 @@ public class PlanEntrenamientoController {
             existing.setFecha_fin(plan.getFecha_fin());
 
             if (plan.getAlumno() != null) {
-                Alumno alumno = alumnoRepository
-                        .findById(plan.getAlumno().getId_alumno())
-                        .orElse(null);
+                Alumno alumno = alumnoRepository.findById(plan.getAlumno().getId_alumno()).orElse(null);
                 existing.setAlumno(alumno);
             }
 
             if (plan.getEstado() != null) {
-                Estado estado = estadoRepository
-                        .findById(plan.getEstado().getIdEstado())
-                        .orElse(null);
+                Estado estado = estadoRepository.findById(plan.getEstado().getIdEstado()).orElse(null);
                 existing.setEstado(estado);
             }
 
@@ -117,7 +113,7 @@ public class PlanEntrenamientoController {
 
     /* ==========================
         ELIMINAR PLAN
-        ========================== */
+       ========================== */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         planRepository.deleteById(id);
@@ -126,28 +122,24 @@ public class PlanEntrenamientoController {
 
     /* ==========================
         CREAR PLAN
-        ========================== */
+       ========================== */
     @PostMapping
-    public ResponseEntity<PlanEntrenamiento> crearPlan(
-                @RequestBody CrearPlanrequestDTO request
-    ) {
+    public ResponseEntity<PlanEntrenamiento> crearPlan(@RequestBody CrearPlanrequestDTO request) {
         PlanEntrenamiento nuevoPlan = planService.crearPlan(request);
         return ResponseEntity.ok(nuevoPlan);
     }
 
     /* ==========================
         LISTAR PLANES POR ALUMNO
-        ========================== */
+       ========================== */
     @GetMapping("/alumno/{idAlumno}")
-    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumno(
-                @PathVariable Long idAlumno
-    ) {
+    public ResponseEntity<List<PlanEntrenamiento>> obtenerPlanesPorAlumno(@PathVariable Long idAlumno) {
         return ResponseEntity.ok(planService.listarPlanesPorAlumno(idAlumno));
     }
 
     /* ==========================
         FINALIZAR PLAN
-        ========================== */
+       ========================== */
     @PostMapping("/{idPlan}/finalizar")
     public ResponseEntity<?> finalizarPlan(@PathVariable Long idPlan) {
         PlanEntrenamiento actualizado = planService.finalizar(idPlan);
@@ -156,7 +148,7 @@ public class PlanEntrenamientoController {
 
     /* ==========================
         GRUPOS MUSCULARES
-        ========================== */
+       ========================== */
     @GetMapping("/grupos-musculares")
     public List<Map<String, String>> listarGrupos() {
         return Arrays.stream(GrupoMuscularEnum.values())
@@ -165,13 +157,13 @@ public class PlanEntrenamientoController {
     }
 
     /* ==========================
-        CREAR RUTINA EN UN PLAN
-        ========================== */
+        CREAR RUTINA
+       ========================== */
     @PostMapping("/{idPlan}/rutinas")
     @Transactional
     public ResponseEntity<Rutina> crearRutina(
-                @PathVariable Long idPlan,
-                @RequestBody CrearRutinarequestDTO request
+            @PathVariable Long idPlan,
+            @RequestBody CrearRutinarequestDTO request
     ) {
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new RuntimeException("Plan no encontrado"));
@@ -182,8 +174,8 @@ public class PlanEntrenamientoController {
         rutina.setPlan(plan);
 
         Estado estadoRutina = estadoRepository.findById(
-                        request.getIdEstado() != null ? request.getIdEstado() : 1L
-                ).orElseThrow(() -> new RuntimeException("Estado no encontrado"));
+                request.getIdEstado() != null ? request.getIdEstado() : 1L
+        ).orElseThrow(() -> new RuntimeException("Estado no encontrado"));
 
         rutina.setEstado(estadoRutina);
         rutina.setCreated_at(OffsetDateTime.now());
@@ -192,7 +184,6 @@ public class PlanEntrenamientoController {
         Rutina nuevaRutina = rutinaRepository.save(rutina);
 
         if (request.getEjercicios() != null && !request.getEjercicios().isEmpty()) {
-
             List<RutinaEjercicio> lista = new ArrayList<>();
 
             for (EjercicioRutinaDTO dto : request.getEjercicios()) {
@@ -217,5 +208,68 @@ public class PlanEntrenamientoController {
         }
 
         return ResponseEntity.ok(nuevaRutina);
+    }
+
+    /* =====================================================================
+            NUEVO MÉTODO COPIAR RUTINA (DE TU PATCH)
+       ===================================================================== */
+    @PostMapping("/{idPlan}/rutinas/copiar")
+    @Transactional
+    public ResponseEntity<Rutina> copiarRutinaExistente(
+            @PathVariable Long idPlan,
+            @RequestBody Map<String, Long> body) {
+
+        Long rutinaId = body.get("rutinaId");
+        if (rutinaId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe indicar rutinaId");
+        }
+
+        PlanEntrenamiento plan = planRepository.findById(idPlan)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan no encontrado"));
+
+        Rutina original = rutinaRepository.findById(rutinaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rutina no encontrada"));
+
+        if (original.getPlan() != null
+                && original.getPlan().getEntrenador() != null
+                && plan.getEntrenador() != null
+                && !original.getPlan().getEntrenador().getIdEntrenador()
+                        .equals(plan.getEntrenador().getIdEntrenador())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Solo podés copiar rutinas de tu propio equipo");
+        }
+
+        Rutina copia = new Rutina();
+        copia.setNombre(original.getNombre());
+        copia.setDescripcion(original.getDescripcion());
+        copia.setPlan(plan);
+        copia.setEstado(original.getEstado());
+
+        Rutina guardada = rutinaRepository.save(copia);
+
+        List<RutinaEjercicio> ejerciciosOriginales =
+                rutinaEjercicioRepository.findActivosByRutinaId(original.getId_rutina());
+
+        List<RutinaEjercicio> clones = new ArrayList<>();
+
+        for (RutinaEjercicio item : ejerciciosOriginales) {
+
+            RutinaEjercicio clone = new RutinaEjercicio();
+            clone.setRutina(guardada);
+            clone.setEjercicio(item.getEjercicio());
+            clone.setSeries(item.getSeries());
+            clone.setRepeticiones(item.getRepeticiones());
+            clone.setObservaciones(item.getObservaciones());
+            clone.setGrupo_muscular(item.getGrupo_muscular());
+            clone.setEstado(item.getEstado());
+
+            clones.add(clone);
+        }
+
+        if (!clones.isEmpty()) {
+            rutinaEjercicioRepository.saveAll(clones);
+        }
+
+        return ResponseEntity.ok(guardada);
     }
 }

@@ -27,6 +27,9 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
     // 🔹 Nuevo método para buscar solo alumnos activos por DNI
     Optional<Alumno> findByDocumentoAndDeletedAtIsNull(String documento);
 
+    // 🔹 Consulta ligera para chequeos de disponibilidad
+    boolean existsByDocumentoAndDeletedAtIsNull(String documento);
+
     Optional<Alumno> findByDocumento(String documento);
 
     // Mantenemos el método que devuelve la entidad Alumno completa (por si es usado en otro lado, ej: create/update/findById)
