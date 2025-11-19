@@ -89,7 +89,7 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Turnos", path: "/turnos" },
     { label: "Planes", path: "/planes" },
-    { label: "Entrenador", path: "/entrenadores" },
+    { label: "Perfil", path: entrenadorId ? `/entrenadores/perfil/${entrenadorId}` : "/"},
     { label: "Contacto", path: "/contacto" },
   ];
 

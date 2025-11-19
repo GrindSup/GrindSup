@@ -19,7 +19,6 @@ import DetalleTurno from "./pages/Turnos/DetalleTurno.jsx";
 import HistorialTurnos from "./pages/Turnos/HistorialTurnos.jsx";
 import CalendarioTurnos from "./pages/Turnos/CalendarioTurnos.jsx";
 import EditarAlumnoForm from "./pages/Alumno/EditarAlumnoForm";
-import PerfilAlumno from "./pages/Alumno/PerfilAlumno";
 import Register from "./pages/Usuarios/Register.jsx";
 import ForgotPassword from "./pages/Usuarios/ForgotPassword";
 import ResetPassword from "./pages/Usuarios/ResetPassword";
@@ -242,7 +241,6 @@ export default function App() {
                 <Route path="/alumnos" element={guard(<AlumnoList />)} />
                 <Route path="/alumno/registrar" element={guard(<RegistrarAlumnoForm />)} />
                 <Route path="/alumno/editar/:id" element={guard(<EditarAlumnoForm />)} />
-                <Route path="/alumno/perfil/:id" element={guard(<PerfilAlumno />)} />
 
                 {/* Turnos */}
                 <Route path="/turnos" element={guard(<ListaTurnos />)} />

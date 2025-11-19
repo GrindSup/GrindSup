@@ -205,7 +205,7 @@ export default function ListaEntrenadores() {
                 <Box bg="gray.50" p={4} borderRadius="lg" shadow="inner">
                   <Stack spacing={2} fontSize="sm" color="gray.900">
                     <Text>
-                      <strong>Correo:</strong> {e.usuario?.correo || "—"}
+                      <strong>Correo Electrónico:</strong> {e.usuario?.correo || "—"}
                     </Text>
                     <Text>
                       <strong>Teléfono:</strong> {e.telefono || "—"}

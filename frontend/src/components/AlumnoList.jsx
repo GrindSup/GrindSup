@@ -247,10 +247,9 @@ export default function AlumnoList() {
             const impText = imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
 
             return (
-              <Card key={aid} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }}>
+              <Card key={aid} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }} cursor="pointer" onClick={() => toggleExpand(aid)}>
                 <CardHeader pb={3}>
                   <Flex align="center" gap={3}>
-                    <Link as={RouterLink} to={`/alumno/perfil/${aid}`} flex="1" _hover={{ textDecor: "none" }}>
                       <Box>
                         <Heading size="md">{a.nombre} {a.apellido}</Heading>
                         {imp.length > 0 && (
@@ -265,7 +264,6 @@ export default function AlumnoList() {
                           {a.estado?.nombre && <Badge colorScheme="purple">{a.estado.nombre}</Badge>}
                         </HStack>
                       </Box>
-                    </Link>
                     <Spacer />
                     <IconButton
                       aria-label={isOpen ? "Ocultar detalles" : "Ver detalles"}

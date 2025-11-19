@@ -155,7 +155,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
         title: "Entrenador actualizado correctamente",
         position: "top",
       });
-      navigate("/entrenadores");
+      navigate(-1);
     } catch (err) {
       toast({
         status: "error",
@@ -173,9 +173,9 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
       <Container maxW="container.md">
         <Card>
           <CardHeader textAlign="center" pb={0}>
-            <Heading size="lg">Editar Entrenador</Heading>
+            <Heading size="lg">Editar Perfl</Heading>
             <Text color="gray.600" mt={2}>
-              Modificá los datos del entrenador y guardá los cambios.
+              Modificá tus datos y guardá los cambios.
             </Text>
           </CardHeader>
 
@@ -201,7 +201,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
                 <GridItem colSpan={2}>
                   <FormControl isRequired isInvalid={submitted && !!errors.correo}>
-                    <FormLabel>Correo</FormLabel>
+                    <FormLabel>Correo Electrónico</FormLabel>
                     <Input name="correo" value={entrenador.correo} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.correo}</FormErrorMessage>}
                   </FormControl>
@@ -282,7 +282,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                 >
                   Guardar cambios
                 </Button>
-                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>
+                <Button variant="ghost" onClick={() => navigate(-1)}>
                   Cancelar
                 </Button>
               </Stack>

@@ -20,7 +20,10 @@ function Star({ filled, onClick }) {
       onClick={onClick}
       size="sm"
       borderRadius="full"
-      aria-label={filled ? "star-filled" : "star-empty"}
+      bg={filled ? "#258d19" : "transparent"}
+      color={filled ? "white" : "#258d19"}
+      border="1px solid"
+      borderColor="#258d19"
     >
       ★
     </Button>
@@ -279,7 +282,7 @@ export default function ListaPlanes() {
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button mr={3} onClick={onClose}>Cancelar</Button>
+            <Button mr={3} onClick={onClose} bg="#258d19" color="white">Cancelar</Button>
             <Button bg="#258d19" color="white" onClick={confirmarFinalizar}>
               Guardar
             </Button>
