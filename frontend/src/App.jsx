@@ -43,6 +43,12 @@ import ReportesHome from "./pages/Reportes/ReportesHome.jsx";
 import ReportesPage from "./pages/Reportes/ReportesPage";
 import ReportesPlanes from "./pages/Reportes/ReportesPlanes.jsx";
 
+// 👇 IMPORTÁ TU DASHBOARD DE ADMIN
+// ajustá el path según dónde lo tengas
+import AdminDashboard from "./pages/Admin/AdminDashboards.jsx";
+import AdminReportsGlobal from "./pages/Admin/AdminReportsGlobal.jsx";
+import AdminReportsEntrenadores from "./pages/Admin/AdminReportsEntrenadores.jsx";
+
 import { clearSessionCache } from "./context/auth.js";
 
 function Placeholder({ title }) {
@@ -64,6 +70,16 @@ export default function App() {
 
   // Para evitar limpiar de más en la primera carga
   const isInitialMount = useRef(true);
+
+  // 🔹 Cálculo del rol admin (según lo que nos manda /me)
+  const isAdmin =
+    usuario &&
+    (
+      usuario.rol === "administrador" ||
+      usuario.rol === "ADMINISTRADOR" ||
+      usuario.rol === "ADMIN" ||
+      usuario.id_rol === 2 // por si en algún lado viene así
+    );
 
   // Persistencia de usuario y limpieza cuando cambia
   useEffect(() => {
@@ -94,7 +110,7 @@ export default function App() {
     }
   }, [usuario]);
 
-  // Bootstrap de sesión
+  // Bootstrap de sesión (cuando ya hay gs_token, por ejemplo tras refrescar)
   useEffect(() => {
     let cancel = false;
 
@@ -135,21 +151,25 @@ export default function App() {
     };
   }, []);
 
-  // Guard de rutas protegidas
-  const guard = (el) =>
-    usuario
-      ? el
-      : authAttempted
-      ? <Navigate to="/login" replace />
-      : <LoadingScreen />;
-
   // Pantalla mientras se carga sesión
   const LoadingScreen = () => (
     <Center flex="1" h="calc(100vh - 150px)">
       <Spinner size="xl" color="#258d19" />
-      <Text ml={3} color="gray.700">Cargando sesión...</Text>
+      <Text ml={3} color="gray.700">
+        Cargando sesión...
+      </Text>
     </Center>
   );
+
+  // Guard de rutas protegidas
+  const guard = (el) =>
+    usuario ? (
+      el
+    ) : authAttempted ? (
+      <Navigate to="/login" replace />
+    ) : (
+      <LoadingScreen />
+    );
 
   return (
     <BrowserRouter>
@@ -184,8 +204,17 @@ export default function App() {
           <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
             <Container maxW="container.xl">
               <Routes>
-                {/* Home */}
-                <Route path="/" element={usuario ? <InicioDashboard /> : <PantallaInicio />} />
+                {/* Home: distinto para admin vs entrenador */}
+                <Route
+                  path="/"
+                  element={
+                    usuario
+                      ? isAdmin
+                        ? <AdminDashboard />
+                        : <InicioDashboard />
+                      : <PantallaInicio />
+                  }
+                />
 
                 {/* OAuth Success */}
                 <Route
@@ -194,6 +223,15 @@ export default function App() {
                 />
 
                 {/* Públicas */}
+                
+                <Route
+                  path="/reportes/admin/global"
+                  element={guard(<AdminReportsGlobal />)}
+                />
+                <Route
+                  path="/reportes/admin/entrenadores"
+                  element={guard(<AdminReportsEntrenadores />)}
+                />
                 <Route path="/login" element={<Login setUsuario={setUsuario} />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot" element={<ForgotPassword />} />
@@ -209,7 +247,7 @@ export default function App() {
                 {/* Turnos */}
                 <Route path="/turnos" element={guard(<ListaTurnos />)} />
                 <Route path="/turnos/registrar" element={guard(<RegistrarTurno />)} />
-                <Route path="/turnos/historial" element={guard(<HistorialTurnos />)} /> 
+                <Route path="/turnos/historial" element={guard(<HistorialTurnos />)} />
                 <Route path="/turnos/editar/:id" element={guard(<DetalleTurno />)} />
                 <Route path="/turnos/calendario" element={guard(<CalendarioTurnos />)} />
 
@@ -226,7 +264,10 @@ export default function App() {
                 <Route path="/rutinas/nueva" element={guard(<NuevaRutina />)} />
                 <Route path="/planes/:idPlan/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
                 <Route path="/rutinas/:idRutina" element={guard(<DetalleRutina />)} />
-                <Route path="/planes/:idPlan/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
+                <Route
+                  path="/planes/:idPlan/rutinas/:idRutina/editar"
+                  element={guard(<EditarRutina />)}
+                />
                 <Route path="/rutinas/:idRutina/editar" element={guard(<EditarRutina />)} />
 
                 {/* Ejercicios */}
@@ -237,16 +278,25 @@ export default function App() {
 
                 {/* Entrenadores */}
                 <Route path="/entrenadores" element={guard(<ListaEntrenadores />)} />
-                <Route path="/entrenadores/editar/:idEntrenador" element={guard(<EditarEntrenador />)} />
-                <Route path="/entrenadores/perfil/:idEntrenador" element={guard(<PerfilEntrenador />)} />
+                <Route
+                  path="/entrenadores/editar/:idEntrenador"
+                  element={guard(<EditarEntrenador />)}
+                />
+                <Route
+                  path="/entrenadores/perfil/:idEntrenador"
+                  element={guard(<PerfilEntrenador />)}
+                />
 
                 {/* Reportes */}
                 <Route path="/reportes" element={guard(<ReportesHome />)} />
                 <Route path="/reportes/alumnos" element={guard(<ReportesPage />)} />
                 <Route path="/reportes/planes" element={guard(<ReportesPlanes />)} />
 
-                {/* Dashboard alias */}
-                <Route path="/dashboard" element={guard(<InicioDashboard />)} />
+                {/* Dashboard alias: también respeta admin vs entrenador */}
+                <Route
+                  path="/dashboard"
+                  element={guard(isAdmin ? <AdminDashboard /> : <InicioDashboard />)}
+                />
 
                 {/* Default */}
                 <Route path="*" element={<Navigate to="/" replace />} />

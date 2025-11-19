@@ -1,14 +1,38 @@
-//src\pages\Entrenadores\ListaEntrenadores.jsx
+// src/pages/Entrenadores/ListaEntrenadores.jsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../config/axios.config";
 import {
-  Box, Button, Container, Flex, Heading, Input, InputGroup, InputLeftElement,
-  SimpleGrid, Spacer, Spinner, Text, HStack, Card, CardHeader, CardBody, CardFooter,
-  Badge, Stack, AlertDialog, AlertDialogOverlay, AlertDialogContent, AlertDialogHeader,
-  AlertDialogBody, Textarea, AlertDialogFooter
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  SimpleGrid,
+  Spinner,
+  Text,
+  Card,
+  CardBody,
+  Badge,
+  Stack,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter,
+  Textarea,
+  useToast,
 } from "@chakra-ui/react";
-import { SearchIcon, EditIcon, DeleteIcon, ArrowBackIcon } from "@chakra-ui/icons";
+import {
+  SearchIcon,
+  EditIcon,
+  DeleteIcon,
+  ArrowBackIcon,
+} from "@chakra-ui/icons";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
@@ -16,30 +40,33 @@ export default function ListaEntrenadores() {
   const [entrenadores, setEntrenadores] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
   const [isOpen, setIsOpen] = useState(false);
   const [entrenadorToDelete, setEntrenadorToDelete] = useState(null);
   const [motivo, setMotivo] = useState("");
-  const toast = useRef();
+
+  const toast = useToast();
   const navigate = useNavigate();
   const cancelRef = useRef();
 
+  // Traer TODOS los entrenadores (para admin)
   const fetchEntrenadores = async () => {
-  const idEntrenador = localStorage.getItem("entrenadorId"); //  <-- CORRECTO
-
-  if (!idEntrenador) {
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const { data } = await axios.get(`${API}/entrenadores/${idEntrenador}`);
-    setEntrenadores([data]); // lo mantengo igual, porque es un perfil único
-  } catch (error) {
-    toast.current?.({ title: "Error al cargar entrenador", status: "error" });
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${API}/entrenadores`);
+      setEntrenadores(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error al cargar entrenadores",
+        description: "No se pudo obtener el listado de entrenadores.",
+        status: "error",
+        position: "top",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchEntrenadores();
@@ -47,9 +74,16 @@ export default function ListaEntrenadores() {
 
   const filtered = entrenadores.filter((e) => {
     const q = search.toLowerCase();
+    const nombre = e.usuario?.nombre?.toLowerCase() || "";
+    const apellido = e.usuario?.apellido?.toLowerCase() || "";
+    const correo =
+      e.usuario?.correo?.toLowerCase() ||
+      e.usuario?.email?.toLowerCase() ||
+      "";
     return (
-      e.usuario?.nombre?.toLowerCase().includes(q) ||
-      e.usuario?.apellido?.toLowerCase().includes(q)
+      nombre.includes(q) ||
+      apellido.includes(q) ||
+      correo.includes(q)
     );
   });
 
@@ -60,109 +94,142 @@ export default function ListaEntrenadores() {
   };
 
   const confirmDelete = async () => {
-    if (!motivo.trim()) return;
+    if (!entrenadorToDelete) return;
     try {
-      await axios.delete(`${API}/entrenadores/${entrenadorToDelete.idEntrenador}`, {
-        data: { motivo },
+      // Por ahora el backend no usa "motivo", solo hacemos el DELETE simple.
+      await axios.delete(`${API}/entrenadores/${entrenadorToDelete.idEntrenador}`);
+      toast({
+        title: "Entrenador eliminado",
+        description: "Se realizó la eliminación lógica correctamente.",
+        status: "success",
+        position: "top",
       });
+      setIsOpen(false);
       fetchEntrenadores();
-    } catch {}
-    finally { setIsOpen(false); }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error al eliminar",
+        description: "No se pudo eliminar el entrenador.",
+        status: "error",
+        position: "top",
+      });
+    }
   };
 
-  if (loading) return <Spinner size="xl" color="teal.400" />;
+  if (loading) {
+    return (
+      <Container maxW="5xl" py={10}>
+        <Flex justify="center" align="center" minH="50vh" gap={3}>
+          <Spinner size="xl" color="#258d19" />
+          <Text color="white">Cargando entrenadores...</Text>
+        </Flex>
+      </Container>
+    );
+  }
 
   return (
     <Container maxW="5xl" py={10}>
-      
-      {/* FILA SUPERIOR: solo el botón */}
-<Flex align="center" mb={4}>
-  <Button
-    leftIcon={<ArrowBackIcon />}
-    onClick={() => navigate(-1)}
-    bg="#258d19"
-    color="white"
-  >
-    Volver
-  </Button>
-</Flex>
+      {/* Fila superior: volver + buscador */}
+      <Flex align="center" mb={6} gap={4} wrap="wrap">
+        <Button
+          leftIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/dashboard")}
+          bg="#258d19"
+          color="white"
+          _hover={{ bg: "green.600" }}
+        >
+          Volver
+        </Button>
 
-{/* CONTENIDO CENTRADO: título + card */}
-<Flex direction="column" align="center">
-  <Heading size="lg" color="white" mb={6}>
-    Perfil del Entrenador
-  </Heading>
+        <Heading size="lg" color="white" flex="1">
+          Administrar entrenadores
+        </Heading>
 
-  {/* Aquí ponés tu card o el contenido que quieras centrar */}
-  <Box w="100%" maxW="500px">
-    {/** tu card aquí **/}
-  </Box>
-</Flex>
+        <Box w={{ base: "100%", md: "260px" }}>
+          <InputGroup>
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.400" />
+            </InputLeftElement>
+            <Input
+              bg="white"
+              placeholder="Buscar por nombre, apellido o correo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </InputGroup>
+        </Box>
+      </Flex>
+
       {filtered.length === 0 ? (
         <Text
           fontSize="lg"
-          color="gray.300"
+          color="gray.200"
           fontWeight="bold"
           textAlign="center"
+          mt={8}
         >
-          No se encontró el entrenador.
+          No se encontraron entrenadores que coincidan con la búsqueda.
         </Text>
       ) : (
-        filtered.map((e) => (
-          <Card
-            key={e.idEntrenador}
-            borderRadius="2xl"
-            boxShadow="xl"
-            bg="white"
-            p={6}
-            _hover={{ transform: "scale(1.01)", transition: "0.3s" }}
-          >
-            <Flex gap={8} align="flex-start" direction={{ base: "column", md: "row" }}>
-              
-              {/* FOTO */}
-              <Box textAlign="center">
-                <Box
-                  as="img"
-                  src={e.usuario?.foto_perfil || e.foto_perfil}
-                  alt="Foto perfil"
-                  w="150px"
-                  h="150px"
-                  objectFit="cover"
-                  borderRadius="full"
-                  boxShadow="md"
-                  mb={3}
-                />
-                <Badge colorScheme="purple" fontSize="sm" px={3} py={1} borderRadius="full">
-                  {e.estado?.nombre}
-                </Badge>
-              </Box>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          {filtered.map((e) => (
+            <Card
+              key={e.idEntrenador}
+              borderRadius="2xl"
+              boxShadow="xl"
+              bg="white"
+              p={6}
+              _hover={{ transform: "scale(1.01)", transition: "0.2s" }}
+            >
+              <Stack spacing={4}>
+                {/* Encabezado: nombre + estado */}
+                <Flex justify="space-between" align="center">
+                  <Heading size="md" color="gray.900">
+                    {e.usuario?.nombre} {e.usuario?.apellido}
+                  </Heading>
+                  <Badge
+                    colorScheme={
+                      e.estado?.nombre === "ACTIVO" ? "green" : "purple"
+                    }
+                    fontSize="sm"
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                  >
+                    {e.estado?.nombre || "Sin estado"}
+                  </Badge>
+                </Flex>
 
-              {/* INFO */}
-              <Stack spacing={4} flex="1">
-                <Heading size="md" color="gray.900">
-                  {e.usuario?.nombre} {e.usuario?.apellido}
-                </Heading>
-
+                {/* Datos contacto */}
                 <Box bg="gray.50" p={4} borderRadius="lg" shadow="inner">
                   <Stack spacing={2} fontSize="sm" color="gray.900">
-                    <Text><strong>Correo:</strong> {e.usuario?.correo}</Text>
-                    <Text><strong>Teléfono:</strong> {e.telefono || "—"}</Text>
-                    <Text><strong>Experiencia:</strong> {e.experiencia || "Sin especificar"}</Text>
+                    <Text>
+                      <strong>Correo:</strong> {e.usuario?.correo || "—"}
+                    </Text>
+                    <Text>
+                      <strong>Teléfono:</strong> {e.telefono || "—"}
+                    </Text>
+                    <Text>
+                      <strong>Experiencia:</strong>{" "}
+                      {e.experiencia || "Sin especificar"}
+                    </Text>
                   </Stack>
                 </Box>
 
-                {/* BOTONES */}
-                <Flex gap={4} mt={4}>
+                {/* Botones */}
+                <Flex gap={4} mt={2} justify="flex-end">
                   <Button
                     bg="#258d19"
                     color="white"
                     leftIcon={<EditIcon />}
                     _hover={{ bg: "green.500" }}
-                    onClick={() => navigate(`/entrenadores/editar/${e.idEntrenador}`)}
+                    onClick={() =>
+                      navigate(`/entrenadores/editar/${e.idEntrenador}`)
+                    }
                   >
-                    Editar Perfil
+                    Editar
                   </Button>
-
                   <Button
                     bg="red.600"
                     color="white"
@@ -174,14 +241,17 @@ export default function ListaEntrenadores() {
                   </Button>
                 </Flex>
               </Stack>
-
-            </Flex>
-          </Card>
-        ))
+            </Card>
+          ))}
+        </SimpleGrid>
       )}
 
       {/* Modal de eliminación */}
-      <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={() => setIsOpen(false)}>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsOpen(false)}
+      >
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
@@ -189,16 +259,29 @@ export default function ListaEntrenadores() {
             </AlertDialogHeader>
             <AlertDialogBody>
               <Text mb={2}>
-                Ingrese motivo de eliminación de <strong>{entrenadorToDelete?.usuario?.nombre} {entrenadorToDelete?.usuario?.apellido}</strong>:
+                Motivo de eliminación de{" "}
+                <strong>
+                  {entrenadorToDelete?.usuario?.nombre}{" "}
+                  {entrenadorToDelete?.usuario?.apellido}
+                </strong>
+                :
               </Text>
-              <Textarea 
+              <Textarea
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder="Ej: ya no trabaja en el gimnasio"
               />
+              <Text mt={2} fontSize="xs" color="gray.500">
+                * Por ahora el motivo no se guarda en backend, pero podés
+                dejarlo listo para una futura auditoría.
+              </Text>
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsOpen(false)} bg="#258d19" color="white">
+              <Button
+                ref={cancelRef}
+                onClick={() => setIsOpen(false)}
+                bg="gray.200"
+              >
                 Cancelar
               </Button>
               <Button

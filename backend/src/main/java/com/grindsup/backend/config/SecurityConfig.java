@@ -90,6 +90,11 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
                 .requestMatchers("/login/**", "/oauth2/**").permitAll()
+
+                // 🔐 RUTAS DE REPORTES DE ADMIN: requieren autoridad de administrador
+                .requestMatchers("/api/reportes/admin/**").permitAll()
+
+                // Resto de /api: solo autenticado
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,9 +43,20 @@ public class UsuarioController {
     // 👇 NUEVO: repositorio de entrenadores
     @Autowired private EntrenadorRepository entrenadorRepository;
 
-    // ========= HELPER: asegurar que el usuario tenga entrenador =========
+    // ========= HELPER: asegurar que el usuario tenga entrenador (NO admin) =========
     private void ensureEntrenadorForUsuario(Usuario usuario) {
         if (usuario == null || usuario.getId_usuario() == null) return;
+
+        // 👉 Si es ADMIN, NO creamos entrenador
+        Rol rol = usuario.getRol();
+        if (rol != null) {
+            Long idRol = rol.getId_rol();
+            String nombreRol = rol.getNombre();
+            if ((idRol != null && idRol == 2L) || // ID 2 = ADMIN
+                (nombreRol != null && nombreRol.equalsIgnoreCase("ADMINISTRADOR"))) {
+                return; // Es administrador, no debe ser entrenador
+            }
+        }
 
         // Si ya existe un entrenador para este usuario, no hacemos nada
         boolean yaExiste = entrenadorRepository.findByUsuario(usuario).isPresent();
@@ -56,8 +68,6 @@ public class UsuarioController {
         Entrenador entrenador = new Entrenador();
         entrenador.setUsuario(usuario);
         entrenador.setEstado(estadoActivo);   // puede ser null si la columna admite null
-
-        // Ajustá estos setters según tu entidad (LocalDateTime / OffsetDateTime, nombres)
         entrenador.setCreated_at(OffsetDateTime.now());
         entrenador.setUpdated_at(OffsetDateTime.now());
 
@@ -75,7 +85,7 @@ public class UsuarioController {
 
     /**
      * Crea un nuevo usuario. Asigna Rol y Estado por defecto si no son proporcionados.
-     * Además, asegura que el usuario tenga un Entrenador asociado.
+     * Además, asegura que el usuario tenga un Entrenador asociado (salvo admin).
      */
     @PostMapping
     public Usuario create(@RequestBody Usuario usuario) {
@@ -126,7 +136,7 @@ public class UsuarioController {
         // 6. Guardar usuario
         Usuario guardado = usuarioRepository.save(usuario);
 
-        // 7. 🔥 Asegurar que también tenga Entrenador
+        // 7. 🔥 Asegurar que también tenga Entrenador (si no es admin)
         ensureEntrenadorForUsuario(guardado);
 
         return guardado;
@@ -171,25 +181,35 @@ public class UsuarioController {
         return "Usuario eliminado con id " + id;
     }
 
-    // ===== LOGIN con BCrypt =====
+    // ===== LOGIN con BCrypt + fallback texto plano =====
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         var opt = usuarioRepository.findByCorreoIgnoreCase(request.getCorreo());
         if (opt.isEmpty()) {
-            // Ajustado para que siempre devuelva el DTO, incluso en error
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("Usuario no encontrado", false, null, null, null));
         }
 
         Usuario usuario = opt.get();
 
-        boolean ok = passwordEncoder.matches(request.getContrasena(), usuario.getContrasena());
+        String stored = usuario.getContrasena();
+        boolean ok = false;
+
+        if (stored != null &&
+                (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$"))) {
+            // Caso normal: contraseña en BCrypt
+            ok = passwordEncoder.matches(request.getContrasena(), stored);
+        } else {
+            // Caso admin creado a mano: texto plano en DB
+            ok = stored != null && stored.equals(request.getContrasena());
+        }
+
         if (!ok) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new LoginResponse("Contraseña incorrecta", false, null, null, null));
         }
 
-        // 🔥 Asegurar que este usuario tenga su entrenador asociado
+        // 🔥 Asegurar que este usuario tenga su entrenador asociado (si no es admin)
         ensureEntrenadorForUsuario(usuario);
 
         // Crear sesión (histórico)
@@ -242,7 +262,7 @@ public class UsuarioController {
                 .body(new LogoutResponse("Sesión no encontrada", false)));
     }
 
-    // ===== QUIÉN SOY (para bootstrap con cookie JWT) =====
+    // ===== QUIÉN SOY (para bootstrap con cookie/JWT) =====
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication auth) {
@@ -259,15 +279,31 @@ public class UsuarioController {
         }
 
         Usuario u = opt.get();
+
+        Long rolId = null;
+        String rolNombre = null;
+        if (u.getRol() != null) {
+            rolId = u.getRol().getId_rol();
+            rolNombre = u.getRol().getNombre();
+        }
+
+        Map<String, Object> usuarioMap = new HashMap<>();
+        usuarioMap.put("id_usuario", u.getId_usuario());
+        usuarioMap.put("nombre", u.getNombre());
+        usuarioMap.put("apellido", u.getApellido());
+        usuarioMap.put("correo", u.getCorreo());
+        if (rolId != null) {
+            usuarioMap.put("id_rol", rolId);
+        }
+        if (rolNombre != null) {
+            usuarioMap.put("rol", rolNombre);
+        }
+        if (u.getFoto_perfil() != null) {
+            usuarioMap.put("foto_perfil", u.getFoto_perfil());
+        }
+
         return ResponseEntity.ok(Map.of(
-                "usuario", Map.of(
-                        "id_usuario", u.getId_usuario(),
-                        "nombre", u.getNombre(),
-                        "apellido", u.getApellido(),
-                        "correo", u.getCorreo(),
-                        "rol", (u.getRol() != null ? u.getRol().getNombre() : null),
-                        "foto_perfil", u.getFoto_perfil()
-                )
+                "usuario", usuarioMap
         ));
     }
 }
