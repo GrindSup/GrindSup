@@ -10,7 +10,7 @@ import {
   FormControl, FormLabel, Textarea
 } from '@chakra-ui/react';
 
-import { AddIcon, EditIcon, DeleteIcon, SearchIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { AddIcon, EditIcon, DeleteIcon, SearchIcon, ChevronDownIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import axiosInstance from '../../config/axios.config';
 import BotonVolver from '../../components/BotonVolver.jsx';
 import rutinasService from '../../services/rutinas.servicio.js';
@@ -280,7 +280,9 @@ export default function ListaEjercicios() {
     <Container maxW="7xl" py={10}>
       <Flex justify="space-between" align="center" mb={6}>
         <HStack spacing={4} align="center">
-          <BotonVolver />
+          <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate("/InicioDashboard")} bg="#258d19" color="white">
+            Volver
+          </Button>
           <Heading size="xl" color="white">Lista de Ejercicios</Heading>
         </HStack>
 

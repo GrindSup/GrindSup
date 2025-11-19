@@ -302,7 +302,7 @@ export default function RegistrarTurno() {
                     placeholder={
                       esIndividual
                         ? "Seleccione un alumno"
-                        : "Buscar/seleccionar alumno"
+                        : "Buscar alumno"
                     }
                     value={alumnoAAgregar}
                     onChange={(e) => setAlumnoAAgregar(e.target.value)}
@@ -373,10 +373,23 @@ export default function RegistrarTurno() {
             )}
 
             {msg && (
-              <Alert status="success">
-                <AlertIcon />
-                {msg}
-              </Alert>
+                <Alert status="success" flexDirection="column" alignItems="flex-start">
+                    <HStack w="full">
+                        <AlertIcon />
+                        {/* El mensaje de éxito ahora se muestra dentro de un Text */}
+                        <Text flex="1">{msg}</Text>
+                    </HStack>
+                    {/* Nuevo Botón */}
+                    <Button
+                        mt={3} // Margen superior para separarlo del mensaje
+                        onClick={() => navigate("/turnos/calendario")}
+                        colorScheme="teal"
+                        size="sm"
+                        alignSelf="flex-end" // Alinea el botón a la derecha dentro del Alert
+                    >
+                        Ir al calendario
+                    </Button>
+                </Alert>
             )}
 
             <Stack

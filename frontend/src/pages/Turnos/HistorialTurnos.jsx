@@ -23,7 +23,7 @@ import {
   InputLeftElement,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { SearchIcon, CalendarIcon, TimeIcon } from "@chakra-ui/icons";
+import { SearchIcon, CalendarIcon, TimeIcon, ArrowBackIcon } from "@chakra-ui/icons";
 import { listarTurnos } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
 
@@ -132,6 +132,9 @@ export default function HistorialTurnos() {
       )}
 
       <HStack mb={6} gap={3} wrap="wrap">
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate("/InicioDashboard")} bg="#258d19" color="white">
+          Volver
+        </Button>
         <Heading size="lg" color="white">
           Historial de turnos
         </Heading>

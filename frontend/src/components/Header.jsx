@@ -30,6 +30,7 @@ export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoggedIn = !!usuario;
+  const isLoginPage = location.pathname === "/login";
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [logoutPending, setLogoutPending] = useState(false);
@@ -89,7 +90,10 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Turnos", path: "/turnos" },
     { label: "Planes", path: "/planes" },
-    { label: "Perfil", path: entrenadorId ? `/entrenadores/perfil/${entrenadorId}` : "/"},
+    {
+      label: "Perfil",
+      path: entrenadorId ? `/entrenadores/perfil/${entrenadorId}` : "/",
+    },
     { label: "Contacto", path: "/contacto" },
   ];
 
@@ -137,7 +141,6 @@ export default function Header({ usuario, setUsuario }) {
           {/* Avatar + botón de sesión */}
           {isLoggedIn ? (
             <Flex align="center" gap={3}>
-              {/* Icono de usuario logueado → Perfil Entrenador */}
               {!hideMenu && (
                 <Box
                   cursor={entrenadorId ? "pointer" : "default"}
@@ -162,14 +165,16 @@ export default function Header({ usuario, setUsuario }) {
               </Button>
             </Flex>
           ) : (
-            <Button
-              size="sm"
-              colorScheme="green"
-              onClick={() => go("/login")}
-              bg="#258d19"
-            >
-              Iniciar sesión
-            </Button>
+            !isLoginPage && (
+              <Button
+                size="sm"
+                colorScheme="green"
+                onClick={() => go("/login")}
+                bg="#258d19"
+              >
+                Iniciar sesión
+              </Button>
+            )
           )}
         </Flex>
       </Container>

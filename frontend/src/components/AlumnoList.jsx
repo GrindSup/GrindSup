@@ -202,7 +202,7 @@ export default function AlumnoList() {
       )}
 
       <Flex gap={4} align="center" mb={6} wrap="wrap">
-        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} bg="#258d19" color="white">
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate("/InicioDashboard")} bg="#258d19" color="white">
           Volver
         </Button>
         <Heading size="lg" color="white">Lista de Alumnos</Heading>

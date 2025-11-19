@@ -7,11 +7,10 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton,
   ModalBody, ModalFooter, VStack, Textarea
 } from "@chakra-ui/react";
-import { SearchIcon } from "@chakra-ui/icons";
+import { SearchIcon, ArrowBackIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { ensureEntrenadorId } from "../../context/auth";
 import { planesService } from "../../services/planes.servicio";
-import BotonVolver from "../../components/BotonVolver.jsx";
 
 function Star({ filled, onClick }) {
   return (
@@ -143,7 +142,9 @@ export default function ListaPlanes() {
   return (
     <Container maxW="7xl" py={8}>
       <HStack align="center" mb={4} gap={3} wrap="wrap">
-        <BotonVolver />
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate("/InicioDashboard")} bg="#258d19" color="white">
+          Volver
+        </Button>
         <Heading size="lg" color="white">Planes</Heading>
         <Spacer />
         <InputGroup maxW="360px">

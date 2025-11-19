@@ -13,6 +13,7 @@ import {
   Alert,
   AlertIcon,
 } from "@chakra-ui/react";
+import { ArrowBackIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { listarTurnos } from "/src/services/turnos.servicio.js";
 import { ensureEntrenadorId, getUsuario } from "/src/context/auth.js";
@@ -115,6 +116,9 @@ export default function CalendarioTurnos() {
       )}
 
       <HStack justify="space-between" mb={6} opacity={entrenadorId ? 1 : 0.5}>
+        <Button leftIcon={<ArrowBackIcon />} onClick={() => navigate("/InicioDashboard")} bg="#258d19" color="white">
+          Volver
+        </Button>
         <Heading size="lg" color="white">
           Calendario de Turnos
         </Heading>
