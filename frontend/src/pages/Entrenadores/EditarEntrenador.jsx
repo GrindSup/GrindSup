@@ -3,10 +3,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Button, Card, CardBody, CardHeader, Container,
   Grid, GridItem, Heading, Input, Stack, Text, useToast,
-  FormControl, FormLabel, FormErrorMessage
+  FormControl, FormLabel, FormErrorMessage, Image
 } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from '../../config/axios.config';
+import axios from "../../config/axios.config";
 
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
@@ -17,13 +17,16 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);   // 👈 nuevo
 
   const [entrenador, setEntrenador] = useState({
+    idEntrenador: null,
     nombre: "",
     apellido: "",
     correo: "",
     telefono: "",
-    experiencia: ""
+    experiencia: "",
+    foto_perfil: ""   // 👈 campo para URL
   });
 
   // Cargar entrenador
@@ -32,12 +35,16 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
       try {
         const { data } = await axios.get(`${apiBaseUrl}/entrenadores/${idEntrenador}`);
         setEntrenador({
-          idEntrenador: data.idEntrenador,
+          idEntrenador: data.idEntrenador ?? data.id_entrenador ?? null,
           nombre: data.usuario?.nombre || "",
           apellido: data.usuario?.apellido || "",
           correo: data.usuario?.correo || "",
           telefono: data.telefono || "",
-          experiencia: data.experiencia || ""
+          experiencia: data.experiencia || "",
+          foto_perfil:
+            data.usuario?.foto_perfil ||
+            data.usuario?.fotoPerfil ||
+            ""
         });
       } catch (err) {
         toast({
@@ -67,7 +74,52 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEntrenador(prev => ({ ...prev, [name]: value }));
+    setEntrenador((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 👇 NUEVO: subir foto desde dispositivo
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data } = await axios.post(
+        `${apiBaseUrl}/upload/foto-perfil`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (data?.url) {
+        setEntrenador((prev) => ({
+          ...prev,
+          foto_perfil: data.url,
+        }));
+        toast({
+          status: "success",
+          title: "Foto subida correctamente",
+          position: "top",
+        });
+      } else {
+        throw new Error("El servidor no devolvió la URL");
+      }
+    } catch (err) {
+      toast({
+        status: "error",
+        title: "Error al subir la imagen",
+        description: err.response?.data || err.message,
+        position: "top",
+      });
+    } finally {
+      setUploadingPhoto(false);
+      // limpiar input de archivo
+      e.target.value = "";
+    }
   };
 
   const onSubmit = async (e) => {
@@ -85,14 +137,14 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
 
     setSubmitting(true);
     try {
-      // Payload que coincide con el backend, sin estado
       const payload = {
         experiencia: entrenador.experiencia,
         telefono: entrenador.telefono,
         usuario: {
           nombre: entrenador.nombre,
           apellido: entrenador.apellido,
-          correo: entrenador.correo
+          correo: entrenador.correo,
+          foto_perfil: entrenador.foto_perfil || ""
         }
       };
 
@@ -130,6 +182,7 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
           <CardBody pt={6} px={{ base: 6, md: 10 }} pb={8}>
             <Box as="form" onSubmit={onSubmit}>
               <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
+                {/* datos básicos */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
                     <FormLabel>Nombre</FormLabel>
@@ -154,8 +207,51 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                   </FormControl>
                 </GridItem>
 
+                {/* FOTO: URL + archivo */}
                 <GridItem colSpan={2}>
-                  <FormControl isRequired isInvalid={submitted && !!errors.telefono}>
+                  <FormControl>
+                    <FormLabel>Foto de perfil (URL opcional)</FormLabel>
+                    <Input
+                      name="foto_perfil"
+                      value={entrenador.foto_perfil}
+                      onChange={handleChange}
+                      placeholder="https://ruta-de-la-imagen.jpg"
+                    />
+                  </FormControl>
+
+                  <FormControl mt={4}>
+                    <FormLabel>O subir una imagen desde tu dispositivo</FormLabel>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    {uploadingPhoto && (
+                      <Text mt={2} fontSize="sm" color="gray.600">
+                        Subiendo imagen...
+                      </Text>
+                    )}
+                  </FormControl>
+
+                  {entrenador.foto_perfil?.trim() && (
+                    <Box mt={4}>
+                      <Text fontSize="sm" color="gray.600" mb={1}>
+                        Vista previa:
+                      </Text>
+                      <Image
+                        src={entrenador.foto_perfil}
+                        alt="Foto de perfil"
+                        boxSize="80px"
+                        borderRadius="full"
+                        objectFit="cover"
+                        border="2px solid #258d19"
+                      />
+                    </Box>
+                  )}
+                </GridItem>
+
+                <GridItem colSpan={2}>
+                  <FormControl isInvalid={submitted && !!errors.telefono}>
                     <FormLabel>Teléfono</FormLabel>
                     <Input name="telefono" value={entrenador.telefono} onChange={handleChange} />
                     {submitted && <FormErrorMessage>{errors.telefono}</FormErrorMessage>}
@@ -170,11 +266,25 @@ export default function EditarEntrenador({ apiBaseUrl = API }) {
                 </GridItem>
               </Grid>
 
-              <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
-                <Button type="submit" isLoading={submitting} loadingText="Guardando" px={10} bg="#258d19" color="white">
+              <Stack
+                direction={{ base: "column", md: "row" }}
+                spacing={4}
+                mt={8}
+                justify="center"
+              >
+                <Button
+                  type="submit"
+                  isLoading={submitting}
+                  loadingText="Guardando"
+                  px={10}
+                  bg="#258d19"
+                  color="white"
+                >
                   Guardar cambios
                 </Button>
-                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>Cancelar</Button>
+                <Button variant="ghost" onClick={() => navigate("/entrenadores")}>
+                  Cancelar
+                </Button>
               </Stack>
             </Box>
           </CardBody>

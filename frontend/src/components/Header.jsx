@@ -1,13 +1,30 @@
 // frontend/src/components/Header.jsx
 import {
-  Box, Container, Flex, Text, Button, IconButton, Menu,
-  MenuButton, MenuList, MenuItem, Image, Spacer,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure
+  Box,
+  Container,
+  Flex,
+  Text,
+  Button,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Image,
+  Spacer,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  Avatar,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
-import { clearSessionCache } from "../context/auth";
-import { useState } from "react";
+import { clearSessionCache, ensureEntrenadorId } from "../context/auth";
+import { useState, useEffect } from "react";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
@@ -16,15 +33,42 @@ export default function Header({ usuario, setUsuario }) {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [logoutPending, setLogoutPending] = useState(false);
+  const [entrenadorId, setEntrenadorId] = useState(null);
 
   const go = (path) => navigate(path);
+
+  // 🔥 Resolver id_entrenador del usuario logueado
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      if (!isLoggedIn) {
+        setEntrenadorId(null);
+        return;
+      }
+      try {
+        const id = await ensureEntrenadorId();
+        if (active) setEntrenadorId(id ?? null);
+      } catch (e) {
+        console.error("No se pudo obtener entrenadorId", e);
+        if (active) setEntrenadorId(null);
+      }
+    };
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     setLogoutPending(true);
     const sesionId = localStorage.getItem("sesionId");
     try {
       if (sesionId) {
-        await fetch(`http://localhost:8080/api/usuarios/logout/${sesionId}`, { method: "PUT" });
+        await fetch(`http://localhost:8080/api/usuarios/logout/${sesionId}`, {
+          method: "PUT",
+        });
       }
     } catch (e) {
       console.error("Error al cerrar sesión", e);
@@ -45,12 +89,13 @@ export default function Header({ usuario, setUsuario }) {
     { label: "Alumnos", path: "/alumnos" },
     { label: "Turnos", path: "/turnos" },
     { label: "Planes", path: "/planes" },
-    { label: "Entrenador", path: "/entrenadores"},
+    { label: "Entrenador", path: "/entrenadores" },
     { label: "Contacto", path: "/contacto" },
   ];
 
   // Solo ocultar el menú en login/register
-  const hideMenu = location.pathname === "/login" || location.pathname === "/register";
+  const hideMenu =
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
@@ -59,7 +104,9 @@ export default function Header({ usuario, setUsuario }) {
           {/* Logo */}
           <Flex align="center" gap={2} cursor="pointer" onClick={() => go("/")}>
             <Image src="/vite.png" alt="GrindSup" boxSize="30px" />
-            <Text fontWeight="bold" fontSize="xl" color="green.800">GrindSup</Text>
+            <Text fontWeight="bold" fontSize="xl" color="green.800">
+              GrindSup
+            </Text>
           </Flex>
 
           <Spacer />
@@ -75,7 +122,7 @@ export default function Header({ usuario, setUsuario }) {
                   variant="ghost"
                 />
                 <MenuList>
-                  {items.map(i => (
+                  {items.map((i) => (
                     <MenuItem key={i.path} onClick={() => go(i.path)}>
                       {i.label}
                     </MenuItem>
@@ -87,13 +134,40 @@ export default function Header({ usuario, setUsuario }) {
 
           <Spacer />
 
-          {/* Botones de sesión siempre visibles */}
+          {/* Avatar + botón de sesión */}
           {isLoggedIn ? (
-            <Button size="sm" onClick={onOpen} bg="#258d19" color="white">
-              Cerrar sesión
-            </Button>
+            <Flex align="center" gap={3}>
+              {/* Icono de usuario logueado → Perfil Entrenador */}
+              {!hideMenu && (
+                <Box
+                  cursor={entrenadorId ? "pointer" : "default"}
+                  onClick={() =>
+                    entrenadorId && go(`/entrenadores/perfil/${entrenadorId}`)
+                  }
+                >
+                  <Avatar
+                    size="sm"
+                    name={`${usuario?.nombre ?? ""} ${
+                      usuario?.apellido ?? ""
+                    }`}
+                    src={usuario?.foto_perfil ?? ""}
+                    bg="green.500"
+                    color="white"
+                  />
+                </Box>
+              )}
+
+              <Button size="sm" onClick={onOpen} bg="#258d19" color="white">
+                Cerrar sesión
+              </Button>
+            </Flex>
           ) : (
-            <Button size="sm" colorScheme="green" onClick={() => go("/login")} bg="#258d19">
+            <Button
+              size="sm"
+              colorScheme="green"
+              onClick={() => go("/login")}
+              bg="#258d19"
+            >
               Iniciar sesión
             </Button>
           )}
@@ -103,11 +177,26 @@ export default function Header({ usuario, setUsuario }) {
       {/* Modal de confirmación */}
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="0 8px 30px rgba(0,0,0,0.2)">
-          <ModalHeader bg="#007000" color="white" fontWeight="bold" textAlign="center">
+        <ModalContent
+          borderRadius="2xl"
+          overflow="hidden"
+          boxShadow="0 8px 30px rgba(0,0,0,0.2)"
+        >
+          <ModalHeader
+            bg="#007000"
+            color="white"
+            fontWeight="bold"
+            textAlign="center"
+          >
             Confirmar cierre de sesión
           </ModalHeader>
-          <ModalBody textAlign="center" fontSize="md" color="gray.900" py={6} fontWeight="bold">
+          <ModalBody
+            textAlign="center"
+            fontSize="md"
+            color="gray.900"
+            py={6}
+            fontWeight="bold"
+          >
             ¿Estás seguro de que quieres cerrar sesión?
           </ModalBody>
           <ModalFooter justifyContent="center" gap={3} py={4}>

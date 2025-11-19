@@ -25,9 +25,9 @@ export default function InicioDashboard() {
       { label: "Ver Alumnos",      to: "/alumnos",          icon: ViewIcon,     desc: "Listado y edición.", available: true },
       { label: "Registrar Turno",  to: "/turnos/registrar", icon: CalendarIcon, desc: "Agendá clases.", available: true },
       { label: "Ver Turnos",       to: "/turnos",           icon: ViewIcon,     desc: "Calendario y gestión.", available: true },
-      { label: "Ejercicios",       to: "/ejercicios",       icon: FiActivity,   desc: "Catálogo.", available: true },
-      { label: "Rutinas",          to: "/rutinas",          icon: FaRunning,    desc: "Planes de entrenamiento.", available: true },
-      { label: "Planes",           to: "/planes",           icon: FiMap,        desc: "Planes por alumno.", available: true },
+      { label: "Ejercicios",       to: "/ejercicios",       icon: FiActivity,   desc: "Catálogo de ejercicios.", available: true },
+      { label: "Rutinas",          to: "/rutinas",          icon: FaRunning,    desc: "Rutinas de entrenamiento.", available: true },
+      { label: "Planes",           to: "/planes",           icon: FiMap,        desc: "Planes de alumnos.", available: true },
       // 🔹 NUEVOS accesos a reportes
       { label: "Reportes",         to: "/reportes",         icon: FiCopy,       desc: "Reportes y estadisticas.", available: true },
     ],

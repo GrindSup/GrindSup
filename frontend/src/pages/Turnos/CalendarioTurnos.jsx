@@ -196,7 +196,10 @@ export default function CalendarioTurnos() {
                 </Text>
                 <VStack align="stretch" spacing={1}>
                   {items.slice(0, 4).map((t) => {
-                    const hhmm = new Date(t.fecha).toLocaleTimeString([], {
+                    const fechaTurno = new Date(t.fecha);
+                    const esPasado = fechaTurno < new Date();
+
+                    const hhmm = fechaTurno.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     });
@@ -209,7 +212,10 @@ export default function CalendarioTurnos() {
                       <Tag
                         key={t.id_turno}
                         size="sm"
-                        colorScheme={color}
+                        colorScheme={esPasado ? "gray" : color}
+                        variant={esPasado ? "outline" : "solid"}
+                        textDecoration={esPasado ? "line-through" : "none"}
+                        opacity={esPasado ? 0.7 : 1}
                         cursor="pointer"
                         // ✅ NAVEGA A LA RUTA CORRECTA DE EDICIÓN
                         onClick={() => navigate(`/turnos/editar/${t.id_turno}`)}

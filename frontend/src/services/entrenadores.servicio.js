@@ -15,6 +15,7 @@ function adaptEntrenador(raw) {
         nombre: raw.usuario.nombre ?? "",
         apellido: raw.usuario.apellido ?? "",
         email: raw.usuario.email ?? raw.usuario.correo ?? "",
+        foto_perfil: raw.usuario.foto_perfil ?? "",   // 👈 NUEVO
       }
     : null;
 

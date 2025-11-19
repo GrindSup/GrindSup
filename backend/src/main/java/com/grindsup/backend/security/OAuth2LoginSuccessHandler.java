@@ -1,6 +1,10 @@
 package com.grindsup.backend.security;
 
 import com.grindsup.backend.model.Usuario;
+import com.grindsup.backend.model.Entrenador;
+import com.grindsup.backend.model.Estado;
+import com.grindsup.backend.repository.EntrenadorRepository;
+import com.grindsup.backend.repository.EstadoRepository;
 import com.grindsup.backend.security.JwtService;
 import com.grindsup.backend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,14 +14,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -26,14 +31,48 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserService userService;
 
+    private final EntrenadorRepository entrenadorRepository;
+    private final EstadoRepository estadoRepository;
+
     public OAuth2LoginSuccessHandler(
             JwtService jwtService,
             OAuth2AuthorizedClientService authorizedClientService,
-            UserService userService
+            UserService userService,
+            EntrenadorRepository entrenadorRepository,
+            EstadoRepository estadoRepository
     ) {
         this.jwtService = jwtService;
         this.authorizedClientService = authorizedClientService;
         this.userService = userService;
+        this.entrenadorRepository = entrenadorRepository;
+        this.estadoRepository = estadoRepository;
+    }
+
+    /** 
+     * Asegura que el Usuario tenga un registro asociado en la tabla entrenadores.
+     * Si ya existe, no hace nada.
+     */
+    private void ensureEntrenadorForUsuario(Usuario u) {
+        if (u == null || u.getId_usuario() == null) {
+            return;
+        }
+
+        // ¿Ya hay entrenador para este usuario?
+        Optional<Entrenador> existing = entrenadorRepository.findByUsuario(u);
+        if (existing.isPresent()) {
+            return;
+        }
+
+        // Estado por defecto (ajustá el ID si tu "ACTIVO" es otro)
+        Estado estadoActivo = estadoRepository.findById(1L).orElse(null);
+
+        Entrenador entrenador = new Entrenador();
+        entrenador.setUsuario(u);
+        entrenador.setEstado(estadoActivo);
+        entrenador.setCreated_at(OffsetDateTime.now());
+        entrenador.setUpdated_at(OffsetDateTime.now());
+
+        entrenadorRepository.save(entrenador);
     }
 
     @Override
@@ -45,6 +84,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         CustomOAuth2User principal = (CustomOAuth2User) authentication.getPrincipal();
         Usuario u = principal.getUsuario();
+
+        // 🔥 Asegurar que el usuario tenga un Entrenador asociado
+        ensureEntrenadorForUsuario(u);
 
         // === Guardar REFRESH TOKEN si está presente ===
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {

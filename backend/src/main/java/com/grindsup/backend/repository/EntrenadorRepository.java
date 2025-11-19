@@ -1,14 +1,16 @@
 package com.grindsup.backend.repository;
 
 import com.grindsup.backend.model.Entrenador;
-import com.grindsup.backend.model.Usuario; // <--- 1. IMPORTA USUARIO
+import com.grindsup.backend.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional; // <--- 2. IMPORTA OPTIONAL
+
+import java.util.Optional;
 
 public interface EntrenadorRepository extends JpaRepository<Entrenador, Long> {
 
-    // 🚀 3. ¡AGREGA ESTA LÍNEA!
-    // Esto le enseña a Spring cómo buscar un Entrenador usando el objeto Usuario
+    // Buscar entrenador por el Usuario asociado
     Optional<Entrenador> findByUsuario(Usuario usuario);
 
+    // (Opcional) si querés un exists también, usalo así:
+    boolean existsByUsuario(Usuario usuario);
 }

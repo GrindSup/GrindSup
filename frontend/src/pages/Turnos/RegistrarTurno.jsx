@@ -1,10 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Box, Button, Container, FormControl, FormLabel, Input, Select, Heading,
-  VStack, Alert, AlertIcon, HStack, Tag, TagLabel, TagCloseButton, Text,
-  Divider, Stack
+  Box,
+  Button,
+  Container,
+  FormControl,
+  FormLabel,
+  Input,
+  Select,
+  Heading,
+  VStack,
+  Alert,
+  AlertIcon,
+  HStack,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+  Text,
+  Divider,
+  Stack,
+  Checkbox,        // 🔹 NUEVO
 } from "@chakra-ui/react";
-import { crearTurno, asignarAlumnos, listarAlumnos, listarTiposTurno } from "../../services/turnos.servicio.js";
+import {
+  crearTurno,
+  asignarAlumnos,
+  listarAlumnos,
+  listarTiposTurno,
+} from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +40,11 @@ export default function RegistrarTurno() {
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
   const [tipo, setTipo] = useState("");
+
+  // 🔹 NUEVO: turno fijo
+  const [esFijo, setEsFijo] = useState(false);
+  const [hastaFechaFija, setHastaFechaFija] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -32,7 +58,7 @@ export default function RegistrarTurno() {
       try {
         const [alRes, ttRes] = await Promise.all([
           listarAlumnos(id),
-          listarTiposTurno()
+          listarTiposTurno(),
         ]);
 
         setAlumnos(alRes.data || []);
@@ -44,7 +70,7 @@ export default function RegistrarTurno() {
   }, []);
 
   const tipoSel = useMemo(
-    () => tipos.find(t => t.id_tipoturno === Number(tipo)),
+    () => tipos.find((t) => t.id_tipoturno === Number(tipo)),
     [tipo, tipos]
   );
 
@@ -53,12 +79,13 @@ export default function RegistrarTurno() {
 
   useEffect(() => {
     if (esIndividual && seleccionados.length > 1) {
-      setSeleccionados(prev => (prev.length ? [prev[0]] : []));
+      setSeleccionados((prev) => (prev.length ? [prev[0]] : []));
     }
   }, [esIndividual]);
 
-  const nombreCompleto = a => `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim();
-  const findAlumno = id => alumnos.find(x => x.id_alumno === id);
+  const nombreCompleto = (a) =>
+    `${a.nombre ?? ""} ${a.apellido ?? ""}`.trim();
+  const findAlumno = (id) => alumnos.find((x) => x.id_alumno === id);
 
   const handleAgregarAlumno = () => {
     if (!alumnoAAgregar) return;
@@ -69,15 +96,16 @@ export default function RegistrarTurno() {
     }
 
     setError("");
-
-    setSeleccionados(esIndividual ? [idNum] : [...seleccionados, idNum]);
+    setSeleccionados(
+      esIndividual ? [idNum] : [...seleccionados, idNum]
+    );
     setAlumnoAAgregar("");
   };
 
-  const handleQuitarAlumno = id =>
-    setSeleccionados(seleccionados.filter(x => x !== id));
+  const handleQuitarAlumno = (id) =>
+    setSeleccionados(seleccionados.filter((x) => x !== id));
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMsg("");
@@ -89,7 +117,8 @@ export default function RegistrarTurno() {
       return setError("Fecha, hora y tipo son obligatorios.");
 
     const fechaHora = new Date(`${fecha}T${hora}:00`);
-    if (Number.isNaN(fechaHora.getTime())) return setError("Fecha u hora inválida.");
+    if (Number.isNaN(fechaHora.getTime()))
+      return setError("Fecha u hora inválida.");
     if (fechaHora < new Date())
       return setError("No se permiten turnos en fechas anteriores.");
 
@@ -99,36 +128,72 @@ export default function RegistrarTurno() {
     if (esGrupal && seleccionados.length < 2)
       return setError("En turno grupal agregá al menos 2 alumnos.");
 
-    const payload = {
-      entrenadorId,
-      tipoTurnoId: Number(tipo),
-      fecha: fechaHora.toISOString(),
-      estadoId: 3
-    };
+    // 🔹 Validaciones extra para turno fijo
+    let fechas = [fechaHora];
+    if (esFijo) {
+      if (!hastaFechaFija)
+        return setError("Indicá hasta qué fecha se repetirá el turno fijo.");
+
+      const fin = new Date(`${hastaFechaFija}T23:59:59`);
+      if (Number.isNaN(fin.getTime()))
+        return setError("Fecha fin de turno fijo inválida.");
+      if (fin < fechaHora)
+        return setError(
+          "La fecha fin del turno fijo debe ser posterior a la fecha de inicio."
+        );
+
+      // Generar fechas semanales
+      fechas = [];
+      const actual = new Date(fechaHora);
+      while (actual <= fin) {
+        fechas.push(new Date(actual));
+        actual.setDate(actual.getDate() + 7);
+      }
+    }
 
     try {
       setLoading(true);
 
-      // 🔥 Usuario para Google Calendar (id real)
       const userId =
         localStorage.getItem("gs_user_id") ||
         localStorage.getItem("userId") ||
         undefined;
 
-      const { data: turnoCreado } = await crearTurno(payload, { userId });
-      const turnoId = turnoCreado?.id_turno;
-      if (!turnoId) throw new Error("El backend no devolvió id_turno");
+      // función que crea un turno + asigna alumnos
+      const crearUno = async (f) => {
+        const payload = {
+          entrenadorId,
+          tipoTurnoId: Number(tipo),
+          fecha: f.toISOString(),
+          estadoId: 3,
+        };
 
-      if (seleccionados.length) {
-        await asignarAlumnos(turnoId, seleccionados);
+        const { data: turnoCreado } = await crearTurno(payload, { userId });
+        const turnoId = turnoCreado?.id_turno;
+        if (!turnoId) throw new Error("El backend no devolvió id_turno");
+
+        if (seleccionados.length) {
+          await asignarAlumnos(turnoId, seleccionados);
+        }
+      };
+
+      // 🔹 Si es fijo, crea varios turnos; si no, sólo uno
+      for (const f of fechas) {
+        await crearUno(f);
       }
 
-      setMsg("Turno registrado con éxito ✅");
+      setMsg(
+        esFijo
+          ? `Turno fijo creado con ${fechas.length} sesiones ✅`
+          : "Turno registrado con éxito ✅"
+      );
       setAlumnoAAgregar("");
       setSeleccionados([]);
       setFecha("");
       setHora("");
       setTipo("");
+      setEsFijo(false);
+      setHastaFechaFija("");
     } catch (err) {
       setError(
         err?.response?.data?.mensaje ||
@@ -174,7 +239,7 @@ export default function RegistrarTurno() {
               <Input
                 type="date"
                 value={fecha}
-                onChange={e => setFecha(e.target.value)}
+                onChange={(e) => setFecha(e.target.value)}
               />
             </FormControl>
 
@@ -183,7 +248,7 @@ export default function RegistrarTurno() {
               <Input
                 type="time"
                 value={hora}
-                onChange={e => setHora(e.target.value)}
+                onChange={(e) => setHora(e.target.value)}
               />
             </FormControl>
 
@@ -192,14 +257,38 @@ export default function RegistrarTurno() {
               <Select
                 placeholder="Seleccione tipo"
                 value={tipo}
-                onChange={e => setTipo(e.target.value)}
+                onChange={(e) => setTipo(e.target.value)}
               >
-                {tipos.map(t => (
+                {tipos.map((t) => (
                   <option key={t.id_tipoturno} value={t.id_tipoturno}>
                     {t.nombre}
                   </option>
                 ))}
               </Select>
+            </FormControl>
+
+            {/* 🔹 Sección turno fijo */}
+            <FormControl>
+              <Checkbox
+                isChecked={esFijo}
+                onChange={(e) => setEsFijo(e.target.checked)}
+              >
+                Turno fijo semanal (misma hora y día)
+              </Checkbox>
+
+              {esFijo && (
+                <Box mt={3}>
+                  <FormLabel fontSize="sm">Repetir hasta</FormLabel>
+                  <Input
+                    type="date"
+                    value={hastaFechaFija}
+                    onChange={(e) => setHastaFechaFija(e.target.value)}
+                  />
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    Se crearán turnos cada semana con la fecha y hora elegidas.
+                  </Text>
+                </Box>
+              )}
             </FormControl>
 
             {!!tipo && (
@@ -216,9 +305,9 @@ export default function RegistrarTurno() {
                         : "Buscar/seleccionar alumno"
                     }
                     value={alumnoAAgregar}
-                    onChange={e => setAlumnoAAgregar(e.target.value)}
+                    onChange={(e) => setAlumnoAAgregar(e.target.value)}
                   >
-                    {alumnos.map(a => (
+                    {alumnos.map((a) => (
                       <option key={a.id_alumno} value={a.id_alumno}>
                         {nombreCompleto(a)}
                       </option>
@@ -237,7 +326,7 @@ export default function RegistrarTurno() {
 
                 {seleccionados.length ? (
                   <HStack spacing={2} wrap="wrap">
-                    {seleccionados.map(id => {
+                    {seleccionados.map((id) => {
                       const a = findAlumno(id);
                       return (
                         <Tag
