@@ -267,6 +267,18 @@ export default function ListaTurnos() {
           bg="whiteAlpha.900"
           color="#258d19"
           variant="outline"
+          _hover={{
+            bg: "#87c987ff",   // color cuando pasás el mouse
+            color: "white",    // opcional: texto blanco
+          }}
+          _active={{
+            bg: "#87c987ff",   // color al hacer clic
+            color: "white",
+          }}
+          _focus={{
+            bg: "#87c987ff",   // por si lo seleccionás con teclado
+            color: "white",
+          }}
           isDisabled={!entrenadorId}
         >
           Historial de turnos

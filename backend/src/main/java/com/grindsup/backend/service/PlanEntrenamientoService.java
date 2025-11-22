@@ -25,15 +25,17 @@ public class PlanEntrenamientoService {
     private final PlanEntrenamientoRepository planRepository;
     private final AlumnoRepository alumnoRepository;
     private final EstadoRepository estadoRepository;
+    private final NotificacionService notificacionService;
 
     public PlanEntrenamientoService(
-                PlanEntrenamientoRepository planRepository,
-                AlumnoRepository alumnoRepository,
-                EstadoRepository estadoRepository
-    ) {
+            PlanEntrenamientoRepository planRepository,
+            AlumnoRepository alumnoRepository,
+            EstadoRepository estadoRepository,
+            NotificacionService notificacionService) {
         this.planRepository = planRepository;
         this.alumnoRepository = alumnoRepository;
         this.estadoRepository = estadoRepository;
+        this.notificacionService = notificacionService;
     }
 
     public PlanEntrenamiento crearPlan(CrearPlanrequestDTO request) {
@@ -43,27 +45,27 @@ public class PlanEntrenamientoService {
         // 🎯 CORRECCIÓN CLAVE: Obtener y asignar el Entrenador del Alumno
         Entrenador entrenador = alumno.getEntrenador();
         if (entrenador == null) {
-             throw new RuntimeException("El alumno no tiene un entrenador asociado. No se puede crear el plan.");
+            throw new RuntimeException("El alumno no tiene un entrenador asociado. No se puede crear el plan.");
         }
 
         PlanEntrenamiento plan = new PlanEntrenamiento();
         plan.setAlumno(alumno);
-        
+
         // Asignar el Entrenador al plan antes de guardar
         plan.setEntrenador(entrenador); // <-- ¡ESTO RESUELVE EL PROBLEMA DEL ID NULL!
-        
+
         plan.setObjetivo(request.getObjetivo());
         // Asumiendo LocalDate en la entidad:
         plan.setFecha_inicio(request.getFechaInicio());
         plan.setFecha_fin(request.getFechaFin());
         plan.setCreated_at(OffsetDateTime.now());
         plan.setUpdated_at(OffsetDateTime.now());
-        
+
         // probar sino findByName
         Estado estadoInicial = estadoRepository.findById((long) 3)
                 .orElseThrow(() -> new EntityNotFoundException("Estado 'En proceso' no encontrado"));
         plan.setEstado(estadoInicial);
-        
+
         return planRepository.save(plan);
     }
 
@@ -108,6 +110,15 @@ public class PlanEntrenamientoService {
                 .ifPresent(plan::setEstado);
 
         plan.setUpdated_at(OffsetDateTime.now());
-        return planRepository.save(plan);
+        PlanEntrenamiento planFinalizado = planRepository.save(plan);
+
+        // ✔️ NOTIFICACIÓN SOLO PARA EL ENTRENADOR
+        notificacionService.crearNotificacionParaEntrenador(
+                "Plan finalizado",
+                "El plan del alumno " + planFinalizado.getAlumno().getNombre() +
+                        " (" + planFinalizado.getObjetivo() + ") ha sido finalizado. No te olvides de calificarlo",
+                planFinalizado.getEntrenador());
+
+        return planFinalizado;
     }
 }

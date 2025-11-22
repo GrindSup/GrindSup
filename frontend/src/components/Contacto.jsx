@@ -45,7 +45,7 @@ export default function Contacto() {
             fontFamily="Arial, sans-serif"
           >
             <Text color="black" fontSize="md" fontWeight="normal" mb={4}>
-              Si tienes sugerencias, consultas o problemas, escribinos a:
+              Si tienes sugerencias, consultas o problemas, escribenos a:
             </Text>
             <Text fontSize="xl" fontWeight="bold" mb={4} color="#258d19">
               grindsup.developers@gmail.com

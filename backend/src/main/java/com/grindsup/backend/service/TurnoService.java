@@ -44,15 +44,16 @@ public class TurnoService {
     @Autowired
     private AlumnoRepository alumnoRepository;
 
-    // 💡 Inyección opcional. Si Spring no puede crearlo (por configuración o falta de dependencia), será null.
+    // 💡 Inyección opcional. Si Spring no puede crearlo (por configuración o falta
+    // de dependencia), será null.
     @Autowired(required = false)
     private GoogleCalendarNotificationService googleCalendarNotificationService;
-    
+
     // ======== LISTAR: por entrenador + filtros ========
     public List<TurnoResponseDTO> listarPorEntrenador(Long entrenadorId,
-                                                      OffsetDateTime desde,
-                                                      OffsetDateTime hasta,
-                                                      String tipo)  {
+            OffsetDateTime desde,
+            OffsetDateTime hasta,
+            String tipo) {
 
         var turnos = turnoRepository.findByEntrenadorAndFilters(entrenadorId, desde, hasta, tipo);
         return turnos.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
@@ -95,7 +96,7 @@ public class TurnoService {
 
         Turno turnoGuardado = turnoRepository.save(turno);
 
-        String resolvedUserId = resolveUserId(providedUserId, turnoGuardado); 
+        String resolvedUserId = resolveUserId(providedUserId, turnoGuardado);
 
         // 💡 Bloque condicional: Solo intenta sincronizar si el servicio existe
         if (googleCalendarNotificationService != null) {
@@ -198,8 +199,8 @@ public class TurnoService {
         Turno nuevoTurno = new Turno();
         nuevoTurno.setEntrenador(turnoOriginal.getEntrenador());
         nuevoTurno.setTipoTurno(turnoOriginal.getTipoTurno());
-        nuevoTurno.setAlumnos(new ArrayList<>(turnoOriginal.getAlumnos())); 
-        
+        nuevoTurno.setAlumnos(new ArrayList<>(turnoOriginal.getAlumnos()));
+
         // Aplica cambios si vienen en el DTO
         nuevoTurno.setFecha(dto.getFecha() != null ? dto.getFecha() : turnoOriginal.getFecha());
         if (dto.getAlumnosIds() != null && !dto.getAlumnosIds().isEmpty()) {
@@ -207,10 +208,10 @@ public class TurnoService {
             nuevoTurno.setAlumnos(alumnos);
         }
         if (dto.getEstadoId() != null) {
-             nuevoTurno.setEstado(estadoRepository.findById(dto.getEstadoId())
-                     .orElseThrow(() -> new RuntimeException("Estado no encontrado")));
+            nuevoTurno.setEstado(estadoRepository.findById(dto.getEstadoId())
+                    .orElseThrow(() -> new RuntimeException("Estado no encontrado")));
         } else {
-             nuevoTurno.setEstado(turnoOriginal.getEstado());
+            nuevoTurno.setEstado(turnoOriginal.getEstado());
         }
 
         nuevoTurno.setCreated_at(OffsetDateTime.now());
@@ -362,7 +363,8 @@ public class TurnoService {
     }
 
     /**
-     * Intenta resolver el userId usando el ID provisto, o cae al ID del Usuario del Entrenador
+     * Intenta resolver el userId usando el ID provisto, o cae al ID del Usuario del
+     * Entrenador
      * asociado al Turno.
      */
     private String resolveUserId(String providedUserId, Turno turno) {
@@ -372,8 +374,10 @@ public class TurnoService {
             if (isNumeric(providedUserId)) {
                 return providedUserId;
             }
-            // Si no es numérico (ej: JWT ID string), se emite advertencia y se intenta la resolución automática.
-            System.err.println("⚠️ userId provisto NO NUMÉRICO: " + providedUserId + ". Intentando resolver por turno.");
+            // Si no es numérico (ej: JWT ID string), se emite advertencia y se intenta la
+            // resolución automática.
+            System.err
+                    .println("⚠️ userId provisto NO NUMÉRICO: " + providedUserId + ". Intentando resolver por turno.");
         }
 
         // 2. Usar ID del Entrenador del Turno

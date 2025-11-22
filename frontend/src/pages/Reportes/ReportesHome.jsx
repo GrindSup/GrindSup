@@ -8,16 +8,27 @@ import BotonVolver from "../../components/BotonVolver";
 
 function Tile({ icon, title, desc, badge, onClick }) {
   const bg = useColorModeValue("white", "gray.800");
-  const hover = useColorModeValue("rgba(37,141,25,0.08)", "rgba(37,141,25,0.18)");
 
   return (
     <Card
       role="button"
       onClick={onClick}
-      _hover={{ transform: "translateY(-4px)", boxShadow: "xl", bg: hover, cursor: "pointer" }}
-      transition="all 180ms ease"
       bg={bg}
       borderRadius="2xl"
+      transition="all 180ms ease"
+      _hover={{
+        transform: "translateY(-4px)",
+        boxShadow: "xl",
+        bg: "#87c987ff", // 💚 Tu color fijo
+        cursor: "pointer",
+      }}
+      _active={{
+        bg: "#87c987ff", // 💚 No se oscurece al click
+        transform: "translateY(-2px)",
+      }}
+      _focus={{
+        bg: "#87c987ff",
+      }}
     >
       <CardBody>
         <VStack align="start" spacing={3}>
@@ -30,6 +41,7 @@ function Tile({ icon, title, desc, badge, onClick }) {
             >
               <Icon as={icon} boxSize={6} color="#258d19" />
             </Box>
+
             <VStack align="start" spacing={0}>
               <HStack>
                 <Heading size="md">{title}</Heading>
@@ -66,13 +78,14 @@ export default function ReportesHome() {
           badge="KPI"
           onClick={() => navigate("/reportes/alumnos")}
         />
+
         <Tile
           icon={FiStar}
           title="Evaluaciones de Planes"
           desc="Promedio mensual de ratings (0–5) y distribución de calificaciones por puntaje."
-          // ✅ CORRECCIÓN: Apuntar a la ruta principal de Planes
           onClick={() => navigate("/reportes/planes")}
         />
+
         <Tile
           icon={FiBarChart2}
           title="Asistencia & Turnos"
@@ -80,6 +93,7 @@ export default function ReportesHome() {
           badge="Próximamente"
           onClick={() => {}}
         />
+
         <Tile
           icon={FiTrendingUp}
           title="Progreso de Objetivos"

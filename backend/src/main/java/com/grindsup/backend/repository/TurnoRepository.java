@@ -38,4 +38,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
       @Param("desde") OffsetDateTime desde,
       @Param("hasta") OffsetDateTime hasta,
       @Param("tipo") String tipo);
+
+  // Buscar turnos cuyo horario esté entre "desde" y "hasta"
+  List<Turno> findByFechaBetween(OffsetDateTime desde, OffsetDateTime hasta);
 }
