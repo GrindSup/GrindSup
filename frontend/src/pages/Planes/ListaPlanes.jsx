@@ -234,7 +234,7 @@ export default function ListaPlanes() {
 
                   {finalizado ? (
                     evaluado ? (
-                      <Button size="sm" isDisabled>
+                      <Button size="sm" bg="#187e0cff" color="white" isDisabled>
                         Calificado ★{evalStatus[id]?.data?.score ?? ""}
                       </Button>
                     ) : (

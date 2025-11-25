@@ -3,6 +3,10 @@ package com.grindsup.backend.service;
 import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.Notificacion;
 import com.grindsup.backend.repository.NotificacionRepository;
+
+import jakarta.transaction.Transactional;
+
+import com.grindsup.backend.repository.EntrenadorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,9 +15,12 @@ import java.util.List;
 public class NotificacionService {
 
     private final NotificacionRepository notificacionRepository;
+    private final EntrenadorRepository entrenadorRepository;
 
-    public NotificacionService(NotificacionRepository notificacionRepository) {
+    public NotificacionService(NotificacionRepository notificacionRepository,
+            EntrenadorRepository entrenadorRepository) {
         this.notificacionRepository = notificacionRepository;
+        this.entrenadorRepository = entrenadorRepository;
     }
 
     // ✔️ Crear una notificación SOLO para entrenador
@@ -26,13 +33,27 @@ public class NotificacionService {
     }
 
     // ✔️ Obtener NOTIFICACIONES NO LEÍDAS del entrenador
-    public List<Notificacion> obtenerNotificacionesEntrenador(Entrenador entrenador) {
+    public List<Notificacion> obtenerNotificacionesEntrenador(Long entrenadorId) {
+        Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
+                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado con ID: " + entrenadorId));
         return notificacionRepository.findByEntrenadorAndLeidaFalseOrderByCreatedAtDesc(entrenador);
     }
 
     // ✔️ Obtener TODAS las notificaciones (opcional pero útil)
-    public List<Notificacion> obtenerTodasNotificacionesEntrenador(Entrenador entrenador) {
+    public List<Notificacion> obtenerTodasNotificacionesEntrenador(Long entrenadorId) {
+        Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
+                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado con ID: " + entrenadorId));
         return notificacionRepository.findByEntrenadorOrderByCreatedAtDesc(entrenador);
+    }
+
+    // 🆕 NUEVO: Marcar TODAS como leídas para un entrenador
+    @Transactional
+    public int marcarTodasComoLeidas(Long entrenadorId) {
+        Entrenador entrenador = entrenadorRepository.findById(entrenadorId)
+                .orElseThrow(() -> new RuntimeException("Entrenador no encontrado con ID: " + entrenadorId));
+
+        // Llama al nuevo método del repositorio
+        return notificacionRepository.marcarTodasComoLeidas(entrenador);
     }
 
     // ✔️ Marcar como leída

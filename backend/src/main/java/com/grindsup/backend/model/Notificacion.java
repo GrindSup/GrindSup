@@ -2,6 +2,7 @@ package com.grindsup.backend.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "notificacion")
@@ -9,6 +10,7 @@ public class Notificacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_notificaciones")
     private Long id;
 
     private String titulo;
@@ -19,6 +21,7 @@ public class Notificacion {
     private boolean leida = false;
 
     // ✔️ El único receptor: el entrenador logueado
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "id_entrenador", nullable = false)
     private Entrenador entrenador;

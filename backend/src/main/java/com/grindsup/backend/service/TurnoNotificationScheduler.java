@@ -4,6 +4,7 @@ import com.grindsup.backend.model.Turno;
 import com.grindsup.backend.repository.TurnoRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -21,19 +22,23 @@ public class TurnoNotificationScheduler {
     }
 
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void enviarNotificacionesPrevias() {
         OffsetDateTime ahora = OffsetDateTime.now();
-        OffsetDateTime dentroDeUnaHora = ahora.plusHours(1);
+        OffsetDateTime dentroDeUnaHora = ahora.plusHours(1).plusSeconds(1);
 
-        List<Turno> turnosProximos = turnoRepository.findByFechaBetween(ahora, dentroDeUnaHora);
+        List<Turno> turnosProximos = turnoRepository.findByFechaBetweenAndNotificacionPreviaEnviadaFalse(ahora,
+                dentroDeUnaHora);
 
         for (Turno turno : turnosProximos) {
 
             // El entrenador SIEMPRE es el que recibe la notificación
             notificacionService.crearNotificacionParaEntrenador(
                     "Turno Próximo",
-                    "Tenés un turno dentro de una hora con " + obtenerListaAlumnos(turno),
+                    "Tienes un turno dentro de una hora con " + obtenerListaAlumnos(turno),
                     turno.getEntrenador());
+            turno.setNotificacionPreviaEnviada(true);
+            turnoRepository.save(turno);
         }
     }
 

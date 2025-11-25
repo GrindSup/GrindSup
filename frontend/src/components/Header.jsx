@@ -11,7 +11,6 @@ import {
   MenuList,
   MenuItem,
   Image,
-  // Spacer, // YA NO NECESITAMOS SPACER
   Modal,
   ModalOverlay,
   ModalContent,
@@ -28,6 +27,7 @@ import { HamburgerIcon, BellIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearSessionCache, ensureEntrenadorId } from "../context/auth";
 import { useState, useEffect } from "react";
+import api from "../config/axios.config";
 
 export default function Header({ usuario, setUsuario }) {
   const navigate = useNavigate();
@@ -71,12 +71,10 @@ export default function Header({ usuario, setUsuario }) {
     if (!entrenadorId) return;
     const fetchNotif = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/notificaciones/entrenador/${entrenadorId}`
+        const res = await api.get(
+          `api/notificaciones/entrenador/${entrenadorId}`
         );
-        if (res.ok) {
-          setNotificaciones(await res.json());
-        }
+        setNotificaciones(res.data);
       } catch (e) {
         console.error("Error obteniendo notificaciones", e);
       }
@@ -85,6 +83,27 @@ export default function Header({ usuario, setUsuario }) {
     const interval = setInterval(fetchNotif, 30000);
     return () => clearInterval(interval);
   }, [entrenadorId]);
+
+  // 🆕 Función para marcar las notificaciones como leídas
+  const markNotificationsAsRead = async () => {
+    if (!entrenadorId || notificaciones.length === 0) return;
+
+    try {
+      // 1. Llamar al nuevo endpoint PUT para marcar en la DB
+      await api.put(`/api/notificaciones/entrenador/${entrenadorId}/leidas`);
+
+      // 2. Opcional pero recomendado: Limpiar el estado local (para que la insignia desaparezca de inmediato)
+      setNotificaciones([]);
+    } catch (e) {
+      console.error("Error al marcar notificaciones como leídas", e);
+    }
+  };
+
+  // 🆕 Función para manejar el cierre del modal
+  const handleNotifModalClose = () => {
+    notifModal.onClose(); // Cierra el modal
+    markNotificationsAsRead(); // Ejecuta la acción de marcado
+  };
 
   // Logout
   const handleLogout = async () => {
@@ -157,12 +176,15 @@ export default function Header({ usuario, setUsuario }) {
                   variant="ghost"
                 />
                 <MenuList>
-                  {items.map((i) => (
-                    <MenuItem key={i.path} onClick={() => go(i.path)}>
-                      {i.label}
-                    </MenuItem>
-                  ))}
-                </MenuList>
+                  {items.map((i, index) => {
+                      const finalKey = i.path === '/' ? i.label : i.path; 
+                      return (
+                          <MenuItem key={finalKey} onClick={() => go(i.path)}>
+                              {i.label}
+                          </MenuItem>
+                      );
+                  })}
+              </MenuList>
               </Menu>
             )}
           </Flex>
@@ -240,28 +262,42 @@ export default function Header({ usuario, setUsuario }) {
         <ModalOverlay />
         <ModalContent borderRadius="2xl">
           <ModalHeader>Notificaciones</ModalHeader>
-          <ModalBody>
+          <ModalBody
+            maxH="400px"
+            overflowY="auto"
+            display="flex"
+            flexDirection="column"
+            gap={2}
+          >
             {notificaciones.length === 0 ? (
-              <Text>No tienes notificaciones nuevas.</Text>
+              <Text textAlign="center" color="gray.500" py={4}>
+                No tienes notificaciones pendientes.
+              </Text>
             ) : (
-              <VStack align="stretch" spacing={3}>
-                {notificaciones.map((n) => (
-                  <Box
-                    key={n.idNotificacion}
-                    p={3}
-                    borderRadius="lg"
-                    bg="gray.100"
-                  >
-                    <Text fontWeight="bold">{n.titulo}</Text>
-                    <Text fontSize="sm">{n.mensaje}</Text>
-                  </Box>
-                ))}
-              </VStack>
+              // ❌ Corrección de la advertencia "key"
+              notificaciones.map((notif, index) => (
+                <Box
+                  key={notif.id} // ✅ Usar el ID de la notificación como key
+                  p={3}
+                  bg="gray.50"
+                  borderRadius="lg"
+                  boxShadow="sm"
+                  borderLeft="4px solid #007000"
+                >
+                  <Text fontWeight="bold">{notif.titulo}</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    {notif.mensaje}
+                  </Text>
+                  <Text fontSize="xs" color="gray.400" mt={1}>
+                    {new Date(notif.createdAt).toLocaleTimeString()}
+                  </Text>
+                </Box>
+              ))
             )}
           </ModalBody>
           <ModalFooter>
             <Button
-              onClick={notifModal.onClose}
+              onClick={handleNotifModalClose}
               bg="#258d19"
               color="white"
             >

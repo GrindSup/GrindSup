@@ -6,6 +6,7 @@ import com.grindsup.backend.model.TokenRecuperacionContrasena;
 import com.grindsup.backend.repository.TokenRecuperacionContrasenaRepository;
 import com.grindsup.backend.repository.UsuarioRepository;
 import com.grindsup.backend.util.TokenUtil;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +25,7 @@ public class RecuperarContrasenaService {
     private final TokenUtil tokenUtil;
     private final MailPort mail;
 
-    // URL del front para armar el link del mail 
+    // URL del front para armar el link del mail
     @Value("${app.front-url:http://localhost:5173}")
     private String frontUrl;
 
@@ -33,10 +34,10 @@ public class RecuperarContrasenaService {
     private int tokenMinutes;
 
     public RecuperarContrasenaService(UsuarioRepository usuarioRepository,
-                                      TokenRecuperacionContrasenaRepository tokenRepository,
-                                      PasswordEncoder encoder,
-                                      TokenUtil tokenUtil,
-                                      MailPort mail) {
+            TokenRecuperacionContrasenaRepository tokenRepository,
+            PasswordEncoder encoder,
+            TokenUtil tokenUtil,
+            MailPort mail) {
         this.usuarioRepository = usuarioRepository;
         this.tokenRepository = tokenRepository;
         this.encoder = encoder;
@@ -45,16 +46,21 @@ public class RecuperarContrasenaService {
     }
 
     /**
-     * Inicia el flujo de recuperación: genera token, guarda HASH y envía link por mail.
+     * Inicia el flujo de recuperación: genera token, guarda HASH y envía link por
+     * mail.
      * Siempre responde OK aunque el correo no exista (para no filtrar usuarios).
      */
     @Transactional
     public void iniciarFlujo(String correo) {
-        if (correo != null) correo = correo.trim();
+        if (correo != null)
+            correo = correo.trim();
         usuarioRepository.findByCorreoIgnoreCase(correo).ifPresent(u -> {
             // (Opcional) invalidar token activo previo del usuario
             tokenRepository.findByIdUsuarioAndUsadoFalse(u.getId_usuario())
-                     .ifPresent(t -> { t.setUsado(true); tokenRepository.save(t); });
+                    .ifPresent(t -> {
+                        t.setUsado(true);
+                        tokenRepository.save(t);
+                    });
 
             // Token crudo (para enviar) + hash (para guardar)
             String raw = tokenUtil.generarTokenCrudo();
@@ -71,30 +77,30 @@ public class RecuperarContrasenaService {
             String link = frontUrl + "/reset?token=" + raw;
             String html = MailTemplate.resetPasswordHtml(link, tokenMinutes);
             mail.send(
-                u.getCorreo(),                                  
-                "Recuperar contraseña - GrindSup",
-                html
-            );
+                    u.getCorreo(),
+                    "Recuperar contraseña - GrindSup",
+                    html);
         });
         // Siempre OK aunque no exista el correo
     }
 
     /**
-     * Canjea el token: valida hash y expiración, setea nueva contraseña (hasheada) y marca token como usado.
+     * Canjea el token: valida hash y expiración, setea nueva contraseña (hasheada)
+     * y marca token como usado.
      */
     @Transactional
     public void resetear(String rawToken, String nuevaPassword) {
         String hash = tokenUtil.sha256Hex(rawToken);
 
         var token = tokenRepository.findByHashToken(hash)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido"));
 
         if (token.isUsado() || token.getExpired_at().isBefore(OffsetDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token expirado o usado");
         }
 
         var usuario = usuarioRepository.findById(token.getIdUsuario())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario no encontrado"));
 
         // Guardar la nueva contraseña en HASH (bcrypt)
         usuario.setContrasena(encoder.encode(nuevaPassword));

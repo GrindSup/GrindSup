@@ -11,7 +11,7 @@ public class TokenUtil {
 
     private final SecureRandom sr = new SecureRandom();
 
-    // Genera un token aleatorio seguro 
+    // Genera un token aleatorio seguro
     public String generarTokenCrudo() {
         byte[] bytes = new byte[32]; // 256 bits
         sr.nextBytes(bytes);
@@ -24,7 +24,8 @@ public class TokenUtil {
             byte[] dig = MessageDigest.getInstance("SHA-256")
                     .digest(raw.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder(64);
-            for (byte b : dig) sb.append(String.format("%02x", b));
+            for (byte b : dig)
+                sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
             throw new IllegalStateException("Error calculando SHA-256", e);

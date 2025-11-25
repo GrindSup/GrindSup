@@ -40,9 +40,13 @@ public class Turno {
     @Column(name = "google_event_id")
     private String googleEventId;
 
+    // 🆕 NUEVO: Campo para controlar si ya se envió la notificación
+    @Column(name = "notificacion_previa_enviada", nullable = false)
+    private boolean notificacionPreviaEnviada = false; // Por defecto: false
+
     @ManyToMany
     @JoinTable(name = "turno_alumno", joinColumns = @JoinColumn(name = "id_turno"), inverseJoinColumns = @JoinColumn(name = "id_alumno"))
-    
+
     private List<Alumno> alumnos = new ArrayList<>();
 
     // Getters y Setters
@@ -124,5 +128,14 @@ public class Turno {
 
     public void setGoogleEventId(String googleEventId) {
         this.googleEventId = googleEventId;
+    }
+
+    // 🆕 NUEVO: Getter y Setter para el nuevo campo
+    public boolean isNotificacionPreviaEnviada() {
+        return notificacionPreviaEnviada;
+    }
+
+    public void setNotificacionPreviaEnviada(boolean notificacionPreviaEnviada) {
+        this.notificacionPreviaEnviada = notificacionPreviaEnviada;
     }
 }
