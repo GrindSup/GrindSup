@@ -20,6 +20,14 @@ public class Notificacion {
 
     private boolean leida = false;
 
+    // 🆕 NUEVO: ID de la entidad relacionada (e.g., id_turno)
+    @Column(name = "id_referencia")
+    private Long idReferencia;
+
+    // 🆕 NUEVO: Tipo de entidad (e.g., 'TURNO', 'PLAN_ENTRENAMIENTO')
+    @Column(name = "tipo_referencia", length = 50)
+    private String tipoReferencia;
+
     // ✔️ El único receptor: el entrenador logueado
     @JsonIgnore
     @ManyToOne
@@ -60,6 +68,22 @@ public class Notificacion {
 
     public void setLeida(boolean leida) {
         this.leida = leida;
+    }
+
+    public Long getIdReferencia() {
+        return idReferencia;
+    }
+
+    public void setIdReferencia(Long idReferencia) {
+        this.idReferencia = idReferencia;
+    }
+
+    public String getTipoReferencia() {
+        return tipoReferencia;
+    }
+
+    public void setTipoReferencia(String tipoReferencia) {
+        this.tipoReferencia = tipoReferencia;
     }
 
     public Entrenador getEntrenador() {

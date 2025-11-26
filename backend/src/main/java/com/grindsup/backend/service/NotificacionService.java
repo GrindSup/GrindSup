@@ -24,11 +24,14 @@ public class NotificacionService {
     }
 
     // ✔️ Crear una notificación SOLO para entrenador
-    public Notificacion crearNotificacionParaEntrenador(String titulo, String mensaje, Entrenador entrenador) {
+    public Notificacion crearNotificacionParaEntrenador(String titulo, String mensaje, Entrenador entrenador,
+            Long idReferencia, String tipoReferencia) {
         Notificacion noti = new Notificacion();
         noti.setTitulo(titulo);
         noti.setMensaje(mensaje);
         noti.setEntrenador(entrenador);
+        noti.setIdReferencia(idReferencia); // Nuevo campo
+        noti.setTipoReferencia(tipoReferencia); // Nuevo campo
         return notificacionRepository.save(noti);
     }
 

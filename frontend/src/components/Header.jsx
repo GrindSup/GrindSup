@@ -26,7 +26,7 @@ import {
 import { HamburgerIcon, BellIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearSessionCache, ensureEntrenadorId } from "../context/auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "../config/axios.config";
 
 export default function Header({ usuario, setUsuario }) {
@@ -44,27 +44,55 @@ export default function Header({ usuario, setUsuario }) {
 
   const go = (path) => navigate(path);
 
-  // Obtener id_entrenador
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      if (!isLoggedIn) {
-        setEntrenadorId(null);
+  // Función para obtener las notificaciones (usamos useCallback para el intervalo)
+  const fetchNotificaciones = useCallback(async (id) => {
+    // Es buena práctica asegurarse de que el ID es un número antes de la llamada
+    const numericId = Number(id); 
+    if (!numericId || isNaN(numericId)) {
+        console.warn("ID de entrenador no válido para notificaciones.");
         return;
-      }
-      try {
-        const id = await ensureEntrenadorId();
-        if (active) setEntrenadorId(id ?? null);
-      } catch (e) {
-        console.error("No se pudo obtener entrenadorId", e);
-        if (active) setEntrenadorId(null);
+    }
+    
+    try {
+      const res = await api.get(`/api/notificaciones/entrenador/${numericId}`);
+      setNotificaciones(res.data || []);
+    } catch (error) {
+      console.error("Error al cargar notificaciones:", error);
+    }
+  }, []); 
+
+  // Obtener id_entrenador y configurar el Polling
+  useEffect(() => {
+    let intervalId = null;
+
+    const resolveIdAndStartPolling = async () => {
+      // 🛑 CORRECCIÓN CLAVE: Usar AWAIT para resolver la Promise del ID
+      const id = await ensureEntrenadorId(); 
+      
+      const validId = id && !isNaN(Number(id)) ? Number(id) : null;
+      setEntrenadorId(validId); // Actualizar el state con el ID resuelto
+
+      if (validId) {
+        // 1. Cargar notificaciones inmediatamente
+        fetchNotificaciones(validId);
+
+        // 2. Configurar el Polling (ejecutar cada 15 segundos)
+        intervalId = setInterval(() => {
+          console.log("Polling notificaciones...");
+          fetchNotificaciones(validId); 
+        }, 15000); 
       }
     };
-    load();
+
+    resolveIdAndStartPolling(); // Llamar a la función async inmediatamente
+
+    // 3. Limpiar el intervalo cuando el componente se desmonte o el ID cambie
     return () => {
-      active = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
-  }, [isLoggedIn]);
+  }, [usuario, fetchNotificaciones]);
 
   // Traer notificaciones del entrenador
   useEffect(() => {
@@ -144,6 +172,7 @@ export default function Header({ usuario, setUsuario }) {
   const hideMenu =
     location.pathname === "/login" || location.pathname === "/register";
 
+  const notificacionesNoLeidas = notificaciones.length;
   return (
     <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200">
       <Container maxW="container.xl" py={3}>
@@ -200,17 +229,20 @@ export default function Header({ usuario, setUsuario }) {
                       icon={<BellIcon boxSize={6} color="#258d19" />}
                       variant="ghost"
                       onClick={notifModal.onOpen}
+                      aria-label="Notificaiones"
+                      position="relative"
                     />
-                    {notificaciones.length > 0 && (
+                    {notificacionesNoLeidas > 0 && (
                       <Badge
                         colorScheme="red"
                         position="absolute"
                         top="-2px"
                         right="-2px"
                         borderRadius="full"
+                        fontSize="xs"
                         px={2}
                       >
-                        {notificaciones.length}
+                        {notificacionesNoLeidas}
                       </Badge>
                     )}
                   </Box>
@@ -289,7 +321,10 @@ export default function Header({ usuario, setUsuario }) {
                     {notif.mensaje}
                   </Text>
                   <Text fontSize="xs" color="gray.400" mt={1}>
-                    {new Date(notif.createdAt).toLocaleTimeString()}
+                    {new Date(notif.createdAt).toLocaleTimeString('es-AR', {
+                      hour: 'numeric',
+                      minute:'2-digit'
+                    })}
                   </Text>
                 </Box>
               ))

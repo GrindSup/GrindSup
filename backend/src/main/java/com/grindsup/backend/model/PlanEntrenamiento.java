@@ -19,7 +19,7 @@ public class PlanEntrenamiento {
     // ✅ CORRECCIÓN CLAVE: Mapeo directo a la columna id_entrenador
     @ManyToOne
     @JoinColumn(name = "id_entrenador")
-    private Entrenador entrenador; 
+    private Entrenador entrenador;
 
     @Column(columnDefinition = "TEXT")
     private String objetivo;
@@ -33,6 +33,10 @@ public class PlanEntrenamiento {
     @ManyToOne
     @JoinColumn(name = "id_estado")
     private Estado estado;
+
+    // 🆕 NUEVO: Campo para controlar si ya se envió la notificación de calificación
+    @Column(name = "notificacion_calificacion_enviada", nullable = false)
+    private boolean notificacionCalificacionEnviada = false;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime created_at;
@@ -98,6 +102,14 @@ public class PlanEntrenamiento {
 
     public void setEstado(Estado estado) {
         this.estado = estado;
+    }
+
+    public boolean isNotificacionCalificacionEnviada() {
+        return notificacionCalificacionEnviada;
+    }
+
+    public void setNotificacionCalificacionEnviada(boolean notificacionCalificacionEnviada) {
+        this.notificacionCalificacionEnviada = notificacionCalificacionEnviada;
     }
 
     public OffsetDateTime getCreated_at() {

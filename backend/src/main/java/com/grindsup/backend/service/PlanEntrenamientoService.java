@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.grindsup.backend.DTO.CrearPlanrequestDTO;
 import com.grindsup.backend.model.Alumno;
-import com.grindsup.backend.model.Entrenador; // <-- Importación necesaria
+import com.grindsup.backend.model.Entrenador;
 import com.grindsup.backend.model.Estado;
 import com.grindsup.backend.model.PlanEntrenamiento;
 import com.grindsup.backend.repository.AlumnoRepository;
@@ -52,7 +52,7 @@ public class PlanEntrenamientoService {
         plan.setAlumno(alumno);
 
         // Asignar el Entrenador al plan antes de guardar
-        plan.setEntrenador(entrenador); // <-- ¡ESTO RESUELVE EL PROBLEMA DEL ID NULL!
+        plan.setEntrenador(entrenador);
 
         plan.setObjetivo(request.getObjetivo());
         // Asumiendo LocalDate en la entidad:
@@ -65,6 +65,9 @@ public class PlanEntrenamientoService {
         Estado estadoInicial = estadoRepository.findById((long) 3)
                 .orElseThrow(() -> new EntityNotFoundException("Estado 'En proceso' no encontrado"));
         plan.setEstado(estadoInicial);
+
+        // 🛑 Importante: El flag de notificación para calificación inicia en false
+        plan.setNotificacionCalificacionEnviada(false);
 
         return planRepository.save(plan);
     }
@@ -98,9 +101,15 @@ public class PlanEntrenamientoService {
     }
 
     /** Finaliza el plan: fecha_fin = hoy, y setea estado FINALIZADO si existe. */
+    @Transactional
     public PlanEntrenamiento finalizar(Long idPlan) {
         PlanEntrenamiento plan = planRepository.findById(idPlan)
                 .orElseThrow(() -> new IllegalArgumentException("Plan no encontrado"));
+
+        if (plan.isNotificacionCalificacionEnviada()) {
+            // Ya se finalizó y se notificó, evitamos duplicación de la notificación.
+            return plan;
+        }
 
         // ✅ LocalDate directamente (sin java.sql.Date)
         plan.setFecha_fin(LocalDate.now());
@@ -110,14 +119,23 @@ public class PlanEntrenamientoService {
                 .ifPresent(plan::setEstado);
 
         plan.setUpdated_at(OffsetDateTime.now());
+
+        // Guardar el plan ANTES de crear la notificación para obtener el ID actualizado
         PlanEntrenamiento planFinalizado = planRepository.save(plan);
 
-        // ✔️ NOTIFICACIÓN SOLO PARA EL ENTRENADOR
+        // 🆕 1. Crear la notificación usando la nueva firma del servicio
         notificacionService.crearNotificacionParaEntrenador(
-                "Plan finalizado",
+                "Plan Finalizado y Pendiente de Calificación",
                 "El plan del alumno " + planFinalizado.getAlumno().getNombre() +
-                        " (" + planFinalizado.getObjetivo() + ") ha sido finalizado. No te olvides de calificarlo",
-                planFinalizado.getEntrenador());
+                        " (" + planFinalizado.getObjetivo() + ") ha finalizado. No te olvides de calificarlo.",
+                planFinalizado.getEntrenador(),
+                planFinalizado.getId_plan(), // ID del Plan de Entrenamiento
+                "PLAN_ENTRENAMIENTO" // Tipo de Referencia
+        );
+
+        // 🆕 2. Marcar el plan como notificado (para evitar duplicados)
+        planFinalizado.setNotificacionCalificacionEnviada(true);
+        planRepository.save(planFinalizado); // Guardar nuevamente el flag actualizado
 
         return planFinalizado;
     }
