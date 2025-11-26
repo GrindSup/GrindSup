@@ -63,7 +63,7 @@ export default function AdminReportsGlobal() {
             <Heading size="lg" color="white" mb={1}>
               Reportes globales de uso
             </Heading>
-            <Text color="whiteAlpha.800">
+            <Text color="whiteAlpha.900" fontWeight="bold">
               Actividad de los entrenadores dentro de GrindSup.
             </Text>
           </Box>

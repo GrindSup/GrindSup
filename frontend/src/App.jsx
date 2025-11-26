@@ -47,6 +47,7 @@ import ReportesPlanes from "./pages/Reportes/ReportesPlanes.jsx";
 import AdminDashboard from "./pages/Admin/AdminDashboards.jsx";
 import AdminReportsGlobal from "./pages/Admin/AdminReportsGlobal.jsx";
 import AdminReportsEntrenadores from "./pages/Admin/AdminReportsEntrenadores.jsx";
+import HeaderAdmin from "./pages/Admin/HeaderAdmin.jsx";
 
 import { clearSessionCache } from "./context/auth.js";
 
@@ -80,6 +81,8 @@ export default function App() {
       usuario.id_rol === 2 // por si en algún lado viene así
     );
 
+  // Si isAdmin es true, se usa HeaderAdmin, sino se usa el Header normal
+  const CurrentHeader = isAdmin ? HeaderAdmin : Header;
   // Persistencia de usuario y limpieza cuando cambia
   useEffect(() => {
     const firstRun = isInitialMount.current;
@@ -198,7 +201,13 @@ export default function App() {
 
         {/* Contenido */}
         <Box position="relative" zIndex={2} flex="1" display="flex" flexDirection="column">
-          <Header usuario={usuario} setUsuario={setUsuario} />
+          {/* Si el usuario no está logueado, los headers deben manejar no renderizarse,
+              pero si sí lo está, se le pasa la lógica de ADMIN/ENTRENADOR */}
+          {usuario ? (
+            <CurrentHeader usuario={usuario} setUsuario={setUsuario} />
+          ) : (
+            <Header usuario={usuario} setUsuario={setUsuario} /> 
+          )}
 
           <Box as="main" flex="1" py={{ base: 6, md: 10 }}>
             <Container maxW="container.xl">

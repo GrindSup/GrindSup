@@ -75,7 +75,7 @@ export default function AdminReportsEntrenadores() {
             <Heading size="lg" color="white" mb={1}>
               Reportes y estadísticas de entrenadores
             </Heading>
-            <Text color="whiteAlpha.800">
+            <Text color="whiteAlpha.900" fontWeight="bold">
               Altas de entrenadores e inactividad dentro de GrindSup.
             </Text>
           </Box>
@@ -137,7 +137,7 @@ export default function AdminReportsEntrenadores() {
 
         {/* Filtro de inactividad */}
         <Flex align="center" mb={4} gap={3}>
-          <Text color="whiteAlpha.900">
+          <Text color="whiteAlpha.900" fontWeight="bold">
             Mostrar entrenadores que no entran hace más de:
           </Text>
           <Select
