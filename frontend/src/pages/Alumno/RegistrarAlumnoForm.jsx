@@ -13,6 +13,26 @@ import { useNavigate } from "react-router-dom";
 import axios from "../../config/axios.config.js";
 
 /* =========================================================================
+ * 📦 HOOK PARA DEBOUNCE
+ * ========================================================================= */
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+
+/* =========================================================================
  * 📦 HELPERS
  * ========================================================================= */
 
@@ -24,50 +44,82 @@ const DOCUMENT_TYPES = [
     { code: "PAS", name: "Pasaporte" },
     { code: "CI", name: "Cédula de Identidad" },
 ];
-// NOTA: Usamos un mock de API libre ya que no hay una API universal para tipos de DNI.
-// En un entorno real, esto vendría de tu backend.
 
-function stringifyNotes(items) {
+// 🛑 MODIFICADO: Función stringifyNotes para incluir la fecha para lesiones
+function stringifyNotes(items, which) {
+  const isLesion = which === "les";
   const list = (items || [])
-    .map((i) => ({ text: String(i.text ?? "").trim(), important: !!i.important }))
+    .map((i) => ({ 
+      text: String(i.text ?? "").trim(), 
+      important: !!i.important,
+      // Incluir la fecha solo si es una lesión
+      fecha: isLesion ? i.fecha : undefined 
+    }))
     .filter((i) => i.text);
   return JSON.stringify({ items: list });
 }
 
 /* ⚡ Componente para Optimización de Rendimiento (React.memo) */
-// Se usa React.memo para evitar re-renders innecesarios en las listas
-// de Lesiones y Enfermedades cuando otros campos del formulario cambian.
+// 🛑 MODIFICADO: Componente DetalleItem para incluir la fecha de lesión
 const DetalleItem = React.memo(
   function DetalleItem({ item, idx, which, setItem, removeItem }) {
     const isLesion = which === "les";
     const placeholderText = isLesion ? "Detalle de la lesión..." : "Detalle de la enfermedad...";
     
-    // Función de cambio centralizada para manejar inputs y checkboxes
     const handleTextChange = (e) => setItem(which, idx, { text: e.target.value });
     const handleCheckboxChange = (e) => setItem(which, idx, { important: e.target.checked });
+    const handleDateChange = (e) => setItem(which, idx, { fecha: e.target.value });
 
     return (
-      <HStack key={`${which}-${idx}`} mt={2}>
-        <Input
-          placeholder={placeholderText}
-          value={item.text}
-          onChange={handleTextChange}
-        />
-        <Checkbox
-          isChecked={item.important}
-          onChange={handleCheckboxChange}
-        >
-          Importante
-        </Checkbox>
-        <IconButton
-          aria-label="Eliminar"
-          icon={<DeleteIcon />}
-          onClick={() => removeItem(which, idx)}
-          bg="#258d19"
-          color="white"
-          _hover={{ bg: "#1f7a14" }}
-        />
-      </HStack>
+      <Box p={3} border="1px" borderColor="gray.200" borderRadius="md" mt={2} bg="gray.50">
+        <HStack justify="space-between" mb={3}>
+            <Text fontWeight="bold" fontSize="sm">{isLesion ? `Lesión ${idx + 1}` : `Enfermedad ${idx + 1}`}</Text>
+            <IconButton
+                aria-label="Eliminar"
+                icon={<DeleteIcon />}
+                onClick={() => removeItem(which, idx)}
+                bg="#258d19"
+                color="white"
+                _hover={{ bg: "#1f7a14" }}
+                size="xs"
+            />
+        </HStack>
+        <Stack spacing={2}>
+            {/* 🛑 NUEVO CAMPO: Fecha de la lesión (solo para lesiones) */}
+            {isLesion && (
+                <FormControl isRequired={isLesion} isInvalid={isLesion && !item.fecha}>
+                    <FormLabel fontSize="xs" mb={1}>Fecha de la lesión</FormLabel>
+                    <Input 
+                        type="date" 
+                        value={item.fecha || ''} 
+                        onChange={handleDateChange} 
+                        size="sm"
+                    />
+                    {isLesion && !item.fecha && (
+                        <FormErrorMessage fontSize="sm">La fecha es obligatoria</FormErrorMessage>
+                    )}
+                </FormControl>
+            )}
+
+            <FormControl isRequired>
+                <FormLabel fontSize="xs" mb={1}>Descripción</FormLabel>
+                <Input
+                    placeholder={placeholderText}
+                    value={item.text}
+                    onChange={handleTextChange}
+                    size="sm"
+                />
+            </FormControl>
+            
+            <Checkbox
+                isChecked={item.important}
+                onChange={handleCheckboxChange}
+                size="sm"
+            >
+                Importante
+            </Checkbox>
+        </Stack>
+      </Box>
     );
   }
 );
@@ -100,18 +152,24 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     nombre: "", apellido: "", documento: "", fechaNac: "",
     peso: "", altura: "", telefono: "", informeMedico: false,
     codigoArea: "+54", contactoNumero: "",
-    tipoDocumento: DOCUMENT_TYPES[0].code, // Nuevo campo
+    tipoDocumento: DOCUMENT_TYPES[0].code,
   });
 
-  // Eliminamos checkingDni y setCheckingDni. dniDisponible solo se usará al hacer submit.
+  // Estados para el chequeo de DNI
+  const [checkingDni, setCheckingDni] = useState(false); 
   const [dniDisponible, setDniDisponible] = useState(true); 
+
+  // Estados para lesiones y enfermedades
   const [lesiones, setLesiones] = useState([]);
   const [enfermedades, setEnfermedades] = useState([]);
+  
+  // Estados para códigos de área
   const [codigos, setCodigos] = useState([]);
   const [loadingCodigos, setLoadingCodigos] = useState(true);
   
   const hoy = new Date().toISOString().split("T")[0];
   const documentoLimpio = form.documento?.trim();
+  const debouncedDocumento = useDebounce(documentoLimpio, 500); 
 
   // Códigos de área (fetch público) - Se mantiene igual
   useEffect(() => {
@@ -128,7 +186,6 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
           })
           .filter((x) => x.code)
           .sort((a, b) => a.country.localeCompare(b.country, "es"));
-        // Argentina arriba
         parsed.sort((a, b) => (a.country === "Argentina" ? -1 : b.country === "Argentina" ? 1 : 0));
         setCodigos(parsed);
       } catch (err) {
@@ -145,13 +202,9 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = "El nombre es obligatorio";
     if (!form.apellido?.trim()) e.apellido = "El apellido es obligatorio";
-    
-    // Nueva validación para Tipo de Documento
     if (!form.tipoDocumento) e.tipoDocumento = "Seleccioná el tipo de documento";
-    
     if (!form.documento?.trim()) e.documento = "El número de documento es obligatorio";
     else if (!/^[0-9]+$/.test(form.documento)) e.documento = "El documento debe contener solo números";
-    
     if (!form.fechaNac?.trim()) e.fechaNac = "La fecha de nacimiento es obligatoria";
     else {
       if (form.fechaNac > hoy) e.fechaNac = "La fecha no puede ser futura";
@@ -159,17 +212,76 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     if (form.peso && !/^\d+(\.\d+)?$/.test(form.peso)) e.peso = "El peso debe ser numérico";
     if (form.altura && !/^\d+(\.\d+)?$/.test(form.altura)) e.altura = "La altura debe ser numérica";
     if (form.contactoNumero && !/^[0-9]+$/.test(form.contactoNumero)) e.contactoNumero = "El número debe ser numérico";
-    return e;
-  }, [form, hoy]);
+    
+    // 🛑 NUEVO: Validación de fecha de lesión
+    lesiones.forEach((lesion, index) => {
+        if (!lesion.text.trim() || (lesion.text.trim() && !lesion.fecha)) {
+            // No creamos un error específico en el objeto errors, sino que confiamos en la validación inline del DetalleItem.
+        }
+    });
 
-  // 🛑 ELIMINAMOS EL useEffect DE VERIFICACIÓN DE DNI EN TIEMPO REAL 🛑
-  // Esto es lo que causaba la lentitud. La verificación ahora solo se hace en onSubmit.
-  // useEffect(() => { ... }, [form.documento]); // Código eliminado
+    return e;
+  }, [form, hoy, lesiones]); // Añadir 'lesiones' a las dependencias
+
+  /* -------------------------------------------------------------
+  * 1. useEffect para activar el estado 'Verificando' (Visual Inmediata)
+  * ------------------------------------------------------------- */
+  useEffect(() => {
+    const isReadyForCheck = documentoLimpio && !errors.documento && documentoLimpio.length >= 6;
+    
+    // Si el documento es válido y el valor actual es diferente del valor debounced,
+    // significa que el usuario está escribiendo y la verificación está en curso (esperando debounce).
+    if (isReadyForCheck && documentoLimpio !== debouncedDocumento) {
+        setCheckingDni(true);
+    } 
+    // Si el campo se borra o es demasiado corto, reseteamos la disponibilidad y la verificación
+    else if (!isReadyForCheck && documentoLimpio.length < 6) {
+      setDniDisponible(true);
+      setCheckingDni(false); 
+    }
+  }, [documentoLimpio, errors.documento, debouncedDocumento]); 
+
+
+  /* -------------------------------------------------------------
+  * 2. useEffect para realizar la llamada a la API (Debounce)
+  * ------------------------------------------------------------- */
+  useEffect(() => {
+    // 1. Limpiar error de submit si el usuario edita
+    if (submitted && dniDisponible === false) {
+        setDniDisponible(true);
+    }
+    
+    // 2. Solo ejecutar si el valor debounced es válido y tiene largo suficiente
+    if (debouncedDocumento && !errors.documento && debouncedDocumento.length >= 6) {
+
+      const checkDni = async () => {
+        try {
+          const res = await axios.get("/api/alumnos/exists", {
+            params: { documento: debouncedDocumento },
+          });
+          const existe = res.data?.exists;
+          
+          setDniDisponible(!existe);
+          
+        } catch (err) {
+          console.error("Error al chequear DNI en tiempo real", err);
+        } finally {
+          // 3. Setear a false *solo* después de que la API responde
+          setCheckingDni(false); 
+        }
+      };
+
+      checkDni();
+    } else {
+      // Si el valor debounced es vacío o inválido, nos aseguramos de que el spinner se oculte
+      setCheckingDni(false);
+    }
+    
+  }, [debouncedDocumento, errors.documento, submitted]); 
+
 
   const isValid = Object.keys(errors).length === 0;
-  // Handler para campos de formulario
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  // Handler específico para Menú de Tipo de Documento
   const handleDocTypeChange = (code) => setForm((p) => ({ ...p, tipoDocumento: code }));
 
 
@@ -178,7 +290,6 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     return {
       nombre: form.nombre.trim(),
       apellido: form.apellido.trim(),
-      // ⚠️ Incluimos el tipo de documento en el payload
       tipoDocumento: form.tipoDocumento, 
       documento: form.documento.trim(),
       fechaNacimiento: form.fechaNac,
@@ -186,8 +297,9 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
       altura: form.altura ? Number(form.altura) : null,
       informeMedico: form.informeMedico,
       telefono: form.codigoArea + form.contactoNumero,
-      lesiones: stringifyNotes(lesiones),
-      enfermedades: stringifyNotes(enfermedades),
+      // 🛑 MODIFICADO: Pasar 'which' para distinguir lesiones de enfermedades
+      lesiones: stringifyNotes(lesiones, "les"), 
+      enfermedades: stringifyNotes(enfermedades, "dis"),
       estado: { id_estado: 1 },
       entrenador: entrenadorRef,
     };
@@ -198,11 +310,15 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
   const onSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
-
-    if (!isValid) {
-      toast({ status: "warning", title: "Revisá los campos obligatorios", position: "top" });
+    
+    // Validar que todas las lesiones tengan descripción Y fecha.
+    const hasIncompleteLesion = lesiones.some(l => !l.text.trim() || !l.fecha);
+    
+    if (!isValid || !dniDisponible || checkingDni || hasIncompleteLesion) {
+      toast({ status: "warning", title: "Revisá los campos obligatorios o el documento", position: "top" });
       return;
     }
+    
     if (!entrenadorId) {
       toast({
         status: "warning",
@@ -214,25 +330,8 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
 
     setSubmitting(true);
-    setDniDisponible(true); // Resetear estado antes del chequeo final
+    
     try {
-      // ✅ CHEQUEO DE DNI: SOLO AQUÍ (doble chequeo)
-      // Usamos el tipo de documento en la consulta si el backend lo requiere.
-      const dupRes = await axios.get("/api/alumnos/exists", {
-        params: { documento: documentoLimpio }
-      });
-      const existe = dupRes.data?.exists;
-      if (existe) {
-        setDniDisponible(false);
-        toast({
-          status: "error",
-          title: "Documento duplicado",
-          description: "El documento ya está registrado.",
-          position: "top",
-        });
-        return; // Salir de la función si está duplicado
-      }
-      
       const payload = buildPayload();
 
       if (usarMock) {
@@ -255,10 +354,10 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
   };
 
-  // Lógica para añadir/modificar/eliminar ítems de Lesiones/Enfermedades
   const addItem = (which) => {
     if (which === "les") {
-      setLesiones((p) => [...p, { text: "", important: false }]);
+      // 🛑 MODIFICADO: Añadir 'fecha' al inicializar la lesión
+      setLesiones((p) => [...p, { text: "", important: false, fecha: "" }]); 
     } else {
       setEnfermedades((p) => [...p, { text: "", important: false }]);
     }
@@ -278,7 +377,6 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     }
   };
 
-  // Buscamos el nombre del documento seleccionado para mostrarlo en la etiqueta
   const selectedDocType = DOCUMENT_TYPES.find(d => d.code === form.tipoDocumento);
   const docLabel = selectedDocType ? `${selectedDocType.name} (Número)` : "Documento (Número)";
 
@@ -307,7 +405,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
           <CardBody pt={6} px={{ base: 6, md: 10 }} pb={8}>
             <Box as="form" onSubmit={onSubmit}>
               <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={5}>
-                {/* Nombre */}
+                {/* Nombre y Apellido */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.nombre}>
                     <FormLabel>Nombre</FormLabel>
@@ -316,7 +414,6 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
-                {/* Apellido */}
                 <GridItem>
                   <FormControl isRequired isInvalid={submitted && !!errors.apellido}>
                     <FormLabel>Apellido</FormLabel>
@@ -325,7 +422,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
-                {/* Tipo de Documento (NUEVO) */}
+                {/* Tipo de Documento */}
                 <GridItem>
                     <FormControl isRequired isInvalid={submitted && !!errors.tipoDocumento}>
                         <FormLabel>Tipo de Documento</FormLabel>
@@ -354,21 +451,39 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                     </FormControl>
                 </GridItem>
 
-                {/* Documento (Número) - Área crítica de lentitud */}
+                {/* Documento (Número) */}
                 <GridItem>
                   <FormControl
                     isRequired
-                    isInvalid={(submitted && !!errors.documento) || (submitted && !dniDisponible)}
+                    isInvalid={(submitted && !!errors.documento) || (!dniDisponible && !checkingDni)}
                   >
-                    {/* La etiqueta cambia dinámicamente */}
                     <FormLabel>{docLabel}</FormLabel>
                     <Input name="documento" placeholder="Ej: 41059876" value={form.documento} onChange={handleChange} />
                     
-                    {/* Eliminamos el mensaje de 'Verificando' ya que se eliminó la verificación en tiempo real */}
+                    {/* INDICADOR DE CARGA Y ESTADO (PRIORIZA CHECKING) */}
+                    <HStack mt={1} spacing={2} align="center">
+                        {/* Se muestra solo si checkingDni es true (Verificación Inmediata) */}
+                        {checkingDni && (
+                            <HStack color="green.500">
+                                <Spinner size="sm" />
+                                <Text fontSize="sm">Verificando...</Text>
+                            </HStack>
+                        )}
+                        {/* Se muestra si NO está chequeando Y el campo no está vacío/inválido */}
+                        {!checkingDni && documentoLimpio && !errors.documento && (
+                            dniDisponible ? (
+                                <Badge colorScheme="green">Disponible</Badge>
+                            ) : (
+                                <Badge colorScheme="red">Duplicado</Badge>
+                            )
+                        )}
+                    </HStack>
                     
-                    {submitted && errors.documento && (<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
-                    {/* El mensaje de duplicado se activa solo después de intentar submit */}
-                    {submitted && !dniDisponible && (
+                    {/* MENSAJES DE ERROR */}
+                    {(submitted && errors.documento) && (<FormErrorMessage>{errors.documento}</FormErrorMessage>)}
+                    
+                    {/* El mensaje de duplicado se activa si no está disponible Y no se está chequeando */}
+                    {!dniDisponible && !checkingDni && (
                       <FormErrorMessage>Este documento ya está registrado.</FormErrorMessage>
                     )}
                   </FormControl>
@@ -383,7 +498,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
-                {/* Peso */}
+                {/* Peso y Altura */}
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.peso}>
                     <FormLabel>Peso (kg)</FormLabel>
@@ -391,7 +506,6 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
-                {/* Altura */}
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.altura}>
                     <FormLabel>Altura (cm)</FormLabel>
@@ -436,7 +550,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   </FormControl>
                 </GridItem>
 
-                {/* Lesiones (Optimizadas con React.memo) */}
+                {/* Lesiones (Con Campo de Fecha) */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Lesiones" onAdd={() => addItem("les")} />
                   {lesiones.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -456,7 +570,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                   <Divider />
                 </GridItem>
 
-                {/* Enfermedades (Optimizadas con React.memo) */}
+                {/* Enfermedades */}
                 <GridItem colSpan={{ base: 1, md: 2 }}>
                   <SectionHeader title="Enfermedades" onAdd={() => addItem("dis")} />
                   {enfermedades.length === 0 && <Badge mt={2}>Sin registros</Badge>}
@@ -487,15 +601,14 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
               <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={8} justify="center">
                 <Button
                   type="submit"
-                  isLoading={submitting}
+                  isLoading={submitting || checkingDni}
                   loadingText="Guardando"
                   px={10}
                   bg="#258d19"
                   color="white"
                   _hover={{ bg: "#1f7a14" }}
-                  // Solo se deshabilita por submit/cargando o si no hay entrenador. 
-                  // El DNI duplicado es manejado por el chequeo de onSubmit.
-                  isDisabled={submitting || !entrenadorId} 
+                  // Se deshabilita si está cargando, si el DNI está en proceso de chequeo, o si está duplicado
+                  isDisabled={submitting || !entrenadorId || checkingDni || !dniDisponible} 
                 >
                   Registrar
                 </Button>

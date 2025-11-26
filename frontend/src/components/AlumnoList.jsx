@@ -18,19 +18,26 @@ import { getUsuario, getEntrenadorId } from "../context/auth.js";
 const API = import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 /* ---- helpers JSON <-> items ---- */
+// 🛑 MODIFICADO: Incluir el campo 'fecha' en la salida
 function parseNotes(raw) {
   if (!raw) return [];
   try {
     const j = JSON.parse(raw);
     if (Array.isArray(j?.items)) {
       return j.items
-        .map(it => ({ text: String(it.text ?? "").trim(), important: !!it.important }))
+        .map(it => ({ 
+          text: String(it.text ?? "").trim(), 
+          important: !!it.important,
+          fecha: it.fecha || null // <-- Se incluye la fecha
+        }))
         .filter(it => it.text);
     }
   } catch {}
+  // Para el caso fallback, también inicializamos 'fecha'
   const t = String(raw).trim();
-  return t ? [{ text: t, important: false }] : [];
+  return t ? [{ text: t, important: false, fecha: null }] : [];
 }
+
 function importantSummary(a) {
   const imp = [...parseNotes(a.lesiones), ...parseNotes(a.enfermedades)]
     .filter(i => i.important)
@@ -57,10 +64,10 @@ export default function AlumnoList() {
   const usuario = useMemo(() => getUsuario(), []);
   const entrenadorId = useMemo(() => getEntrenadorId(usuario), [usuario]);
 
-  // ✅ FIX: contemplar también `entrenador.idEntrenador` (camelCase)
+  // Contemplar también `entrenador.idEntrenador` (camelCase)
   const getAlumnoEntrenadorId = (a) =>
     a?.entrenador?.id_entrenador ??
-    a?.entrenador?.idEntrenador ??   // <-- agregado
+    a?.entrenador?.idEntrenador ??
     a?.entrenador?.id ??
     a?.id_entrenador ??
     a?.entrenadorId ??
@@ -76,7 +83,6 @@ export default function AlumnoList() {
         params: { entrenadorId },
       });
       const rows = Array.isArray(data) ? data : [];
-      // ✅ Si el backend ya filtró, esto igual no hace daño, pero ahora sí matchea
       const propios = rows.filter(
         (a) => Number(getAlumnoEntrenadorId(a)) === Number(entrenadorId)
       );
@@ -115,24 +121,42 @@ export default function AlumnoList() {
     const alumnoActual = alumnos.find((a) => (a.id_alumno ?? a.idAlumno) === idAlumno);
     if (!alumnoActual) return;
 
-    const payload = {
-      ...alumnoActual,
-      // ✅ aceptar camelCase o snake_case, pero enviar id_estado que espera el backend
-      estado: { id_estado: Number(idEstado) },
-      entrenador:
-        alumnoActual.entrenador ??
-        (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId, idEntrenador: entrenadorId } : null),
-    };
+    // Asumimos que los estados Activo (1) y Archivados (2) se manejan con PATCH /estado
+    const isArchiveOrActivate = Number(idEstado) === 1 || Number(idEstado) === 2;
 
-    axios
-      .put(`${API}/alumnos/${idAlumno}`, payload)
-      .then(() => {
-        toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
-        fetchAlumnos();
-      })
-      .catch(() =>
-        toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
-      );
+    if (isArchiveOrActivate) {
+        // Usar la nueva API PATCH /alumnos/{id}/estado
+        axios
+          .patch(`${API}/alumnos/${idAlumno}/estado`, { idEstado: Number(idEstado) })
+          .then(() => {
+            const statusText = Number(idEstado) === 1 ? "Reactivado" : "Archivado";
+            toast({ title: `Alumno ${statusText}`, status: "success", duration: 2000, isClosable: true });
+            fetchAlumnos();
+          })
+          .catch(() =>
+            toast({ title: "Error al cambiar estado", status: "error", duration: 2000, isClosable: true })
+          );
+
+    } else {
+        // Usar el método PUT existente para otros cambios de estado (si los hay)
+        const payload = {
+            ...alumnoActual,
+            estado: { id_estado: Number(idEstado) },
+            entrenador:
+                alumnoActual.entrenador ??
+                (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId, idEntrenador: entrenadorId } : null),
+        };
+
+        axios
+            .put(`${API}/alumnos/${idAlumno}`, payload)
+            .then(() => {
+                toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
+                fetchAlumnos();
+            })
+            .catch(() =>
+                toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
+            );
+    }
   };
 
   const handleInformeChange = (idAlumno, checked) => {
@@ -241,13 +265,21 @@ export default function AlumnoList() {
       ) : (
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={5}>
           {filteredAlumnos.map((a) => {
-            const aid = a.id_alumno ?? a.idAlumno; // ✅ por las dos variantes que devuelve el backend
+            const aid = a.id_alumno ?? a.idAlumno;
             const isOpen = expanded.has(aid);
             const imp = importantSummary(a);
             const impText = imp.length <= 2 ? imp.join(", ") : `${imp.slice(0, 2).join(", ")} +${imp.length - 2}`;
 
             return (
-              <Card key={aid} borderRadius="2xl" boxShadow="md" _hover={{ boxShadow: "lg" }} cursor="pointer" onClick={() => toggleExpand(aid)}>
+              <Card 
+                key={aid} 
+                borderRadius="2xl" 
+                boxShadow="md" 
+                _hover={{ boxShadow: "lg" }} 
+                cursor="pointer" 
+                // El Card entero sigue siendo el toggle principal
+                onClick={() => toggleExpand(aid)} 
+              >
                 <CardHeader pb={3}>
                   <Flex align="center" gap={3}>
                       <Box>
@@ -269,7 +301,11 @@ export default function AlumnoList() {
                       aria-label={isOpen ? "Ocultar detalles" : "Ver detalles"}
                       icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                       variant="ghost"
-                      onClick={() => toggleExpand(aid)}
+                      // 🛑 SOLUCIÓN: Usar e.stopPropagation() para que solo se dispare el click del icono.
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(aid);
+                      }}
                     />
                   </Flex>
                 </CardHeader>
@@ -287,7 +323,11 @@ export default function AlumnoList() {
                       <Box mt={3}>
                         <Checkbox
                           isChecked={!!a.informeMedico}
-                          onChange={(e) => handleInformeChange(aid, e.target.checked)}
+                          // 🛑 Parar propagación también en el Checkbox para evitar colapsar
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleInformeChange(aid, e.target.checked);
+                          }}
                         >
                           Informe médico entregado
                         </Checkbox>
@@ -297,9 +337,12 @@ export default function AlumnoList() {
                         <Text mb={1} fontWeight="medium">Estado</Text>
                         <Select
                           size="sm"
-                          // ✅ soportar idEstado o id_estado
                           value={(a.estado?.id_estado ?? a.estado?.idEstado) ?? ""}
-                          onChange={(e) => handleEstadoChange(aid, e.target.value)}
+                          // 🛑 Parar propagación también en el Select para evitar colapsar
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleEstadoChange(aid, e.target.value);
+                          }}
                         >
                           {estados.map((estado) => {
                             const eid = estado.id_estado ?? estado.idEstado;
@@ -321,7 +364,11 @@ export default function AlumnoList() {
                       size="sm"
                       colorScheme="blue"
                       leftIcon={<EditIcon />}
-                      onClick={() => navigate(`/alumno/editar/${aid}`)}
+                      // 🛑 Parar propagación también en el Botón Editar
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/alumno/editar/${aid}`);
+                      }}
                       bg="#258d19"
                     >
                       Editar
@@ -331,7 +378,11 @@ export default function AlumnoList() {
                       bg="red.600"
                       color="white"
                       _hover={{ bg: "red.600" }}
-                      onClick={() => openDeleteDialog(a)}
+                      // 🛑 Parar propagación también en el Botón Eliminar
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDeleteDialog(a);
+                      }}
                       leftIcon={<DeleteIcon />}
                     >
                       Eliminar
@@ -371,24 +422,42 @@ export default function AlumnoList() {
 function Detail({ label, value }) {
   return (
     <Flex as="dl" gap={2} mt={1}>
-      <Text as="dt" minWidth="140px" color="gray.500">{label}</Text>
+      <Text as="dt" minWidth="140px" color="gray.700">{label}</Text>
       <Text as="dd" fontWeight="medium">{String(value)}</Text>
     </Flex>
   );
 }
 
+// 🛑 MODIFICADO: Componente NotesList para mostrar la fecha de lesión
 function NotesList({ label, items }) {
   if (!items?.length) return <Detail label={label} value="—" />;
+  
+  const isLesion = label === "Lesiones";
+
   return (
     <Box mt={2}>
-      <Text mb={1} color="gray.500">{label}</Text>
+      <Text mb={1} color="gray.500" fontWeight="bold">{label}</Text>
       <Box pl={2}>
-        {items.map((it, i) => (
-          <HStack key={i} spacing={2} mb={1}>
-            <Text>• {it.text}</Text>
-            {it.important && <Badge colorScheme="red">Importante</Badge>}
-          </HStack>
-        ))}
+        {items.map((it, i) => {
+          // Formatear la fecha si existe (formato: dd/mm/yyyy)
+          const dateString = isLesion && it.fecha 
+            ? new Date(it.fecha + 'T00:00:00').toLocaleDateString('es-AR') 
+            : null;
+          
+          return (
+            <HStack key={i} spacing={2} mb={1} align="flex-start">
+              <Text>•</Text>
+              <Box>
+                {/* Mostrar la fecha de la lesión */}
+                {isLesion && dateString && (
+                    <Badge colorScheme="purple" variant="subtle" mr={2}>{dateString}</Badge>
+                )}
+                {it.important && <Badge colorScheme="red" mr={2}>Importante</Badge>}
+                <Text as="span" fontSize="sm">{it.text}</Text>
+              </Box>
+            </HStack>
+          );
+        })}
       </Box>
     </Box>
   );
