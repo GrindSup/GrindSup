@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   Box,
   Button,
@@ -20,11 +20,23 @@ import {
   Spacer,
   InputGroup,
   InputLeftElement,
+  useToast,
+  // 🚀 Nuevas importaciones para el diálogo
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { SearchIcon, CalendarIcon, AddIcon, TimeIcon, ArrowBackIcon } from "@chakra-ui/icons";
 import { listarTurnos, eliminarTurno } from "../../services/turnos.servicio.js";
 import { ensureEntrenadorId } from "../../context/auth.js";
+
+/* ============================================================
+ * 📦 HELPERS
+ * ============================================================ */
 
 function alumnosToString(alumnos, fallback = "—") {
   if (!alumnos) return fallback;
@@ -111,12 +123,21 @@ function agruparTurnosFijos(turnos, normalizarTipo) {
   return rows;
 }
 
+/* ============================================================
+ * ⚛️ COMPONENTE PRINCIPAL
+ * ============================================================ */
+
 export default function ListaTurnos() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const cancelRef = useRef();
 
   const [entrenadorId, setEntrenadorId] = useState(null);
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 🚀 ESTADO PARA EL DIÁLOGO DE CONFIRMACIÓN
+  const [turnoAEliminar, setTurnoAEliminar] = useState(null); // Contiene { id: number, tipo: 'simple' | 'serie', data: turno | row }
 
   // filtros
   const [desde, setDesde] = useState("");
@@ -204,45 +225,106 @@ export default function ListaTurnos() {
       minute: "2-digit",
     });
 
-  async function handleEliminar(t) {
-    const fechaTxt = new Date(t.fecha).toLocaleString();
-    const ok = window.confirm(
-      `¿Eliminar el turno #${t.id_turno} (${t.tipo_turno || t.tipoTurno}) del ${fechaTxt}?`
-    );
-    if (!ok) return;
+  /* ==============================================================
+   * LÓGICA DE ELIMINACIÓN CON ALERT DIALOG
+   * ============================================================== */
+
+  // Función que realiza la eliminación de un turno simple (LÓGICA DE API)
+  async function ejecutarEliminarSimple(t) {
     try {
       await eliminarTurno(t.id_turno);
+      
+      toast({
+        title: "Turno eliminado",
+        description: `El turno ha sido eliminado con éxito.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
       setTurnos((prev) => prev.filter((x) => x.id_turno !== t.id_turno));
     } catch (e) {
-      alert(
-        "No se pudo eliminar el turno: " + (e?.response?.data || e.message)
-      );
+      const errorMsg = e?.response?.data?.mensaje || e.message || "Error desconocido al eliminar.";
+      
+      toast({
+        title: "Error al eliminar turno",
+        description: errorMsg,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setTurnoAEliminar(null); // Cerrar el modal
     }
   }
 
-  // 🔹 Eliminar serie de turno fijo (todas las sesiones)
-  async function handleEliminarSerie(row) {
-    const desdeTxt = fmtFecha(row.desde);
-    const hastaTxt = fmtFecha(row.hasta);
-    const ok = window.confirm(
-      `¿Eliminar la serie de turno fijo (${row.sesiones} sesiones) de ${desdeTxt} a ${hastaTxt}?`
-    );
-    if (!ok) return;
-
+  // Función que realiza la eliminación de la serie fija (LÓGICA DE API)
+  async function ejecutarEliminarSerie(row) {
     try {
       for (const id of row.idsSerie) {
         await eliminarTurno(id);
       }
+
+      toast({
+        title: "Serie de turnos eliminada",
+        description: `Se eliminaron ${row.sesiones} sesiones de la serie fija.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
       setTurnos((prev) =>
         prev.filter((x) => !row.idsSerie.includes(x.id_turno))
       );
     } catch (e) {
-      alert(
-        "No se pudo eliminar la serie de turnos: " +
-          (e?.response?.data || e.message)
-      );
+      const errorMsg = e?.response?.data?.mensaje || e.message || "Error desconocido al eliminar la serie.";
+
+      toast({
+        title: "Error al eliminar serie",
+        description: errorMsg,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setTurnoAEliminar(null); // Cerrar el modal
     }
   }
+
+
+  // 🔹 Función que abre el modal para un turno simple (SIN window.confirm)
+  function handleEliminar(t) {
+    setTurnoAEliminar({
+        id: t.id_turno,
+        tipo: 'simple',
+        data: t
+    });
+  }
+
+  // 🔹 Función que abre el modal para una serie fija (SIN window.confirm)
+  function handleEliminarSerie(row) {
+    setTurnoAEliminar({
+        id: row.idsSerie[0],
+        tipo: 'serie',
+        data: row
+    });
+  }
+
+  // 🔹 Función llamada al hacer clic en "Eliminar" DENTRO del modal
+  async function confirmarEliminar() {
+    if (!turnoAEliminar) return;
+
+    if (turnoAEliminar.tipo === 'simple') {
+        await ejecutarEliminarSimple(turnoAEliminar.data);
+    } else {
+        await ejecutarEliminarSerie(turnoAEliminar.data);
+    }
+  }
+
+
+  /* ==============================================================
+   * RENDERIZADO
+   * ============================================================== */
 
   return (
     <Container maxW="7xl" py={8}>
@@ -426,6 +508,7 @@ export default function ListaTurnos() {
                             bg="#258d19"
                             color="white"
                             colorScheme="red"
+                            // 🚀 LLAMA A LA FUNCIÓN QUE ABRE EL MODAL
                             onClick={() => handleEliminar(t)}
                           >
                             Eliminar
@@ -483,6 +566,7 @@ export default function ListaTurnos() {
                           bg="#258d19"
                           color="white"
                           colorScheme="red"
+                          // 🚀 LLAMA A LA FUNCIÓN QUE ABRE EL MODAL
                           onClick={() => handleEliminarSerie(row)}
                         >
                           Eliminar serie
@@ -513,6 +597,77 @@ export default function ListaTurnos() {
           </Tbody>
         </Table>
       </Box>
+      
+      {/* 🚀 DIÁLOGO DE CONFIRMACIÓN - AlertDialog */}
+      <AlertDialog
+        isOpen={turnoAEliminar !== null}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setTurnoAEliminar(null)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {turnoAEliminar?.tipo === 'simple'
+                ? `Eliminar Turno`
+                : `Eliminar Serie de Turnos Fijos`}
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              {turnoAEliminar?.tipo === 'simple' ? (
+                // 🔹 Caso 1: Turno simple - CON SEPARACIÓN Y FECHA EN NEGRITA
+                <Box>
+                  <Text>
+                    ¿Estás seguro de que quieres eliminar el turno del{' '}
+                    <Text as="span" fontWeight="bold">
+                      {/* Usamos toLocaleString() para la fecha y hora completas */}
+                      {new Date(turnoAEliminar.data.fecha).toLocaleString()}
+                    </Text>
+                    ?
+                  </Text>
+                  {/* Separación con mt={2} */}
+                  <Text mt={2}>
+                    Esta acción no se puede deshacer.
+                  </Text>
+                </Box>
+              ) : (
+                // 🔹 Caso 2: Serie Fija - CON SEPARACIÓN Y FECHAS EN NEGRITA
+                <Box>
+                  <Text>
+                    ¿Está seguro de que quiere eliminar las {turnoAEliminar?.data.sesiones} sesiones del turno fijo, desde el{' '}
+                    <Text as="span" fontWeight="bold">
+                      {fmtFecha(turnoAEliminar?.data.desde)}
+                    </Text>{' '}
+                    hasta el{' '}
+                    <Text as="span" fontWeight="bold">
+                      {fmtFecha(turnoAEliminar?.data.hasta)}
+                    </Text>
+                    ?
+                  </Text>
+                  {/* ✨ Aquí se usa mt={2} sin asteriscos para la separación */}
+                  <Text mt={2}>
+                    Esta acción no se puede deshacer.
+                  </Text>
+                </Box>
+              )}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} bg="#258d19" color="white" onClick={() => setTurnoAEliminar(null)}>
+                Cancelar
+              </Button>
+              <Button
+                bg="red.600"
+                color="white"
+                _hover={{ bg: "red.600" }}
+                onClick={confirmarEliminar}
+                ml={3}
+              >
+                Eliminar
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Container>
   );
 }

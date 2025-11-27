@@ -177,7 +177,6 @@ function LandingPagePublica() {
                                     border="1px solid"
                                     borderColor="blackAlpha.100"
                                     boxShadow="md"
-                                    _hover={{ boxShadow: "xl", transform: "translateY(-3px)" }}
                                     transition="all .2s"
                                 >
                                     <CardBody>
@@ -228,7 +227,6 @@ function LandingPagePublica() {
                                     border="1px solid"
                                     borderColor="blackAlpha.100"
                                     boxShadow="sm"
-                                    _hover={{ boxShadow: "md", transform: "translateY(-2px)" }}
                                     transition="all .2s"
                                 >
                                     <CardBody>

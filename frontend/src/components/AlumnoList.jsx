@@ -121,42 +121,40 @@ export default function AlumnoList() {
     const alumnoActual = alumnos.find((a) => (a.id_alumno ?? a.idAlumno) === idAlumno);
     if (!alumnoActual) return;
 
-    // Asumimos que los estados Activo (1) y Archivados (2) se manejan con PATCH /estado
-    const isArchiveOrActivate = Number(idEstado) === 1 || Number(idEstado) === 2;
+    const newIdEstado = Number(idEstado);
+    
+    // 1. Buscar el objeto de estado completo para la actualización visual
+    const nuevoEstadoObjeto = estados.find(e => (e.id_estado ?? e.idEstado) === newIdEstado);
 
-    if (isArchiveOrActivate) {
-        // Usar la nueva API PATCH /alumnos/{id}/estado
-        axios
-          .patch(`${API}/alumnos/${idAlumno}/estado`, { idEstado: Number(idEstado) })
-          .then(() => {
-            const statusText = Number(idEstado) === 1 ? "Reactivado" : "Archivado";
-            toast({ title: `Alumno ${statusText}`, status: "success", duration: 2000, isClosable: true });
-            fetchAlumnos();
-          })
-          .catch(() =>
-            toast({ title: "Error al cambiar estado", status: "error", duration: 2000, isClosable: true })
-          );
+    const payload = {
+      ...alumnoActual,
+      // ✅ aceptar camelCase o snake_case, pero enviar id_estado que espera el backend
+      estado: { id_estado: Number(idEstado) },
+      entrenador:
+        alumnoActual.entrenador ??
+        (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId, idEntrenador: entrenadorId } : null),
+    };
 
-    } else {
-        // Usar el método PUT existente para otros cambios de estado (si los hay)
-        const payload = {
-            ...alumnoActual,
-            estado: { id_estado: Number(idEstado) },
-            entrenador:
-                alumnoActual.entrenador ??
-                (entrenadorId ? { id_entrenador: entrenadorId, id: entrenadorId, idEntrenador: entrenadorId } : null),
-        };
-
-        axios
-            .put(`${API}/alumnos/${idAlumno}`, payload)
-            .then(() => {
-                toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
-                fetchAlumnos();
-            })
-            .catch(() =>
-                toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
-            );
-    }
+    axios
+      .put(`${API}/alumnos/${idAlumno}`, payload)
+      .then(() => {
+        toast({ title: "Estado actualizado", status: "success", duration: 2000, isClosable: true });
+        // 🚀 SOLUCIÓN: Actualizar el estado local (optimista) inmediatamente
+        if (nuevoEstadoObjeto) {
+            setAlumnos(prevAlumnos => prevAlumnos.map(a => 
+                (a.id_alumno ?? a.idAlumno) === idAlumno 
+                    ? { 
+                        ...a, 
+                        // Aplicamos el objeto de estado completo para que la interfaz sepa el nombre y el ID
+                        estado: nuevoEstadoObjeto
+                      } 
+                    : a
+            ));
+        }
+      })
+      .catch(() =>
+        toast({ title: "Error al actualizar estado", status: "error", duration: 2000, isClosable: true })
+      );
   };
 
   const handleInformeChange = (idAlumno, checked) => {
@@ -333,7 +331,7 @@ export default function AlumnoList() {
                         </Checkbox>
                       </Box>
 
-                      <Box mt={3}>
+                      <Box mt={3} onClick={(e) => e.stopPropagation()}>
                         <Text mb={1} fontWeight="medium">Estado</Text>
                         <Select
                           size="sm"

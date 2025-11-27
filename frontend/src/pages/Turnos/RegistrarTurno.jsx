@@ -49,6 +49,16 @@ export default function RegistrarTurno() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
 
+  // 🚀 NUEVO: Calcula la fecha de hoy en formato YYYY-MM-DD para usar como mínimo
+  const minDate = useMemo(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    // Los meses de JS van de 0 a 11, por eso sumamos 1
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
   useEffect(() => {
     (async () => {
       const id = await ensureEntrenadorId();
@@ -240,6 +250,7 @@ export default function RegistrarTurno() {
                 type="date"
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
+                min={minDate}
               />
             </FormControl>
 
@@ -283,10 +294,17 @@ export default function RegistrarTurno() {
                     type="date"
                     value={hastaFechaFija}
                     onChange={(e) => setHastaFechaFija(e.target.value)}
+                    min={minDate}
                   />
                   <Text fontSize="xs" color="gray.500" mt={1}>
                     Se crearán turnos cada semana con la fecha y hora elegidas.
                   </Text>
+
+                  {/* 🚨 TEXTO DE ADVERTENCIA AGREGADO AQUÍ */}
+                  <Text fontSize="sm" color="orange.600" mt={2} fontWeight="medium">
+                    ⚠️ La creación de múltiples sesiones puede tardar unos segundos.
+                  </Text>
+                  {/* 🚨 FIN TEXTO DE ADVERTENCIA */}
                 </Box>
               )}
             </FormControl>

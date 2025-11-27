@@ -62,7 +62,7 @@ function stringifyNotes(items, which) {
 /* ⚡ Componente para Optimización de Rendimiento (React.memo) */
 // 🛑 MODIFICADO: Componente DetalleItem para incluir la fecha de lesión
 const DetalleItem = React.memo(
-  function DetalleItem({ item, idx, which, setItem, removeItem }) {
+  function DetalleItem({ item, idx, which, setItem, removeItem, maxDate }) {
     const isLesion = which === "les";
     const placeholderText = isLesion ? "Detalle de la lesión..." : "Detalle de la enfermedad...";
     
@@ -91,6 +91,7 @@ const DetalleItem = React.memo(
                     <FormLabel fontSize="xs" mb={1}>Fecha de la lesión</FormLabel>
                     <Input 
                         type="date" 
+                        max={maxDate}
                         value={item.fecha || ''} 
                         onChange={handleDateChange} 
                         size="sm"
@@ -279,6 +280,15 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
     
   }, [debouncedDocumento, errors.documento, submitted]); 
 
+  // 🚀 NUEVA FUNCIÓN: Calcula la fecha de hoy en formato YYYY-MM-DD
+    const maxDate = useMemo(() => {
+        const d = new Date();
+        const year = d.getFullYear();
+        // Los meses de JS van de 0 a 11, por eso sumamos 1
+        const month = String(d.getMonth() + 1).padStart(2, '0'); 
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }, []);
 
   const isValid = Object.keys(errors).length === 0;
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -508,7 +518,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
 
                 <GridItem>
                   <FormControl isInvalid={submitted && !!errors.altura}>
-                    <FormLabel>Altura (cm)</FormLabel>
+                    <FormLabel>Altura (m)</FormLabel>
                     <Input type="number" name="altura" value={form.altura} onChange={handleChange} />
                   </FormControl>
                 </GridItem>
@@ -562,6 +572,7 @@ export default function RegistrarAlumnoForm({ usarMock = false }) {
                       which="les"
                       setItem={setItem}
                       removeItem={removeItem}
+                      maxDate={maxDate}
                     />
                   ))}
                 </GridItem>
