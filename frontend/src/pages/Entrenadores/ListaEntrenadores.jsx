@@ -220,17 +220,6 @@ export default function ListaEntrenadores() {
                 {/* Botones */}
                 <Flex gap={4} mt={2} justify="flex-end">
                   <Button
-                    bg="#258d19"
-                    color="white"
-                    leftIcon={<EditIcon />}
-                    _hover={{ bg: "green.500" }}
-                    onClick={() =>
-                      navigate(`/entrenadores/editar/${e.idEntrenador}`)
-                    }
-                  >
-                    Editar
-                  </Button>
-                  <Button
                     bg="red.600"
                     color="white"
                     leftIcon={<DeleteIcon />}
@@ -272,15 +261,15 @@ export default function ListaEntrenadores() {
                 placeholder="Ej: ya no trabaja en el gimnasio"
               />
               <Text mt={2} fontSize="xs" color="gray.500">
-                * Por ahora el motivo no se guarda en backend, pero podés
-                dejarlo listo para una futura auditoría.
+                * Recuerda que esta acción no puede revertirse.
               </Text>
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button
                 ref={cancelRef}
                 onClick={() => setIsOpen(false)}
-                bg="gray.200"
+                bg="#258d19"
+                color="white"
               >
                 Cancelar
               </Button>
