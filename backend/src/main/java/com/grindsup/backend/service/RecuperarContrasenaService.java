@@ -25,15 +25,14 @@ public class RecuperarContrasenaService {
     private final TokenUtil tokenUtil;
     private final MailPort mail;
 
-    // URL del front para armar el link del mail
     @Value("${app.front-url:http://localhost:5173}")
     private String frontUrl;
 
-    // Minutos de expiración del token (configurable)
     @Value("${app.reset-token.minutes:10}")
     private int tokenMinutes;
 
-    public RecuperarContrasenaService(UsuarioRepository usuarioRepository,
+    public RecuperarContrasenaService(
+            UsuarioRepository usuarioRepository,
             TokenRecuperacionContrasenaRepository tokenRepository,
             PasswordEncoder encoder,
             TokenUtil tokenUtil,
@@ -45,29 +44,26 @@ public class RecuperarContrasenaService {
         this.mail = mail;
     }
 
-    /**
-     * Inicia el flujo de recuperación: genera token, guarda HASH y envía link por
-     * mail.
-     * Siempre responde OK aunque el correo no exista (para no filtrar usuarios).
-     */
+    // ---------------------------------------------
+    // PASO 1: enviar mail con token
+    // ---------------------------------------------
     @Transactional
     public void iniciarFlujo(String correo) {
-        if (correo != null)
-            correo = correo.trim();
-        usuarioRepository.findByCorreoIgnoreCase(correo).ifPresent(u -> {
-            // (Opcional) invalidar token activo previo del usuario
-            tokenRepository.findByIdUsuarioAndUsadoFalse(u.getId_usuario())
-                    .ifPresent(t -> {
-                        t.setUsado(true);
-                        tokenRepository.save(t);
+        if (correo != null) correo = correo.trim();
+
+        usuarioRepository.findByCorreoIgnoreCase(correo).ifPresent(usuario -> {
+
+            tokenRepository.findByIdUsuarioAndUsadoFalse(usuario.getId_usuario())
+                    .ifPresent(old -> {
+                        old.setUsado(true);
+                        tokenRepository.save(old);
                     });
 
-            // Token crudo (para enviar) + hash (para guardar)
             String raw = tokenUtil.generarTokenCrudo();
             String hash = tokenUtil.sha256Hex(raw);
 
             TokenRecuperacionContrasena t = new TokenRecuperacionContrasena();
-            t.setIdUsuario(u.getId_usuario());
+            t.setIdUsuario(usuario.getId_usuario());
             t.setHashToken(hash);
             t.setCreated_at(OffsetDateTime.now());
             t.setExpired_at(OffsetDateTime.now().plusMinutes(tokenMinutes));
@@ -76,39 +72,56 @@ public class RecuperarContrasenaService {
 
             String link = frontUrl + "/reset?token=" + raw;
             String html = MailTemplate.resetPasswordHtml(link, tokenMinutes);
+
             mail.send(
-                    u.getCorreo(),
+                    usuario.getCorreo(),
                     "Recuperar contraseña - GrindSup",
-                    html);
+                    html
+            );
         });
-        // Siempre OK aunque no exista el correo
     }
 
-    /**
-     * Canjea el token: valida hash y expiración, setea nueva contraseña (hasheada)
-     * y marca token como usado.
-     */
+    // ---------------------------------------------
+    // PASO 2: cambiar la contraseña
+    // ---------------------------------------------
     @Transactional
     public void resetear(String rawToken, String nuevaPassword) {
         String hash = tokenUtil.sha256Hex(rawToken);
 
         var token = tokenRepository.findByHashToken(hash)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido"));
 
         if (token.isUsado() || token.getExpired_at().isBefore(OffsetDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token expirado o usado");
         }
 
         var usuario = usuarioRepository.findById(token.getIdUsuario())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario no encontrado"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario no encontrado"));
 
-        // Guardar la nueva contraseña en HASH (bcrypt)
         usuario.setContrasena(encoder.encode(nuevaPassword));
         usuario.setUpdated_at(OffsetDateTime.now());
         usuarioRepository.save(usuario);
 
-        // Marcar token como usado
         token.setUsado(true);
         tokenRepository.save(token);
+    }
+
+    // ---------------------------------------------
+    // PASO 3 (opcional): verificar que no sea la contraseña anterior
+    // ---------------------------------------------
+    public boolean esPasswordActual(String rawToken, String nuevaPassword) {
+        String hash = tokenUtil.sha256Hex(rawToken);
+
+        var token = tokenRepository.findByHashToken(hash)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido"));
+
+        var usuario = usuarioRepository.findById(token.getIdUsuario())
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario no encontrado"));
+
+        return encoder.matches(nuevaPassword, usuario.getContrasena());
     }
 }

@@ -1,54 +1,77 @@
 package com.grindsup.backend.mail;
 
-
 public class MailTemplate {
 
-
     public static String resetPasswordHtml(String link, int minutes) {
-        return """
-        <html>
-          <body style="font-family: Arial, sans-serif; background-color:#0d7c34; padding:30px;">
-            <table width="100%%" cellpadding="0" cellspacing="0"
-                   style="max-width:600px; margin:auto; background:#ffffff; border-radius:12px; overflow:hidden;">
-              <tr>
-                <td style="background-color:#0d7c34; color:#ffffff; text-align:center; padding:24px;">
-                  <h1 style="margin:0;">GrindSup</h1>
-                  <h2 style="margin:8px 0 0 0;">Recuperar contraseña</h2>
-                </td>
-              </tr>
 
+        String html = """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                  <meta charset="UTF-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                  <title>Recuperar contraseña</title>
+                </head>
+                <body style="margin:0; padding:0; background:#007000; font-family:Arial, Helvetica, sans-serif;">
+                  <table width="100%%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="center" style="padding:40px 0;">
+                        <table width="90%%" max-width="600" cellspacing="0" cellpadding="0" 
+                               style="background:white; border-radius:12px;">
+                          <tr>
+                            <td style="padding:40px 30px; text-align:center;">
+                              
+                              <h1 style="color:#258d19; margin:0; font-size:28px;">GrindSup</h1>
+                              <h2 style="color:#333; font-weight:600; margin-top:5px;">Recuperar contraseña</h2>
 
-              <tr>
-                <td style="padding:24px; color:#111827; font-size:15px;">
-                  <p>Hola!</p>
-                  <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-                  <p>Hacé clic en el siguiente botón para continuar. Este enlace vence en
-                     <strong>%d minutos</strong>.</p>
+                              <p style="color:#444; font-size:15px; margin-top:24px; line-height:1.6;">
+                                Hola 👋<br><br>
+                                Recibimos una solicitud para restablecer tu contraseña.
+                                <br><br>
+                                Hacé clic en el siguiente botón para continuar.<br>
+                                Este enlace vence en <b>{{MINUTES}} minutos</b>.
+                              </p>
 
+                              <a href="{{LINK}}"
+                                style="
+                                  display:inline-block;
+                                  background:#258d19;
+                                  color:white;
+                                  padding:14px 28px;
+                                  border-radius:8px;
+                                  margin:30px 0;
+                                  text-decoration:none;
+                                  font-size:16px;
+                                  font-weight:bold;
+                                ">
+                                Restablecer contraseña
+                              </a>
 
-                  <div style="text-align:center; margin:32px 0;">
-                    <a href="%s"
-                       style="background-color:#000000; color:#ffffff; padding:14px 28px;
-                              text-decoration:none; font-weight:bold; border-radius:8px;
-                              display:inline-block;">
-                      Restablecer contraseña
-                    </a>
-                  </div>
+                              <p style="color:#777; font-size:13px; margin-top:20px; line-height:1.6;">
+                                Si no fuiste vos, podés ignorar este mensaje. Tu contraseña no se modificará.
+                              </p>
 
+                              <hr style="margin:30px 0; border:none; border-top:1px solid #ddd;" />
 
-                  <p>Si no fuiste vos, podés ignorar este mensaje. Tu contraseña no se modificará.</p>
-                </td>
-              </tr>
+                              <p style="color:#999; font-size:12px;">
+                                © GrindSup – 2025<br>
+                                Tu plataforma de entrenamiento inteligente 🏋️‍♂️
+                              </p>
 
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """;
 
-              <tr>
-                <td style="background-color:#0d7c34; color:#ffffff; text-align:center; padding:12px; font-size:12px;">
-                  © GrindSup - %s
-                </td>
-              </tr>
-            </table>
-          </body>
-        </html>
-        """.formatted(minutes, link, java.time.Year.now());
-    };
-};
+        // Reemplazos seguros
+        html = html.replace("{{LINK}}", link);
+        html = html.replace("{{MINUTES}}", String.valueOf(minutes));
+
+        return html;
+    }
+}
